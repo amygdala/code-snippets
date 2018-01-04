@@ -1,4 +1,4 @@
-# Copyright 2016 Google Inc. All Rights Reserved. Licensed under the Apache
+# Copyright 2018 Google Inc. All Rights Reserved. Licensed under the Apache
 # License, Version 2.0 (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
 # http://www.apache.org/licenses/LICENSE-2.0
@@ -226,7 +226,7 @@ def json_serving_input_fn():
   inputs = {}
   for feat in INPUT_COLUMNS:
     inputs[feat.name] = tf.placeholder(shape=[None], dtype=feat.dtype)
-    
+
   return tf.estimator.export.ServingInputReceiver(inputs, inputs)
 # [END serving-function]
 
