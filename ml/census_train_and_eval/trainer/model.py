@@ -168,8 +168,9 @@ def build_estimator(config, embedding_size=8, hidden_units=None):
       config=config,
       linear_feature_columns=wide_columns,
       dnn_feature_columns=deep_columns,
-      dnn_hidden_units=hidden_units or [100, 70, 50, 25]
-  )
+      dnn_hidden_units=hidden_units or [100, 70, 50, 25],
+      dnn_optimizer=tf.train.ProximalAdagradOptimizer(learning_rate=0.001)
+    )
 
 
 def parse_label_column(label_string_tensor):
