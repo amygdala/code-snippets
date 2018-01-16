@@ -35,7 +35,7 @@ You can read more about this model and its use [here](https://research.googleblo
 
 We're using Estimators because they give us built-in support for distributed training and evaluation (along with other nice features). You should nearly always use Estimators to create your TensorFlow models. You can build a Custom Estimator if none of the pre-made Estimators suit your purpose.
 
-See the accompanying [notebook](using_tf.estimator.train_and_evaluate.ipynb) for the details of defining our Estimator, including specifying the expected format of the input data.
+See the accompanying [notebook](https://nbviewer.jupyter.org/github/amygdala/code-snippets/blob/master/ml/census_train_and_eval/using_tf.estimator.train_and_evaluate.ipynb#First-step:-create-an-Estimator) for the details of defining our Estimator, including specifying the expected format of the input data.
 The data is in csv format, and looks like this:
 
 ```
@@ -83,7 +83,7 @@ The `Dataset` API is much more performant than using `feed_dict` or the queue-ba
 
 In this simple example, our datasets are too small for the use of the Datasets API to make a large difference, but with larger datasets it becomes much more important.
 
-The `input_fn` definition is the following. It uses a couple of helper functions that are defined in the [notebook](using_tf.estimator.train_and_evaluate.ipynb).    
+The `input_fn` definition is the following. It uses a couple of helper functions that are defined in the [notebook](https://nbviewer.jupyter.org/github/amygdala/code-snippets/blob/master/ml/census_train_and_eval/using_tf.estimator.train_and_evaluate.ipynb#Define-input-functions-(using-Datasets)).    
 `parse_label_column` is used to convert the label strings (in our case, ' <=50K' and ' >50K') into [one-hot](https://en.wikipedia.org/wiki/One-hot) encodings.
 
 
