@@ -7,7 +7,7 @@ TensorFlow release 1.4 introduced the function [**`tf.estimator.train_and_evalua
 
 This means that using **`tf.estimator.train_and_evaluate`**, you can run the same code on both locally and distributed in the cloud, on different devices and using different cluster configurations, and get consistent results, **without making any code changes**. A train-and-evaluate loop is automatically supported. When you're done training (or at intermediate stages), the trained model is automatically exported in a form suitable for serving (e.g. for [Cloud ML Engine online prediction](https://cloud.google.com/ml-engine/docs/prediction-overview), or [TensorFlow serving](https://www.tensorflow.org/serving/)).
 
-In this post, we'll walk through how to use `tf.estimator.train_and_evaluate` with an Estimator model, and then show how easy it is to do **distributed training of the model on [Cloud ML Engine](https://cloud.google.com/ml-engine) (CMLE)**, and to move between different cluster configurations with just a config tweak.
+In this example, we'll walk through how to use `tf.estimator.train_and_evaluate` with an Estimator model, and then show how easy it is to do **distributed training of the model on [Cloud ML Engine](https://cloud.google.com/ml-engine) (CMLE)**, and to move between different cluster configurations with just a config tweak.
 (The TensorFlow code itself supports distribution on any infrastructure (GCE, GKE, etc.) when properly configured, but we will focus on CMLE, which makes the experience seamless).
 
 The primary steps necessary to do this, in addition to building your Estimator model, are to define how data is fed into the model for both training and test datasets (often these definitions are essentially the same), and to define training and eval specifications ([`TrainSpec`](https://www.tensorflow.org/api_docs/python/tf/estimator/TrainSpec) and [`EvalSpec`](https://www.tensorflow.org/api_docs/python/tf/estimator/EvalSpec)) passed to `tf.estimator.train_and_evaluate`.  The `EvalSpec` can include information on how to export your trained model for prediction (serving), and we'll look at how to do that as well.
@@ -21,9 +21,9 @@ Set](https://archive.ics.uci.edu/ml/datasets/Census+Income) hosted by the [UC Ir
 Repository](https://archive.ics.uci.edu/ml/datasets/). We have hosted the data
 on [Google Cloud Storage](https://cloud.google.com/storage/) (GCS) in a slightly cleaned form. We'll use this dataset to predict income category based on various information about a person.
 
-This post omits some of the details of the example.
-To see the specifics and work through the code yourself, visit [this](using_tf.estimator.train_and_evaluate.ipynb) [Jupyter](http://jupyter.org/) notebook.
-(The example in the [notebook](using_tf.estimator.train_and_evaluate.ipynb) is a slightly modified version of [this example](https://github.com/GoogleCloudPlatform/cloudml-samples/tree/master/census/estimator/trainer)).
+This README omits some of the details of the example.
+To see the specifics and work through the code yourself, visit the [Jupyter](http://jupyter.org/) notebook [in this directory](using_tf.estimator.train_and_evaluate.ipynb).
+(The example in the [notebook](using_tf.estimator.train_and_evaluate.ipynb) is a slightly modified version of [this other example](https://github.com/GoogleCloudPlatform/cloudml-samples/tree/master/census/estimator/trainer)).
 
 
 ## First step: create an Estimator
@@ -189,7 +189,7 @@ Using `train_and_evaluate`, the training behavior will be consistent whether you
 
 The exported trained model can be served on many platforms. You may particularly want to consider ways to scalably serve your model, in order to handle many prediction requests at once— say if you're using your model in an app you're building, and you expect it to become popular.  [Cloud ML Engine online prediction](https://cloud.google.com/ml-engine/docs/prediction-overview), or [TensorFlow serving](https://www.tensorflow.org/serving/)) are two of the options for doing this.
 
-In this post, we'll look at using **CMLE Online Prediction**. But first, let's take a closer look at our exported model.
+In this example, we'll look at using **CMLE Online Prediction**. But first, let's take a closer look at our exported model.
 
 ### Examine the signature of the exported model.
 
@@ -339,9 +339,9 @@ You can list your model information using `gcloud` too.
 
 ## Summary -- and what's next?
 
-In this post, we've walked through how to configure and use `tf.estimator.train_and_evaluate`.  It enables distributed execution for training and evaluation, while also supporting local execution, and provides consistent behavior for across both local/non-distributed and distributed configurations.
+In this example, we've walked through how to configure and use `tf.estimator.train_and_evaluate`.  It enables distributed execution for training and evaluation, while also supporting local execution, and provides consistent behavior for across both local/non-distributed and distributed configurations.
 
-For more, see the accompanying [notebook](using_tf.estimator.train_and_evaluate.ipynb) for examples of how to run your training job on a CMLE GPU cluster, and how to use CMLE to do [hyperparameter tuning](https://cloud.google.com/ml-engine/docs/hyperparameter-tuning-overview).
+For more, see the accompanying [notebook](using_tf.estimator.train_and_evaluate.ipynb) for information about how to run your training job on a CMLE GPU cluster, and how to use CMLE to do [hyperparameter tuning](https://cloud.google.com/ml-engine/docs/hyperparameter-tuning-overview).
 
 
 
