@@ -11,6 +11,7 @@ In this example, we'll walk through how to use `tf.estimator.train_and_evaluate`
 (The TensorFlow code itself supports distribution on any infrastructure (GCE, GKE, etc.) when properly configured, but we will focus on CMLE, which makes the experience seamless).
 
 The primary steps necessary to do this are:
+
 - build your `Estimator` model;
 - define how data is fed into the model for both training and test datasets (often these definitions are essentially the same); and 
 - define training and eval specifications ([`TrainSpec`](https://www.tensorflow.org/api_docs/python/tf/estimator/TrainSpec) and [`EvalSpec`](https://www.tensorflow.org/api_docs/python/tf/estimator/EvalSpec)) passed to `tf.estimator.train_and_evaluate`.  The `EvalSpec` can include information on how to export your trained model for prediction (serving), and we'll look at how to do that as well.
@@ -33,13 +34,12 @@ To see the specifics and work through the code yourself, visit the [Jupyter](htt
 ## Step 1: create an Estimator
 
 We'll first create an [`Estimator`](https://www.tensorflow.org/get_started/estimator) model using a prebuilt Estimator subclass, [`DNNLinearCombinedClassifier`](https://www.tensorflow.org/api_docs/python/tf/estimator/DNNLinearCombinedClassifier).
-This is a "wide and deep" model.
+This is a ["wide and deep"](https://research.googleblog.com/2016/06/wide-deep-learning-better-together-with.html) model.
 Wide and deep models use a deep neural net (DNN) to learn high level abstractions about complex features or interactions between such features. These models then combine the outputs from the DNN with a [linear regression](https://en.wikipedia.org/wiki/Linear_regression) performed on simpler features. This provides a balance between power and speed that is effective on many structured data problems.
-You can read more about this model and its use [here](https://research.googleblog.com/2016/06/wide-deep-learning-better-together-with.html). 
 
 We're using Estimators because they give us built-in support for distributed training and evaluation. You should nearly always use Estimators to create your TensorFlow models. You can build a [Custom Estimator](https://www.tensorflow.org/extend/estimators) if none of the pre-made Estimators suit your purpose.
 
-See the accompanying [notebook](https://nbviewer.jupyter.org/github/amygdala/code-snippets/blob/master/ml/census_train_and_eval/using_tf.estimator.train_and_evaluate.ipynb#First-step:-create-an-Estimator) for the details of defining our Estimator, including specifying the expected format of the input data.
+See the accompanying [notebook](https://nbviewer.jupyter.org/github/amygdala/code-snippets/blob/master/ml/census_train_and_eval/using_tf.estimator.train_and_evaluate.ipynb#First-step:-create-an-Estimator) for the details of defining our Estimator, including specification of the expected format of the input data.
 The data is in csv format, and looks like this:
 
 ```
@@ -85,10 +85,9 @@ We'll use [Datasets](https://www.tensorflow.org/api_docs/python/tf/data/Dataset)
 This API is a new way to create [input pipelines to TensorFlow models](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/docs_src/performance/datasets_performance.md). 
 The `Dataset` API is much more performant than using `feed_dict` or the queue-based pipelines, and it's [cleaner and easier](https://developers.googleblog.com/2017/09/introducing-tensorflow-datasets.html) to use.
 
-In this simple example, our datasets are too small for the use of the Datasets API to make a large difference, but with larger datasets it becomes much more important.
+In this simple example, our datasets are too small for the use of the Dataset API to make a large difference, but with larger datasets it becomes much more important.
 
 The `input_fn` definition is the following. It uses a couple of helper functions that are defined in the accompanying [notebook](https://nbviewer.jupyter.org/github/amygdala/code-snippets/blob/master/ml/census_train_and_eval/using_tf.estimator.train_and_evaluate.ipynb#Define-input-functions-(using-Datasets)).    
-
 `parse_label_column` is used to convert the label strings (in our case, ' <=50K' and ' >50K') into [one-hot](https://en.wikipedia.org/wiki/One-hot) encodings.
 
 
@@ -132,7 +131,7 @@ eval_input = lambda: input_fn(
 
 ## Step 3: Define training and eval specs
 
-Now we're nearly set.  We just need to define the the `TrainSpec` and `EvalSpec` used by `tf.estimator.train_and_evaluate`. These specify not only the input functions, but how to export our trained model.
+Now we're nearly set.  We just need to define the the `TrainSpec` and `EvalSpec` used by `tf.estimator.train_and_evaluate`. These specify not only the input functions, but how to export our trained model; that is, how to save it in the standard [SavedModel](https://www.tensorflow.org/programmers_guide/saved_model) format, so that we can later use it for serving.
 
 First, we'll define the [`TrainSpec`](https://www.tensorflow.org/api_docs/python/tf/estimator/TrainSpec), which takes as an arg `train_input`:
 
@@ -143,10 +142,11 @@ train_spec = tf.estimator.TrainSpec(train_input,
                                   )
 ```
 
-For our [`EvalSpec`](https://www.tensorflow.org/api_docs/python/tf/estimator/EvalSpec), we'll instantiate it with something additional -- a list of exporters, that specify how to export a trained model so that it can be used for serving.
+For our [`EvalSpec`](https://www.tensorflow.org/api_docs/python/tf/estimator/EvalSpec), we’ll instantiate it with something additional – a list of _exporters_, that specify how to export (save) the trained model so that it can be used for serving with respect to a particular data input format. Here we’ll just define one such exporter.
 
 To specify our exporter, we must first define a
-[*serving input function*](https://www.tensorflow.org/programmers_guide/saved_model#preparing_serving_inputs).  
+[*serving input function*](https://www.tensorflow.org/programmers_guide/saved_model#preparing_serving_inputs).
+This is what determines the input format that the exporter will accept.
 As we saw above, during training, an `input_fn()` ingests data and prepares it for use by the model.  
 At serving time, similarly, a `serving_input_receiver_fn()` accepts inference requests and prepares them for the model. This function has the following purposes:
 
@@ -159,7 +159,7 @@ A `ServingInputReceiver` is instantiated with two arguments — `features`, and 
 
 These two arguments will not necessarily always be the same — in some cases we may want to perform some transformation(s) before feeding the data to the model. [Here's](https://github.com/GoogleCloudPlatform/cloudml-samples/blob/master/census/estimator/trainer/model.py#L197) one example of that, where the inputs to the server (csv-formatted rows) include a field to be removed.
 
-However, in our case, the inputs to the server are the same as the features input to the model. Here's what our serving input function looks like.
+However, in our case, the inputs to the server are the same as the features input to the model. Here's what our serving input function looks like:
 
 
 ```python
@@ -172,7 +172,7 @@ def json_serving_input_fn():
   return tf.estimator.export.ServingInputReceiver(inputs, inputs)
 ```
 
-Then, we define an [Exporter](https://www.tensorflow.org/api_docs/python/tf/estimator/Exporter) in terms of that serving input function, and pass the `EvalSpec` constructor a list of exporters. 
+Then, we define an [Exporter](https://www.tensorflow.org/api_docs/python/tf/estimator/Exporter) in terms of that serving input function. It will export the model in SavedModel format. We pass the `EvalSpec` constructor a list of exporters (here, just one).
 
 Here, we're using
 the [`FinalExporter`](https://www.tensorflow.org/api_docs/python/tf/estimator/FinalExporter).  This class performs a single export at the end of training. This is in contrast to
@@ -192,7 +192,7 @@ eval_spec = tf.estimator.EvalSpec(eval_input,
 ## Step 4: Train your model using `train_and_evaluate`
 
 
-Now, we have defined everything we need to train and evaluate our model, and export the trained model for serving, via a call to **`train_and_evaluate`**:
+Now we have defined everything we need to train and evaluate our model, and export the trained model for serving, via a call to **`train_and_evaluate`**:
 
 
 ```python
@@ -203,7 +203,7 @@ This call will train your model and export the result in a format that makes it 
 
 Using `train_and_evaluate`, the training behavior will be consistent whether you run this function in a local/non-distributed context or in a distributed configuration.
 
-The exported trained model can be served on many platforms. You may particularly want to consider ways to scalably serve your model, in order to handle many prediction requests at once— say if you're using your model in an app you're building, and you expect it to become popular.  [Cloud ML Engine online prediction](https://cloud.google.com/ml-engine/docs/prediction-overview), or [TensorFlow serving](https://www.tensorflow.org/serving/)) are two of the options for doing this.
+The exported trained model can be served on many platforms. You may particularly want to consider ways to scalably serve your model, in order to handle many prediction requests at once— say if you're using your model in an app you're building, and you expect it to become popular.  [Cloud ML Engine online prediction](https://cloud.google.com/ml-engine/docs/prediction-overview), or [TensorFlow serving](https://www.tensorflow.org/serving/)), are two of the options for doing this.
 
 In this example, we'll look at using **CMLE Online Prediction**. But first, let's take a closer look at our exported model.
 
@@ -292,7 +292,7 @@ A nice thing about CMLE is that there’s no lock-in. You could potentially trai
 
 To launch a training job on CMLE, we can again use `gcloud`.  We'll need to package our code so that it can be deployed, and specify the Python file to run to start the training (`--module-name`). 
 
-The `trainer` module is [here](trainer).
+The `trainer` module code is [here](trainer).
 `trainer.task` is the entry point, and when that file is run, it calls `tf.estimator.train_and_evaluate`.  
 (You can read more about how to package your code [here](https://cloud.google.com/ml-engine/docs/packaging-trainer)).  
 
@@ -328,7 +328,7 @@ That exported model has exactly the same signature as the locally-generated mode
 
 ### Scalably serve your trained model with CMLE Online Prediction
 
-You can deploy an exported model to Cloud ML Engine and scalably serve it for **prediction**, using the [CMLE Prediction service](https://cloud.google.com/ml-engine/docs/prediction-overview) to generate a prediction on new data with an easy-to-use REST API. Here we'll look at CMLE Online Prediction, which [just moved to general availability (GA) status](https://cloud.google.com/blog/big-data/2017/12/bringing-cloud-ml-engine-to-more-developers-with-online-prediction-features-and-reduced-prices); but [batch prediction](https://cloud.google.com/ml-engine/docs/batch-predict) is supported as well.
+You can deploy an exported model to Cloud ML Engine and scalably serve it for **prediction**, using the [CMLE Prediction service](https://cloud.google.com/ml-engine/docs/prediction-overview) to generate a prediction on new data with an easy-to-use REST API. Here we'll look at CMLE Online Prediction, which [recently moved to general availability (GA) status](https://cloud.google.com/blog/big-data/2017/12/bringing-cloud-ml-engine-to-more-developers-with-online-prediction-features-and-reduced-prices); but [batch prediction](https://cloud.google.com/ml-engine/docs/batch-predict) is supported as well.
 
 The online prediction service scales the number of nodes it uses to maximize the number of requests it can handle without introducing too much latency. To do that, the service:
 
@@ -338,7 +338,7 @@ The online prediction service scales the number of nodes it uses to maximize the
 
 See the accompanying [notebook](using_tf.estimator.train_and_evaluate.ipynb) for details on how to deploy your model so that you can use it to make predictions.
 
-Once your model is serving with CMLE Online Prediction, you can access it via a REST API.  It's [easy](https://cloud.google.com/ml-engine/docs/online-predict#requesting_predictions) to do this programmatically via the Google Cloud Client libraries or, via `gcloud`.    
+Once your model is serving with CMLE Online Prediction, you can access it via a REST API.  It's [easy](https://cloud.google.com/ml-engine/docs/online-predict#requesting_predictions) to do this programmatically via the [Google Cloud Client libraries](https://cloud.google.com/apis/docs/cloud-client-libraries) or via `gcloud`.    
 `gcloud` is great for testing your deployed model, and the command looks almost the same as it did for the local version of the model:
 
 ```sh
@@ -353,9 +353,10 @@ You can list your model information using `gcloud` too.
 
 ## Summary -- and what's next?
 
-In this example, we've walked through how to configure and use `tf.estimator.train_and_evaluate`.  It enables distributed execution for training and evaluation, while also supporting local execution, and provides consistent behavior for across both local/non-distributed and distributed configurations.
+In this example, we've walked through how to configure and use the TensorFlow `Estimator` class, and
+`tf.estimator.train_and_evaluate`.  They enable distributed execution for training and evaluation, while also supporting local execution, and provides consistent behavior across both local/non-distributed and distributed configurations.
 
-For more, see the accompanying [notebook](using_tf.estimator.train_and_evaluate.ipynb) for information about how to run your training job on a CMLE GPU cluster, and how to use CMLE to do [hyperparameter tuning](https://cloud.google.com/ml-engine/docs/hyperparameter-tuning-overview).
+For more, see the accompanying [notebook](using_tf.estimator.train_and_evaluate.ipynb).  The notebook includes examples of how to run your training job on a CMLE GPU cluster, and how to use CMLE to do [hyperparameter tuning](https://cloud.google.com/ml-engine/docs/hyperparameter-tuning-overview).
 
 
 
