@@ -1,5 +1,5 @@
 
-# Easy distributed training with TensorFlow using `tf.estimator.train_and_evaluate`
+# Easy distributed training with TensorFlow using `tf.estimator.train_and_evaluate` and Cloud ML Engine
 
 ## Introduction
 
@@ -318,7 +318,7 @@ For example, we could alternately configure our job to [use a GPU cluster](https
 Once your training job is running, you can stream its logs to your terminal, and/or monitor it in the [Cloud Console](https://console.cloud.google.com/mlengine/jobs).
 
 
-<a href="https://amy-jo.storage.googleapis.com/images/census_train_eval/ml_jobs.png" target="_blank"><img src="https://amy-jo.storage.googleapis.com/images/census_train_eval/ml_jobs.png" width=500/></a>
+<a href="https://amy-jo.storage.googleapis.com/images/census_train_eval/ml_jobs.png" target="_blank"><img src="https://amy-jo.storage.googleapis.com/images/census_train_eval/ml_jobs.png" width="500"/></a>
 
 
 In the logs, you'll see output from the multiple worker replicas and parameter servers that we utilized by specifying a `SCALE_TIER_STANDARD_1 ` cluster.  In the logs viewers, you can filter on the output of a particular node (e.g. a given worker) if you like.
@@ -348,7 +348,7 @@ gcloud ml-engine predict --model census --version v1 --json-instances test.json
 The Cloud Console makes it easy to inspect the different versions of a model, as well as set the default version: [console.cloud.google.com/mlengine/models](https://console.cloud.google.com/mlengine/models).
 You can list your model information using `gcloud` too.
 
-<a href="https://amy-jo.storage.googleapis.com/images/census_train_eval/ml_model_details.png" target="_blank"><img src="https://amy-jo.storage.googleapis.com/images/census_train_eval/ml_model_details.png" width=500/></a>
+<a href="https://amy-jo.storage.googleapis.com/images/census_train_eval/ml_model_details.png" target="_blank"><img src="https://amy-jo.storage.googleapis.com/images/census_train_eval/ml_model_details.png" width="500"/></a>
 
 
 ## Summary -- and what's next?
