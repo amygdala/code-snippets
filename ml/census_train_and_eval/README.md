@@ -31,13 +31,11 @@ To see the specifics and work through the code yourself, visit the [Jupyter](htt
 (The example in the [notebook](using_tf.estimator.train_and_evaluate.ipynb) is a slightly modified version of [this other example](https://github.com/GoogleCloudPlatform/cloudml-samples/tree/master/census/estimator/trainer)).
 
 
-## Step 1: create an Estimator
+## Step 1: Create an Estimator
 
-We'll first create an [`Estimator`](https://www.tensorflow.org/get_started/estimator) model using a prebuilt Estimator subclass, [`DNNLinearCombinedClassifier`](https://www.tensorflow.org/api_docs/python/tf/estimator/DNNLinearCombinedClassifier). Pre-made Estimators are an effective way to quickly create standard models— in this case
-a ["wide and deep"](https://research.googleblog.com/2016/06/wide-deep-learning-better-together-with.html) model.
-Wide and deep models use a deep neural net (DNN) to learn high level abstractions about complex features or interactions between such features. These models then combine the outputs from the DNN with a [linear regression](https://en.wikipedia.org/wiki/Linear_regression) performed on simpler features. This provides a balance between power and speed that is effective on many structured data problems.
+The TensorFlow [Estimator](https://www.tensorflow.org/api_docs/python/tf/estimator/Estimator) class wraps a model, and provides built-in support for distributed training and evaluation. You should nearly always use Estimators to create your TensorFlow models. ‘Pre-made’ Estimator subclasses are an effective way to quickly create standard models, and you can build a [Custom Estimator](https://www.tensorflow.org/extend/estimators) if none of the pre-made Estimators suit your purpose.
 
-We're using Estimators because they give us built-in support for distributed training and evaluation. You should nearly always use Estimators to create your TensorFlow models. You can build a [Custom Estimator](https://www.tensorflow.org/extend/estimators) if none of the pre-made Estimators suit your purpose.
+For this example, we’ll create an [Estimator](https://www.tensorflow.org/get_started/estimator) object using a pre-made subclass, [`DNNLinearCombinedClassifier`](https://www.tensorflow.org/api_docs/python/tf/estimator/DNNLinearCombinedClassifier), which implements a ["wide and deep"](https://research.googleblog.com/2016/06/wide-deep-learning-better-together-with.html) model. Wide and deep models use a deep neural net (DNN) to learn high level abstractions about complex features or interactions between such features. These models then combine the outputs from the DNN with a [linear regression](https://en.wikipedia.org/wiki/Linear_regression) performed on simpler features. This provides a balance between power and speed that is effective on many structured data problems.
 
 See the accompanying [notebook](https://nbviewer.jupyter.org/github/amygdala/code-snippets/blob/master/ml/census_train_and_eval/using_tf.estimator.train_and_evaluate.ipynb#First-step:-create-an-Estimator) for the details of defining our Estimator, including specification of the expected format of the input data.
 The data is in csv format, and looks like this:
