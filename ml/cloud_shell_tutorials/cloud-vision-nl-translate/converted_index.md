@@ -22,15 +22,15 @@ Since we'll be using curl to send a request to the Vision API, we'll need to gen
 
 APIs & services > Credentials:
 
-![7f3779282bb1a7d6.png](img/7f3779282bb1a7d6.png)
+![apis_and_services](https://storage.googleapis.com/aju-dev-demos-codelabs/apis_and_services.png)
 
 Then click __Create credentials__:
 
-![168581e4ae32f076.png](img/168581e4ae32f076.png)
+![create_credentials1](https://storage.googleapis.com/aju-dev-demos-codelabs/create_credentials1.png)
 
 In the drop down menu, select __API key__:
 
-![bc4940935c1bef7f.png](img/bc4940935c1bef7f.png)
+![create_credentials2](https://storage.googleapis.com/aju-dev-demos-codelabs/create_credentials2.png)
 
 Next, copy the key you just generated. Click __Close__.
 
@@ -45,7 +45,11 @@ Next, you'll send a request to the Cloud Vision API.
 ## Create your Vision API request
 
 We've uploaded a picture of a French sign to this Google Cloud Storage 
-URL, and made it public: `gs://aju-dev-demos-codelabs/french_sign.png`.
+URL, and made it public here: `gs://aju-dev-demos-codelabs/french_sign.png`. 
+The sign looks like this:
+
+![french_sign](https://storage.googleapis.com/aju-dev-demos-codelabs/french_sign.png)
+
 
 You'll use that URL to form a JSON request to analyze the photo. In particular, you're going to use
 the  [TEXT_DETECTION](https://cloud.google.com/vision/docs/ocr) feature of the Vision API. This will run optical character recognition (OCR) on the image to extract text. 
@@ -386,8 +390,6 @@ You've learned how to combine 3 different machine learning APIs: the Vision API'
 * Creating a Vision API OCR request and calling the API with curl
 * Translating text with the Translation API
 * Extract entities from text with the Natural Language API
-
-![38616f8aa634e047.png](img/38616f8aa634e047.png)
 
 
 #### Some next steps
