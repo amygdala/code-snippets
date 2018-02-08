@@ -55,14 +55,14 @@ cd ~/code-snippets/ml/cloud_shell_tutorials/cloud-vision-nl-translate
 You'll remain in this directory for the rest of the tutorial.
 
 We've uploaded a picture of a French sign to this Google Cloud Storage 
-URL, and made it public here: `gs://aju-dev-demos-codelabs/french_sign.png`. 
+URL, and made it public: `gs://aju-dev-demos-codelabs/french_sign.png`.
 The sign looks like this:
 
 ![french_sign](https://storage.googleapis.com/aju-dev-demos-codelabs/french_sign.png)
 
 
 You'll use that URL to form a JSON request to analyze the photo. In particular, you're going to use
-the  [TEXT_DETECTION](https://cloud.google.com/vision/docs/ocr) feature of the Vision API. This will run optical character recognition (OCR) on the image to extract text. 
+the  [`TEXT_DETECTION`](https://cloud.google.com/vision/docs/ocr) feature of the Vision API. This will run optical character recognition (OCR) on the image to extract text.
 
 Bring up the `ocr-request.json` file
 `walkthrough editor-open-file "code-snippets/ml/cloud_shell_tutorials/cloud-vision-nl-translate/ocr-request.json" "in the text editor"`.
@@ -90,9 +90,7 @@ It contains the following request:
 }
 ```
 
-[** TODO: say more about the file... OCR...**]
-
-Next, you'll call the Vision API using the JSON request file.
+Next, you'll call the Vision API using this JSON request file.
 
 ## Call the Vision API's text detection method
 
@@ -212,7 +210,7 @@ It should look like this:
 `q` is where you'll pass the string to translate. 
 
 
-Run the following command in Cloud Shell to extract the image text from the previous step and copy it into a new `translation-request.json`, all in one command:
+Run the following command in Cloud Shell to extract the image text from the previous step and update `translation-request.json`, in one command:
 
 ```bash
 STR=$(jq .responses[0].textAnnotations[0].description ocr-response.json) && STR="${STR//\"}" && sed -i "s|your_text_here|$STR|g" translation-request.json
@@ -232,7 +230,7 @@ cat translation-response.json
 
 Awesome, you can understand what the sign said!  The result should look like this:
 
-```bash
+```json
 {
   "data": {
     "translations": [
@@ -273,13 +271,13 @@ It should look like this:
 
 In the request, you're telling the Natural Language API about the text you're sending:
 
-__type:__ Supported type values are `PLAIN_TEXT` or `HTML`. 
+__`type`:__ Supported type values are `PLAIN_TEXT` or `HTML`.
 
-__content:__ pass the text to send to the Natural Language API for analysis. The Natural Language API also supports sending files stored in Cloud Storage for text processing. To send a file from Cloud Storage, you would replace `content` with `gcsContentUri` and use the value of the text file's uri in Cloud Storage. 
+__`content`:__ pass the text to send to the Natural Language API for analysis. The Natural Language API also supports sending files stored in Cloud Storage for text processing. To send a file from Cloud Storage, you would replace `content` with `gcsContentUri` and use the value of the text file's uri in Cloud Storage.
 
-__encodingType:__ tells the API which type of text encoding to use when processing the text. The API will use this to calculate where specific entities appear in the text.
+__`encodingType`:__ tells the API which type of text encoding to use when processing the text. The API will use this to calculate where specific entities appear in the text.
 
-Run the following bash command in Cloud Shell to copy the translated text into the content block of the Natural Language API request:
+Run the following bash command in Cloud Shell to copy the translated text into the content block of the `nl-request.json` Natural Language API request:
 
 ```bash
 STR=$(jq .data.translations[0].translatedText  translation-response.json) && STR="${STR//\"}" && sed -i "s|your_text_here|$STR|g" nl-request.json
