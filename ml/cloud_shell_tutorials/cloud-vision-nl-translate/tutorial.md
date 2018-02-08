@@ -12,7 +12,9 @@ What you'll learn:
 * Using the Translation API to translate text from your image
 * Using the Natural Language API to analyze the text
 
-**Time to complete**: About XX minutes
+![Some of the ML APIs](https://storage.googleapis.com/aju-dev-demos-codelabs/tutorial_mlapi_initial_image_sm.png)
+
+**Time to complete**: About 30 minutes
 
 Click the **Continue** button to move to the next step.
 
@@ -20,7 +22,7 @@ Click the **Continue** button to move to the next step.
 
 Since we'll be using curl to send a request to the Vision API, we'll need to generate an API key to pass in our request URL. To create an API key, navigate to:
 
-APIs & services > Credentials:
+**APIs & services > Credentials**:
 
 ![apis_and_services](https://storage.googleapis.com/aju-dev-demos-codelabs/apis_and_services.png)
 
@@ -28,7 +30,7 @@ Then click __Create credentials__:
 
 ![create_credentials1](https://storage.googleapis.com/aju-dev-demos-codelabs/create_credentials1.png)
 
-In the drop down menu, select __API key__:
+In the drop-down menu, select __API key__:
 
 ![create_credentials2](https://storage.googleapis.com/aju-dev-demos-codelabs/create_credentials2.png)
 
