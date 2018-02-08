@@ -46,6 +46,14 @@ Next, you'll send a request to the Cloud Vision API.
 
 ## Create your Vision API request
 
+First, change to this directory in the cloud shell:
+
+```bash
+cd ~/code-snippets/ml/cloud_shell_tutorials/cloud-vision-nl-translate
+```
+
+You'll remain in this directory for the rest of the tutorial.
+
 We've uploaded a picture of a French sign to this Google Cloud Storage 
 URL, and made it public here: `gs://aju-dev-demos-codelabs/french_sign.png`. 
 The sign looks like this:
