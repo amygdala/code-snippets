@@ -193,7 +193,7 @@ Next, we'll send the extracted text to the Translation API.
 ## Sending the extracted text from the image to the Translation API
 
 
-The  [Translation API](https://cloud.google.com/translate/docs/reference/translate) can translate text into 100+ languages. It can also detect the language of the input text. To translate the French text into English, all you need to do is pass the text and the language code for the target language (en-US) to the Translation API. 
+The [Translation API](https://cloud.google.com/translate/docs/reference/translate) can translate text into 100+ languages. It can also detect the language of the input text. To translate the French text into English, all you need to do is pass the text and the language code for the target language (en-US) to the Translation API.
 
 Bring up the `translation-request.json` file
 `walkthrough editor-open-file "code-snippets/ml/cloud_shell_tutorials/cloud-vision-nl-translate/translation-request.json" "in the text editor"`.
@@ -259,7 +259,7 @@ Bring up the `nl-request.json` file
 
 It should look like this:
 
-```
+```javascript
 {
   "document":{
     "type":"PLAIN_TEXT",
