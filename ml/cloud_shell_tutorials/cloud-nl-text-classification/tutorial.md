@@ -1,12 +1,6 @@
 # Classify Text into Categories with the Natural Language API
 
-
-
-
 ## Overview
-
-*Duration is 1 min*
-
 
 The Cloud Natural Language API lets you extract entities from text, perform sentiment and syntactic analysis, and classify text into categories. In this lab, we'll focus on text classification. Using a database of 700+ categories, this API feature makes it easy to classify a large dataset of text.
 
@@ -16,7 +10,7 @@ What you'll learn:
 * Use the NL API's text classification feature
 * Use text classification to understand a dataset of news articles
 
-[** TODO -- add logo **]
+![Natural Language API logo](https://storage.googleapis.com/aju-dev-demos-codelabs/NaturalLanguage_Retina_sm.png)
 
 **Time to complete**: About 30 minutes
 
@@ -124,11 +118,11 @@ Classifying a single article is cool, but to really see the power of this featur
 ## Classifying a large text dataset
 
 
-To see how the classifyText method can help us understand a dataset with lots of text, we'll use this  [public dataset](http://mlg.ucd.ie/datasets/bbc.html) of BBC news articles. The dataset consists of 2,225 articles in five topic areas (business, entertainment, politics, sport, tech) from 2004 - 2005. We've put a subset of these articles into a public Google Cloud Storage bucket. Each of the articles is in a .txt file. 
+To see how the `classifyText` method can help us understand a dataset with lots of text, we'll use this  [public dataset](http://mlg.ucd.ie/datasets/bbc.html) of BBC news articles. The dataset consists of 2,225 articles in five topic areas (business, entertainment, politics, sport, tech) from 2004 - 2005. We've put a subset of these articles into a public [Google Cloud Storage](https://cloud.google.com/storage/) (GCS) bucket. Each of the articles is in a `.txt` file. 
 
-To examine the data and send it to the NL API, we'll write a Python script to read each text file from Cloud Storage, send it to the classifyText endpoint, and store the results in a BigQuery table. BigQuery is Google Cloud's big data warehouse tool - it lets us easily store and analyze large datasets. 
+To examine the data and send it to the NL API, we'll write a Python script to read each text file from GCS, send it to the `classifyText` endpoint, and store the results in a [BigQuery](https://cloud.google.com/bigquery/) table. BigQuery is Google Cloud's big data warehouse tool - it lets us easily store and analyze large datasets. 
 
-To see the type of text we'll be working with, run the following command to view one article (`gsutil` provides a command line interface for Cloud Storage):
+To see the type of text we'll be working with, run the following command to view one article (`gsutil` provides a command line interface for GCS):
 
 ```bash
 gsutil cat gs://text-classification-codelab/bbc_dataset/entertainment/001.txt
@@ -148,7 +142,7 @@ Then click on the dropdown arrow next to your project name and select __Create n
 
 ![Create a new BigQuery dataset](https://storage.googleapis.com/aju-dev-demos-codelabs/bigquery2.png)
 
-Name your dataset `news_classification_dataset`. You can leave the defaults in the **Data location** and **Data expiration** fields:
+Name your dataset `news_classification`. You can leave the defaults in the **Data location** and **Data expiration** fields:
 
 ![Name your new dataset](https://storage.googleapis.com/aju-dev-demos-codelabs/bigquery3.png)
 
@@ -181,7 +175,7 @@ gcloud iam service-accounts keys create key.json --iam-account=my-account@$PROJE
 export GOOGLE_APPLICATION_CREDENTIALS=key.json
 ```
 
-Now we're ready to send the text data to the NL API. To do that we'll use a Python script using the Python module for Google Cloud (note that you could accomplish the same thing from any language; there are many different cloud  [client libraries](https://cloud.google.com/apis/docs/cloud-client-libraries)). 
+Now we're ready to send the text data to the NL API. To do that we'll use a Python script using the Python module for Google Cloud (note that you could accomplish the same thing from many other languages; there are many different cloud  [client libraries](https://cloud.google.com/apis/docs/cloud-client-libraries)). 
 
 Bring up the `classify-text.py` file
 `walkthrough editor-open-file "code-snippets/ml/cloud_shell_tutorials/cloud-nl-text-classification/classify-text.py" "in the text editor"`, and in the code, **replace `YOUR_PROJECT`** with the name of your project.
@@ -245,22 +239,24 @@ We're using the `google-cloud` [Python client library](https://googlecloudplatfo
 
 When your script has finished running, it's time to verify that the article data was saved to BigQuery. Navigate to your `article_data` table in the BigQuery web UI and click __Query Table__:
 
-![a714f89910006713.png](img/a714f89910006713.png)
+![Query your new BigQuery table](https://storage.googleapis.com/aju-dev-demos-codelabs/bigquery6.png)
 
-Enter the following query in the **Compose Query** box, **replacing `YOUR_PROJECT`** with your project name:
+Enter the following query in the **Compose Query** box, **first replacing `YOUR_PROJECT`** with your project name:
 
 ```sql
 #standardSQL
 SELECT * FROM `YOUR_PROJECT.news_classification.article_data`
 ```
 
-You should see your data when the query completes. The `category` column has the name of the first category the NL API returned for our article, and `confidence` is a value between 0 and 1 indicating how confident the API is that it categorized the article correctly. We'll learn how to perform more complex queries on the data in the next step.
+You should see your data when the query completes. The `category` column has the name of the first category the NL API returned for our article, and `confidence` is a value between 0 and 1 indicating how confident the API is that it categorized the article correctly. 
+
+We'll learn how to perform more complex queries on the data in the next step.
 
 
 ## Analyzing categorized news data in BigQuery
 
 
-First, let's see which categories were most common in our dataset. Enter the following query, replacing `YOUR_PROJECT` and `YOUR_DATASET` with your project and dataset names:
+First, let's see which categories were most common in our dataset. Enter the following query in the **Compose Query** box, **replacing `YOUR_PROJECT`** with your project name:
 
 ```sql
 #standardSQL
@@ -279,22 +275,22 @@ You should see something like this in the query results:
 
 ![Query results](https://storage.googleapis.com/aju-dev-demos-codelabs/query_results.png)
 
-Let's say we wanted to find the article returned for a more obscure category like **/Arts & Entertainment/Music & Audio/Classical Music**. We could write the following query:
+Let's say we wanted to find the article returned for a more obscure category like **/Arts & Entertainment/Music & Audio/Classical Music**. We could write the following query (again, replace `YOUR_PROJECT` first):
 
 ```sql
 #standardSQL
-SELECT * FROM `YOUR_PROJECT.YOUR_DATASET.article_data`
+SELECT * FROM `YOUR_PROJECT.news_classification.article_data`
 WHERE category = "/Arts & Entertainment/Music & Audio/Classical Music"
 ```
 
-Or, we could get only the articles where the NL API returned a confidence score greater than 90%:
+Or, we could get only the articles where the NL API returned a confidence score greater than 90% (again, replace `YOUR_PROJECT` first):
 
 ```sql
 #standardSQL
 SELECT 
   article_text, 
   category 
-FROM `YOUR_PROJECT.YOUR_DATASET.article_data` 
+FROM `YOUR_PROJECT.news_classification.article_data` 
 WHERE cast(confidence as float64) > 0.9
 ```
 
