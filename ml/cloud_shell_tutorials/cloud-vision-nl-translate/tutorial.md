@@ -20,7 +20,11 @@ Click the **Continue** button to move to the next step.
 
 ## Create an API Key
 
-Since we'll be using curl to send a request to the Vision API, we'll need to generate an API key to pass in our request URL. To create an API key, navigate to:
+Since we'll be using curl to send a request to the Vision API, we'll need to generate an API key to pass in our request URL.
+
+> **Note**: If you've already created an API key in this project during one of the other Cloud Shell tutorials, you can just use the existing key⸺you don't need to create another one.
+
+To create an API key, navigate to:
 
 **APIs & services > Credentials**:
 
@@ -41,6 +45,12 @@ Now that you have an API key, save it to an environment variable to avoid having
 ```bash
 export API_KEY=<YOUR_API_KEY>
 ```
+
+Next, you'll enable the Vision, Translate, and Natural Language APIs for your project, if you've not already done so.
+
+## Enable the Vision, Translate, and Natural Language APIs
+
+[** TODO: what's the best approach? **]
 
 Next, you'll send a request to the Cloud Vision API.
 
@@ -179,7 +189,7 @@ The first part of your response should look like the following:
 
 The OCR method is able to extract lots of text from our image, cool! Let's break down the response. The first piece of data you get back from `textAnnotations` is the entire block of text the API found in the image. This includes the language code (in this case fr for French), a string of the text, and a bounding box indicating where the text was found in our image. Then you get an object for each word found in the text with a bounding box for that specific word.
 
-**Note**: The Vision API also has a `DOCUMENT_TEXT_DETECTION` feature optimized for images with more text. This response includes additional information and breaks text down into page, blocks, paragraphs, and words.
+> **Note**: The Vision API also has a `DOCUMENT_TEXT_DETECTION` feature optimized for images with more text. This response includes additional information and breaks text down into page, blocks, paragraphs, and words.
 
 Unless you speak French you probably don't know what this says. The next step is translation. 
 
@@ -396,9 +406,9 @@ Looking at this image it's relatively easy for us to pick out the important enti
 
 `walkthrough conclusion-trophy`
 
-You've learned how to combine 3 different machine learning APIs: the Vision API's OCR method extracted text from an image, then the Translation API translated that text to English and the Natural Language API to found entities in that text. 
+You've learned how to combine 3 different machine learning APIs: the Vision API's OCR method extracted text from an image, then the Translation API translated that text to English, and then the Natural Language API to found entities in that text.
 
-#### __What we've covered__
+#### What we've covered
 
 * Use cases for combining multiple machine learning APIs
 * Creating a Vision API OCR request and calling the API with curl
