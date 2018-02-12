@@ -19,9 +19,9 @@ Click the **Continue** button to move to the next step.
 
 ## Create an API Key
 
-Since we'll be using curl to send a request to the Vision API, we'll need to generate an API key to pass in our request URL. 
+Since we'll be using curl to send a request to the Natural Language API, we'll need to generate an API key to pass in our request URL.
 
-**Note**: If you've already created an API key in this project during one of the other Cloud Shell tutorials, you can just use the existing key⸺you don't need to create another one.
+> **Note**: If you've already created an API key in this project during one of the other Cloud Shell tutorials, you can just use the existing key⸺you don't need to create another one.
 
 To create an API key, navigate to:
 
@@ -113,7 +113,6 @@ Let's take a look at the response:
 The API returned 2 categories for this text: **/Food & Drink/Cooking & Recipes** and **/Food & Drink/Food/Meat & Seafood**. The text doesn't explicitly mention that this is a recipe or even that it includes seafood, but the API is able to categorize it for us!
 
 Classifying a single article is cool, but to really see the power of this feature we should classify lots of text data. We'll do that next.
-
 
 ## Classifying a large text dataset
 
