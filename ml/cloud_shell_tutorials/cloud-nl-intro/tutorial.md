@@ -66,9 +66,9 @@ Next, you'll use the Natural Language API to analyze *entities* in text.
 
 
 The first Natural Language API method we'll use is `analyzeEntities`. With this method, the API can extract entities
-(like people, places, and events) from text. To try out the API's entity analysis, we'll use the following sentence: 
+(like people, places, and events) from text. To try out the API's entity analysis, we'll use the following sentence:
 
-> *Joanne Rowling, who writes under the pen names J. K. Rowling and Robert Galbraith, is a British novelist and screenwriter who wrote the Harry Potter fantasy series.* 
+> *Joanne Rowling, who writes under the pen names J. K. Rowling and Robert Galbraith, is a British novelist and screenwriter who wrote the Harry Potter fantasy series.*
 
 Bring up the `request.json` file
 `walkthrough editor-open-file "code-snippets/ml/cloud_shell_tutorials/cloud-nl-intro/request.json" "in the text editor"`.
@@ -158,7 +158,7 @@ Next, we'll use the Natural Language API to perform sentiment analysis.
 
 ## Sentiment analysis with the Natural Language API
 
-In addition to extracting entities, the Natural Language API also lets you perform sentiment analysis on a block of text. This JSON request will include the same parameters as the request above, but this time change the text to include something with a stronger sentiment. 
+In addition to extracting entities, the Natural Language API also lets you perform sentiment analysis on a block of text. This JSON request will include the same parameters as the request above, but this time change the text to include something with a stronger sentiment.
 
 Bring up the `request2.json` file
 `walkthrough editor-open-file "code-snippets/ml/cloud_shell_tutorials/cloud-nl-intro/request2.json" "in the text editor"`.
@@ -216,10 +216,10 @@ Your response should look like this:
 }
 ```
 
-Notice that you get two types of sentiment values: sentiment for the document as a whole, and sentiment broken down by sentence. The sentiment method returns two values: 
+Notice that you get two types of sentiment values: sentiment for the document as a whole, and sentiment broken down by sentence. The sentiment method returns two values:
 
 * `score` - a number from -1.0 to 1.0 indicating how positive or negative the statement is.
-* `magnitude` - a number ranging from 0 to infinity that represents the weight of sentiment expressed in the statement, regardless of being positive or negative. 
+* `magnitude` - a number ranging from 0 to infinity that represents the weight of sentiment expressed in the statement, regardless of being positive or negative.
 
 Longer blocks of text with heavily weighted statements have higher magnitude values. The score for the first sentence is positive (0.7), whereas the score for the second sentence is neutral (0.1).
 
@@ -314,16 +314,19 @@ In the response, you get back two entity objects: one for "sushi" and one for "s
 
 You can see that the score returned for "sushi" was 0.9, whereas "service" got a score of -0.9. Cool! You also may notice that there are two sentiment objects returned for each entity. If either of these terms were mentioned more than once, the API would return a different sentiment score and magnitude for each mention, along with an aggregate sentiment for the entity.
 
+The Natural Language API can also be used for analyzing syntax and parts of speech.  We'll do that next.
+
 ## Analyzing syntax and parts of speech
 
 Looking at the Natural Language API's third method - text annotation - you'll dive deeper into the the linguistic details of the text. `annotateText` is an advanced method that provides a full set of details on the semantic and syntactic elements of the text. For each word in the text, the API will tell us the word's part of speech (noun, verb, adjective, etc.) and how it relates to other words in the sentence (Is it the root verb? A modifier?).
 
-Try it out with a simple sentence. This JSON request will be similar to the ones above, with the addition of a features key. This will tell the API that we'd like to perform syntax annotation. 
+Try it out with a simple sentence. This JSON request will be similar to the ones above, with the addition of a features key. This will tell the API that we'd like to perform syntax annotation.
 
 Bring up the `request4.json` file
 `walkthrough editor-open-file "code-snippets/ml/cloud_shell_tutorials/cloud-nl-intro/request4.json" "in the text editor"`.
 
 It should look like this:
+
 ```json
 {
   "document":{
@@ -373,24 +376,29 @@ The response should return an object like the one below for each token in the se
 
 Let's break down the response:
 
-* `partOfSpeech` tells us that "Joanne" is a noun. 
+* `partOfSpeech` tells us that "Joanne" is a noun.
 * `dependencyEdge` includes data that you can use to create a  [dependency parse tree](https://en.wikipedia.org/wiki/Parse_tree#Dependency-based_parse_trees) of the text. Essentially, this is a diagram showing how words in a sentence relate to each other. A dependency parse tree for the sentence above would look like this:
 
 ![1fb62ed60618e914.png](img/1fb62ed60618e914.png)
 
 * `headTokenIndex` is the index of the token that has an arc pointing at "Joanne". We can think of each token in the sentence as a word in an array.
-* `headTokenIndex` of 1 for "Joanne" refers to the word "Rowling," which it is connected to in the tree. The label `NN` (short for noun compound modifier) describes the word's role in the sentence. "Joanne" modifies "Rowling," the subject of the sentence. 
+* `headTokenIndex` of 1 for "Joanne" refers to the word "Rowling," which it is connected to in the tree. The label `NN` (short for noun compound modifier) describes the word's role in the sentence. "Joanne" modifies "Rowling," the subject of the sentence.
 * `lemma` is the canonical form of the word. For example, the words  *run* ,  *runs* ,  *ran* , and  *running*  all have a lemma of  *run* . The lemma value is useful for tracking occurrences of a word in a large piece of text over time.
 
+The Natural Language API also supports languages other than English. Let's look at a Japanese example next.
 
 ## Multilingual natural language processing
 
+The Natural Language API also supports languages other than English (full list  [here](https://cloud.google.com/natural-language/docs/languages)).
 
 
+Bring up the `request5.json` file
+`walkthrough editor-open-file "code-snippets/ml/cloud_shell_tutorials/cloud-nl-intro/request5.json" "in the text editor"`.
 
-The Natural Language API also supports languages other than English (full list  [here](https://cloud.google.com/natural-language/docs/languages)). Modify the `request.json` with a sentence in Japanese: 
+It should look like this:
 
-```
+
+```json
 {
   "document":{
     "type":"PLAIN_TEXT",
@@ -399,71 +407,71 @@ The Natural Language API also supports languages other than English (full list  
 }
 ```
 
-__Save__ the file. Notice that you didn't tell the API which language the text is, it can automatically detect it! 
+Notice that you didn't need to tell the API which language the text is — it can automatically detect it!
 
-Next, you'll send it to the `analyzeEntities` endpoint:
+Next, you'll send this request to the `analyzeEntities` endpoint:
 
-```
+```bash
 curl "https://language.googleapis.com/v1/documents:analyzeEntities?key=${API_KEY}" \
-  -s -X POST -H "Content-Type: application/json" --data-binary @request.json
+  -s -X POST -H "Content-Type: application/json" --data-binary @request5.json
 ```
 
-And you get the following response:
+You should get the following response:
 
+```json
+{
+  "entities": [
     {
-      "entities": [
+      "name": "日本",
+      "type": "LOCATION",
+      "metadata": {
+        "mid": "/m/03_3d",
+        "wikipedia_url": "https://en.wikipedia.org/wiki/Japan"
+      },
+      "salience": 0.23854347,
+      "mentions": [
         {
-          "name": "日本",
-          "type": "LOCATION",
-          "metadata": {
-            "mid": "/m/03_3d",
-            "wikipedia_url": "https://en.wikipedia.org/wiki/Japan"
+          "text": {
+            "content": "日本",
+            "beginOffset": 0
           },
-          "salience": 0.23854347,
-          "mentions": [
-            {
-              "text": {
-                "content": "日本",
-                "beginOffset": 0
-              },
-              "type": "PROPER"
-            }
-          ]
-        },
-        {
-          "name": "グーグル",
-          "type": "ORGANIZATION",
-          "metadata": {
-            "mid": "/m/045c7b",
-            "wikipedia_url": "https://en.wikipedia.org/wiki/Google"
-          },
-          "salience": 0.21155767,
-          "mentions": [
-            {
-              "text": {
-                "content": "グーグル",
-                "beginOffset": 9
-              },
-              "type": "PROPER"
-            }
-          ]
-        },
-        ...
+          "type": "PROPER"
+        }
       ]
-      "language": "ja"
-    }
+    },
+    {
+      "name": "グーグル",
+      "type": "ORGANIZATION",
+      "metadata": {
+        "mid": "/m/045c7b",
+        "wikipedia_url": "https://en.wikipedia.org/wiki/Google"
+      },
+      "salience": 0.21155767,
+      "mentions": [
+        {
+          "text": {
+            "content": "グーグル",
+            "beginOffset": 9
+          },
+          "type": "PROPER"
+        }
+      ]
+    },
+    ...
+  ]
+  "language": "ja"
+}
+```
 
 The wikipedia URLs even point to the Japanese Wikipedia pages - so cool!
 
-
 ## Congratulations!
 
+`walkthrough conclusion-trophy`
 
+You've learned how to perform text analysis with the Cloud Natural Language API by extracting entities, analyzing sentiment, and doing syntax annotation.
 
-
-You've learned how to perform text analysis with the Cloud Natural Language API by extracting entities, analyzing sentiment, and doing syntax annotation. 
-
-#### __What we've covered__
+#### What we've covered
 
 * Creating a Natural Language API request and calling the API with curl
 * Extracting entities and running sentiment analysis on text with the Natural Language API
@@ -472,27 +480,19 @@ You've learned how to perform text analysis with the Cloud Natural Language API 
 
 ![38616f8aa634e047.png](img/38616f8aa634e047.png)
 
-#### Finish your quest
-
-This self-paced lab is part of the Qwiklabs Quest  [Machine Learning APIs](https://google.qwiklabs.com/quests/32). A Quest is a series of related labs that form a learning path. Completing this Quest earns you the badge above, to recognize your achievement. You can make your badge (or badges) public and link to them in your online resume or social media account.  [Enroll in this Quest](http://google.qwiklabs.com/learning_paths/24/enroll) and get immediate completion credit if you've taken this lab.  [See other available Qwiklabs Quests](http://google.qwiklabs.com/catalog).
-
-#### Take your next lab
-
-Try out another lab on Machine Learning APIs, like  [Cloud ML Engine: Qwik Start](https://google.qwiklabs.com/focuses/9364) or  [Detect Labels, Web, Faces, and Landmarks in Images with the Cloud Vision API](https://google.qwiklabs.com/focuses/6893).
-
-#### Next steps
+#### Some next steps
 
 * Sign up for the full  [Coursera Course on Machine Learning](https://www.coursera.org/learn/serverless-machine-learning-gcp/)
 * Check out the Natural Language API  [tutorials](https://cloud.google.com/natural-language/docs/tutorials) in the documentation.
 
-### Google Cloud Training & Certification
+---------------
+Copyright 2018 Google Inc. All Rights Reserved. Licensed under the Apache
+License, Version 2.0 (the "License"); you may not use this file except in
+compliance with the License. You may obtain a copy of the License at
+http://www.apache.org/licenses/LICENSE-2.0
 
-...helps you make the most of Google Cloud technologies.  [Our classes](https://cloud.google.com/training/courses) include technical skills and best practices to help you get up to speed quickly and continue your learning journey. We offer fundamental to advanced level training, with on-demand, live, and virtual options to suit your busy schedule.  [Certifications](https://cloud.google.com/certification/) help you validate and prove your skill and expertise in Google Cloud technologies.
-
-##### Manual Last Updated November 30, 2017
-
-##### Lab Last Tested November 30, 2017
-
-©2018 Google LLC All rights reserved. Google and the Google logo are trademarks of Google LLC. All other company and product names may be trademarks of the respective companies with which they are associated.
-
-
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
