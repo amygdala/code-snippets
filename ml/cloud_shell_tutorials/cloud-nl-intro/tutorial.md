@@ -1,15 +1,5 @@
 # Entity and Sentiment Analysis with the Natural Language API
 
-
-
-
-## GSP038
-
-
-
-
-![Rs8rJ9Ct1Xr7k8129HkD7h-HcMD5ttJX6NXaw70TwbqCbkh5S0Y1lr-AfND_9grwzgGxvMkmAjgziGRJ_qoqMKfwKG88fg7_IYXwxcQ-H6e_fkLTQ_ypbP4x-pMT9YzAuUb5clXc](https://lh3.googleusercontent.com/Rs8rJ9Ct1Xr7k8129HkD7h-HcMD5ttJX6NXaw70TwbqCbkh5S0Y1lr-AfND_9grwzgGxvMkmAjgziGRJ_qoqMKfwKG88fg7_IYXwxcQ-H6e_fkLTQ_ypbP4x-pMT9YzAuUb5clXc)
-
 ## Overview
 
 The Cloud Natural Language API lets you extract entities from text, perform sentiment and syntactic analysis, and classify text into categories.
@@ -21,6 +11,8 @@ What you'll learn:
 * Extracting entities and running sentiment analysis on text with the Natural Language API
 * Performing linguistic analysis on text with the Natural Language API
 * Creating a Natural Language API request in a different language
+
+![Natural Language API logo](https://storage.googleapis.com/aju-dev-demos-codelabs/images/NaturalLanguage_Retina_sm.png)
 
 **Time to complete**: About 30 minutes
 
@@ -36,15 +28,15 @@ To create an API key, navigate to:
 
 **APIs & services > Credentials**:
 
-![apis_and_services](https://storage.googleapis.com/aju-dev-demos-codelabs/apis_and_services.png)
+![apis_and_services](https://storage.googleapis.com/aju-dev-demos-codelabs/images/apis_and_services.png)
 
 Then click __Create credentials__:
 
-![create_credentials1](https://storage.googleapis.com/aju-dev-demos-codelabs/create_credentials1.png)
+![create_credentials1](https://storage.googleapis.com/aju-dev-demos-codelabs/images/create_credentials1.png)
 
 In the drop-down menu, select __API key__:
 
-![create_credentials2](https://storage.googleapis.com/aju-dev-demos-codelabs/create_credentials2.png)
+![create_credentials2](https://storage.googleapis.com/aju-dev-demos-codelabs/images/create_credentials2.png)
 
 Next, copy the key you just generated. Click __Close__.
 
@@ -379,7 +371,7 @@ Let's break down the response:
 * `partOfSpeech` tells us that "Joanne" is a noun.
 * `dependencyEdge` includes data that you can use to create a  [dependency parse tree](https://en.wikipedia.org/wiki/Parse_tree#Dependency-based_parse_trees) of the text. Essentially, this is a diagram showing how words in a sentence relate to each other. A dependency parse tree for the sentence above would look like this:
 
-![1fb62ed60618e914.png](img/1fb62ed60618e914.png)
+![parse tree](https://storage.googleapis.com/aju-dev-demos-codelabs/images/parse_tree.png)
 
 * `headTokenIndex` is the index of the token that has an arc pointing at "Joanne". We can think of each token in the sentence as a word in an array.
 * `headTokenIndex` of 1 for "Joanne" refers to the word "Rowling," which it is connected to in the tree. The label `NN` (short for noun compound modifier) describes the word's role in the sentence. "Joanne" modifies "Rowling," the subject of the sentence.
@@ -477,8 +469,6 @@ You've learned how to perform text analysis with the Cloud Natural Language API 
 * Extracting entities and running sentiment analysis on text with the Natural Language API
 * Performing linguistic analysis on text to create dependency parse trees
 * Creating a Natural Language API request in Japanese
-
-![38616f8aa634e047.png](img/38616f8aa634e047.png)
 
 #### Some next steps
 
