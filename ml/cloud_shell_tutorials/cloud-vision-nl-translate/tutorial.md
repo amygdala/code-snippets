@@ -12,7 +12,7 @@ What you'll learn:
 * Using the Translation API to translate text from your image
 * Using the Natural Language API to analyze the text
 
-![Some of the ML APIs](https://storage.googleapis.com/aju-dev-demos-codelabs/tutorial_mlapi_initial_image_sm.png)
+![Some of the ML APIs](https://storage.googleapis.com/aju-dev-demos-codelabs/images/tutorial_mlapi_initial_image_sm.png)
 
 **Time to complete**: About 30 minutes
 
@@ -28,15 +28,15 @@ To create an API key, navigate to:
 
 **APIs & services > Credentials**:
 
-![apis_and_services](https://storage.googleapis.com/aju-dev-demos-codelabs/apis_and_services.png)
+![apis_and_services](https://storage.googleapis.com/aju-dev-demos-codelabs/images/apis_and_services.png)
 
 Then click __Create credentials__:
 
-![create_credentials1](https://storage.googleapis.com/aju-dev-demos-codelabs/create_credentials1.png)
+![create_credentials1](https://storage.googleapis.com/aju-dev-demos-codelabs/images/create_credentials1.png)
 
 In the drop-down menu, select __API key__:
 
-![create_credentials2](https://storage.googleapis.com/aju-dev-demos-codelabs/create_credentials2.png)
+![create_credentials2](https://storage.googleapis.com/aju-dev-demos-codelabs/images/create_credentials2.png)
 
 Next, copy the key you just generated. Click __Close__.
 
@@ -65,10 +65,10 @@ cd ~/code-snippets/ml/cloud_shell_tutorials/cloud-vision-nl-translate
 You'll remain in this directory for the rest of the tutorial.
 
 We've uploaded a picture of a French sign to this Google Cloud Storage 
-URL, and made it public: `gs://aju-dev-demos-codelabs/french_sign.png`.
+URL, and made it public: `gs://aju-dev-demos-codelabs/images/french_sign.png`.
 The sign looks like this:
 
-![french_sign](https://storage.googleapis.com/aju-dev-demos-codelabs/french_sign.png)
+![french_sign](https://storage.googleapis.com/aju-dev-demos-codelabs/images/french_sign.png)
 
 
 You'll use that URL to form a JSON request to analyze the photo. In particular, you're going to use
@@ -86,7 +86,7 @@ It contains the following request:
       {
         "image": {
           "source": {
-              "gcsImageUri": "gs://aju-dev-demos-codelabs/french_sign.png"
+              "gcsImageUri": "gs://aju-dev-demos-codelabs/images/french_sign.png"
           } 
         },
         "features": [
