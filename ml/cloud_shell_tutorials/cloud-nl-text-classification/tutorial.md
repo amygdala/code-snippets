@@ -10,7 +10,7 @@ What you'll learn:
 * Use the NL API's text classification feature
 * Use text classification to understand a dataset of news articles
 
-![Natural Language API logo](https://storage.googleapis.com/aju-dev-demos-codelabs/NaturalLanguage_Retina_sm.png)
+![Natural Language API logo](https://storage.googleapis.com/aju-dev-demos-codelabs/images/NaturalLanguage_Retina_sm.png)
 
 **Time to complete**: About 30 minutes
 
@@ -27,15 +27,15 @@ To create an API key, navigate to:
 
 **APIs & services > Credentials**:
 
-![apis_and_services](https://storage.googleapis.com/aju-dev-demos-codelabs/apis_and_services.png)
+![apis_and_services](https://storage.googleapis.com/aju-dev-demos-codelabs/images/apis_and_services.png)
 
 Then click __Create credentials__:
 
-![create_credentials1](https://storage.googleapis.com/aju-dev-demos-codelabs/create_credentials1.png)
+![create_credentials1](https://storage.googleapis.com/aju-dev-demos-codelabs/images/create_credentials1.png)
 
 In the drop-down menu, select __API key__:
 
-![create_credentials2](https://storage.googleapis.com/aju-dev-demos-codelabs/create_credentials2.png)
+![create_credentials2](https://storage.googleapis.com/aju-dev-demos-codelabs/images/create_credentials2.png)
 
 Next, copy the key you just generated. Click __Close__.
 
@@ -135,23 +135,23 @@ Next we'll create a BigQuery table for our data.
 
 Before we send the text to the Natural Language API, we need a place to store the text and category for each article - enter BigQuery! Navigate to the BigQuery web UI in your console:
 
-![Navigate to the BigQuery web UI](https://storage.googleapis.com/aju-dev-demos-codelabs/bigquery1.png)
+![Navigate to the BigQuery web UI](https://storage.googleapis.com/aju-dev-demos-codelabs/images/bigquery1.png)
 
 Then click on the dropdown arrow next to your project name and select __Create new dataset__: 
 
-![Create a new BigQuery dataset](https://storage.googleapis.com/aju-dev-demos-codelabs/bigquery2.png)
+![Create a new BigQuery dataset](https://storage.googleapis.com/aju-dev-demos-codelabs/images/bigquery2.png)
 
 Name your dataset `news_classification`. You can leave the defaults in the **Data location** and **Data expiration** fields:
 
-![Name your new dataset](https://storage.googleapis.com/aju-dev-demos-codelabs/bigquery3.png)
+![Name your new dataset](https://storage.googleapis.com/aju-dev-demos-codelabs/images/bigquery3.png)
 
 Click on the dropdown arrow next to your dataset name and select __Create new table__. Under Source Data, select "Create empty table". Then name your table __article_data__ and give it the following 3 fields in the schema:
 
-![Create a new table](https://storage.googleapis.com/aju-dev-demos-codelabs/bigquery4.png)
+![Create a new table](https://storage.googleapis.com/aju-dev-demos-codelabs/images/bigquery4.png)
 
 After creating the table you should see the following:
 
-![New table details](https://storage.googleapis.com/aju-dev-demos-codelabs/bigquery5.png)
+![New table details](https://storage.googleapis.com/aju-dev-demos-codelabs/images/bigquery5.png)
 
 Our table is empty right now. In the next step we'll read the articles from Google Cloud Storage, send them to the NL API for classification, and store the result in BigQuery.
 
@@ -238,7 +238,7 @@ We're using the `google-cloud` [Python client library](https://googlecloudplatfo
 
 When your script has finished running, it's time to verify that the article data was saved to BigQuery. Navigate to your `article_data` table in the BigQuery web UI and click __Query Table__:
 
-![Query your new BigQuery table](https://storage.googleapis.com/aju-dev-demos-codelabs/bigquery6.png)
+![Query your new BigQuery table](https://storage.googleapis.com/aju-dev-demos-codelabs/images/bigquery6.png)
 
 Enter the following query in the **Compose Query** box, **first replacing `YOUR_PROJECT`** with your project name:
 
@@ -272,7 +272,7 @@ ORDER BY
 
 You should see something like this in the query results:
 
-![Query results](https://storage.googleapis.com/aju-dev-demos-codelabs/query_results.png)
+![Query results](https://storage.googleapis.com/aju-dev-demos-codelabs/images/query_results.png)
 
 Let's say we wanted to find the article returned for a more obscure category like **/Arts & Entertainment/Music & Audio/Classical Music**. We could write the following query (again, replace `YOUR_PROJECT` first):
 
@@ -295,7 +295,7 @@ WHERE cast(confidence as float64) > 0.9
 
 To perform more queries on your data, explore the [BigQuery documentation](https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators). BigQuery also integrates with a number of visualization tools. To create visualizations of your categorized news data, check out the  [Data Studio quickstart](https://cloud.google.com/bigquery/docs/visualize-data-studio) for BigQuery. Here's an example of a Data Studio chart we could create for the query above:
 
-![Example Data Studio chart](https://storage.googleapis.com/aju-dev-demos-codelabs/data_studio.png)
+![Example Data Studio chart](https://storage.googleapis.com/aju-dev-demos-codelabs/images/data_studio.png)
 
 
 ## Congratulations!
