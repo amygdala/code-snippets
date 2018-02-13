@@ -56,6 +56,14 @@ Next, you'll use the Natural Language API to analyze *entities* in text.
 
 ## Make an Entity Analysis Request
 
+First, change to this directory in the cloud shell:
+
+```bash
+cd ~/code-snippets/ml/cloud_shell_tutorials/cloud-nl-intro
+```
+
+You'll remain in this directory for the rest of the tutorial.
+
 
 The first Natural Language API method we'll use is `analyzeEntities`. With this method, the API can extract entities
 (like people, places, and events) from text. To try out the API's entity analysis, we'll use the following sentence:
@@ -107,7 +115,7 @@ The beginning of your response should look like this:
         "mid": "/m/042xh",
         "wikipedia_url": "https://en.wikipedia.org/wiki/J._K._Rowling"
       },
-      "salience": 0.7980405,
+      "salience": 0.78821284,
       "mentions": [
         {
           "text": {
@@ -144,7 +152,7 @@ The beginning of your response should look like this:
 ```
 
 For each entity in the response, we get the entity `type`, the associated Wikipedia URL if there is one, the
-`salience`, and the indices of where this entity appeared in the text. Salience is a number in the [0,1] range that refers to the centrality of the entity to the text as a whole. The Natural Language API can also recognize the same entity mentioned in different ways. Take a look at the `mentions` list in the response: ​the API is able to tell that "Joanne Rowling", "Rowling", "novelist" and "Robert Galbriath" all point to the same thing.​
+`salience`, and the indices of where this entity appeared in the text. Salience is a number in the [0,1] range that refers to the centrality of the entity to the text as a whole. The Natural Language API can also recognize the same entity mentioned in different ways. Take a look at the `mentions` list in the response: ​the API is able to tell that "Joanne Rowling", "Rowling", "novelist" and "Robert Galbraith" all point to the same thing.​
 
 Next, we'll use the Natural Language API to perform sentiment analysis.
 
@@ -254,33 +262,10 @@ In the response, you get back two entity objects: one for "sushi" and one for "s
 {
   "entities": [
     {
-      "name": "sushi",
-      "type": "CONSUMER_GOOD",
-      "metadata": {},
-      "salience": 0.52716845,
-      "mentions": [
-        {
-          "text": {
-            "content": "sushi",
-            "beginOffset": 12
-          },
-          "type": "COMMON",
-          "sentiment": {
-            "magnitude": 0.9,
-            "score": 0.9
-          }
-        }
-      ],
-      "sentiment": {
-        "magnitude": 0.9,
-        "score": 0.9
-      }
-    },
-    {
       "name": "service",
       "type": "OTHER",
       "metadata": {},
-      "salience": 0.47283158,
+      "salience": 0.5136989,
       "mentions": [
         {
           "text": {
@@ -298,11 +283,35 @@ In the response, you get back two entity objects: one for "sushi" and one for "s
         "magnitude": 0.9,
         "score": -0.9
       }
+    },
+    {
+      "name": "sushi",
+      "type": "CONSUMER_GOOD",
+      "metadata": {},
+      "salience": 0.4863011,
+      "mentions": [
+        {
+          "text": {
+            "content": "sushi",
+            "beginOffset": 12
+          },
+          "type": "COMMON",
+          "sentiment": {
+            "magnitude": 0.9,
+            "score": 0.9
+          }
+        }
+      ],
+      "sentiment": {
+        "magnitude": 0.9,
+        "score": 0.9
+      }
     }
   ],
   "language": "en"
 }
 ```
+
 
 You can see that the score returned for "sushi" was 0.9, whereas "service" got a score of -0.9. Cool! You also may notice that there are two sentiment objects returned for each entity. If either of these terms were mentioned more than once, the API would return a different sentiment score and magnitude for each mention, along with an aggregate sentiment for the entity.
 
@@ -366,16 +375,13 @@ The response should return an object like the one below for each token in the se
 }
 ```
 
-Let's break down the response:
 
-* `partOfSpeech` tells us that "Joanne" is a noun.
-* `dependencyEdge` includes data that you can use to create a  [dependency parse tree](https://en.wikipedia.org/wiki/Parse_tree#Dependency-based_parse_trees) of the text. Essentially, this is a diagram showing how words in a sentence relate to each other. A dependency parse tree for the sentence above would look like this:
+* `partOfSpeech` tells us that "uses" is a verb.
+* `dependencyEdge` includes data that you can use to create a  [dependency parse tree](https://en.wikipedia.org/wiki/Parse_tree#Dependency-based_parse_trees) of the text. Essentially, this is a diagram showing how words in a sentence relate to each other. The (first part) of a dependency parse tree for the sentence above looks like this:
 
-![parse tree](https://storage.googleapis.com/aju-dev-demos-codelabs/images/parse_tree.png)
+![parse tree](https://storage.googleapis.com/aju-dev-demos-codelabs/images/hermione.png)
 
-* `headTokenIndex` is the index of the token that has an arc pointing at "Joanne". We can think of each token in the sentence as a word in an array.
-* `headTokenIndex` of 1 for "Joanne" refers to the word "Rowling," which it is connected to in the tree. The label `NN` (short for noun compound modifier) describes the word's role in the sentence. "Joanne" modifies "Rowling," the subject of the sentence.
-* `lemma` is the canonical form of the word. For example, the words  *run* ,  *runs* ,  *ran* , and  *running*  all have a lemma of  *run* . The lemma value is useful for tracking occurrences of a word in a large piece of text over time.
+* `lemma` is the canonical form of the word. The lemma value is useful for tracking occurrences of a word in a large piece of text over time.
 
 The Natural Language API also supports languages other than English. Let's look at a Japanese example next.
 
@@ -399,6 +405,7 @@ It should look like this:
 }
 ```
 
+The text can translate in English as: "Google's office in Japan is in Roppongi Hills, Tokyo".
 Notice that you didn't need to tell the API which language the text is — it can automatically detect it!
 
 Next, you'll send this request to the `analyzeEntities` endpoint:
@@ -417,15 +424,15 @@ You should get the following response:
       "name": "日本",
       "type": "LOCATION",
       "metadata": {
-        "mid": "/m/03_3d",
-        "wikipedia_url": "https://en.wikipedia.org/wiki/Japan"
+        "wikipedia_url": "https://en.wikipedia.org/wiki/Japan",
+        "mid": "/m/03_3d"
       },
       "salience": 0.23854347,
       "mentions": [
         {
           "text": {
             "content": "日本",
-            "beginOffset": 0
+            "beginOffset": -1
           },
           "type": "PROPER"
         }
@@ -435,27 +442,77 @@ You should get the following response:
       "name": "グーグル",
       "type": "ORGANIZATION",
       "metadata": {
-        "mid": "/m/045c7b",
-        "wikipedia_url": "https://en.wikipedia.org/wiki/Google"
+        "wikipedia_url": "https://en.wikipedia.org/wiki/Google",
+        "mid": "/m/045c7b"
       },
       "salience": 0.21155767,
       "mentions": [
         {
           "text": {
             "content": "グーグル",
-            "beginOffset": 9
+            "beginOffset": -1
           },
           "type": "PROPER"
         }
       ]
     },
-    ...
-  ]
+    {
+      "name": "六本木ヒルズ",
+      "type": "PERSON",
+      "metadata": {
+        "mid": "/m/01r2_k",
+        "wikipedia_url": "https://en.wikipedia.org/wiki/Roppongi_Hills"
+      },
+      "salience": 0.18502845,
+      "mentions": [
+        {
+          "text": {
+            "content": "六本木ヒルズ",
+            "beginOffset": -1
+          },
+          "type": "PROPER"
+        }
+      ]
+    },
+    {
+      "name": "東京",
+      "type": "LOCATION",
+      "mentions": [
+      "metadata": {
+        "mid": "/g/12lnhn10f",
+        "wikipedia_url": "https://de.wikipedia.org/wiki/Tokio"
+      },
+      "salience": 0.18378882,
+      "mentions": [
+        {
+          "text": {
+            "content": "東京",
+            "beginOffset": -1
+          },
+          "type": "PROPER"
+        }
+      ]
+    },
+    {
+      "name": "オフィス",
+      "type": "OTHER",
+      "metadata": {},
+      "salience": 0.1810816,
+      "mentions": [
+        {
+          "text": {
+            "content": "オフィス",
+            "beginOffset": -1
+          },
+          "type": "COMMON"
+        }
+      ]
+    }
+  ],
   "language": "ja"
 }
 ```
 
-The wikipedia URLs even point to the Japanese Wikipedia pages - so cool!
 
 ## Congratulations!
 
