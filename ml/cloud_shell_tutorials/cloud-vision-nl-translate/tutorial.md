@@ -3,7 +3,7 @@
 
 ## Overview
 
-In this lab, we'll explore the power of machine learning by using multiple machine learning APIs together. We'll start with the Cloud Vision API's text detection method to make use of Optical Character Recognition (OCR) to extract text from images. Then we'll learn how to translate that text with the Translation API and analyze it with the Natural Language API. 
+In this lab, we'll explore the power of machine learning by using multiple machine learning APIs together. We'll start with the [Cloud Vision API's](https://cloud.google.com/vision/) text detection method to make use of Optical Character Recognition (OCR) to extract text from images. Then we'll learn how to translate that text with the [Translation API](https://cloud.google.com/translate/) and analyze it with the [Natural Language API](https://cloud.google.com/natural-language/).
 
 What you'll learn:
 

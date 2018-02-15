@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Cloud Natural Language API lets you extract entities from text, perform sentiment and syntactic analysis, and classify text into categories.
+The [Cloud Natural Language API](https://cloud.google.com/natural-language/) lets you extract entities from text, perform sentiment and syntactic analysis, and classify text into categories.
 In this lab, we'll learn how to use the Natural Language API to analyze entities, sentiment, and syntax.
 
 What you'll learn:
