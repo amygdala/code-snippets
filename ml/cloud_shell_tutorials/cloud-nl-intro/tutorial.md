@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Cloud Natural Language API lets you extract entities from text, perform sentiment and syntactic analysis, and classify text into categories.
+The [Cloud Natural Language API](https://cloud.google.com/natural-language/) lets you extract entities from text, perform sentiment and syntactic analysis, and classify text into categories.
 In this lab, we'll learn how to use the Natural Language API to analyze entities, sentiment, and syntax.
 
 What you'll learn:
@@ -50,12 +50,19 @@ Next, you'll enable the Natural Language API for your project, if you've not alr
 
 ## Enable the Natural Langage API
 
-[** TODO: what's the best approach? **]
+Click on [this link](https://console.cloud.google.com/flows/enableapi?apiid=language.googleapis.com) to enable the Natural Language API for your project. (After you've enabled it, you don't need to do any further setup, as you've already set up an API key above.)
 
 Next, you'll use the Natural Language API to analyze *entities* in text.
 
 ## Make an Entity Analysis Request
 
+First, change to this directory in the cloud shell:
+
+```bash
+cd ~/code-snippets/ml/cloud_shell_tutorials/cloud-nl-intro
+```
+
+You'll remain in this directory for the rest of the tutorial.
 
 The first Natural Language API method we'll use is `analyzeEntities`. With this method, the API can extract entities
 (like people, places, and events) from text. To try out the API's entity analysis, we'll use the following sentence:

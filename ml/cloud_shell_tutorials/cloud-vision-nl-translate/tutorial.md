@@ -3,7 +3,7 @@
 
 ## Overview
 
-In this lab, we'll explore the power of machine learning by using multiple machine learning APIs together. We'll start with the Cloud Vision API's text detection method to make use of Optical Character Recognition (OCR) to extract text from images. Then we'll learn how to translate that text with the Translation API and analyze it with the Natural Language API. 
+In this lab, we'll explore the power of machine learning by using multiple machine learning APIs together. We'll start with the [Cloud Vision API's](https://cloud.google.com/vision/) text detection method to make use of Optical Character Recognition (OCR) to extract text from images. Then we'll learn how to translate that text with the [Translation API](https://cloud.google.com/translate/) and analyze it with the [Natural Language API](https://cloud.google.com/natural-language/).
 
 What you'll learn:
 
@@ -50,7 +50,8 @@ Next, you'll enable the Vision, Translate, and Natural Language APIs for your pr
 
 ## Enable the Vision, Translate, and Natural Language APIs
 
-[** TODO: what's the best approach? **]
+Click on [this link](https://console.cloud.google.com/flows/enableapi?apiid=vision.googleapis.com,translate.googleapis.com,language.googleapis.com) to enable the Vision, Translate, and Natural Language APIs for your project.
+(After you've enabled them, you don't need to do any further setup, as you've already set up an API key above.)
 
 Next, you'll send a request to the Cloud Vision API.
 
