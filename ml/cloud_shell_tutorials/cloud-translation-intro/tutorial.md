@@ -45,7 +45,7 @@ Next, you'll enable the Translation API for your project, if you've not already 
 
 ## Enable the Translation API
 
-Click on [this link](https://console.cloud.google.com/flows/enableapi?apiid=translate.googleapis.com) to enable the Translation API for your project.
+Click on [this link](https://console.cloud.google.com/flows/enableapi?apiid=translate.googleapis.com) to enable the Translation API for your project. (After you've enabled it, you don't need to do any further setup, as you've already set up an API key above.)
 
 Next, you'll translate some text from English to Spanish.
 

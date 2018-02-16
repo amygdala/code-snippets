@@ -50,7 +50,7 @@ Next, you'll enable the Natural Language API for your project, if you've not alr
 
 ## Enable the Natural Langage API
 
-Click on [this link](https://console.cloud.google.com/flows/enableapi?apiid=language.googleapis.com) to enable the Natural Language API for your project.
+Click on [this link](https://console.cloud.google.com/flows/enableapi?apiid=language.googleapis.com) to enable the Natural Language API for your project. (After you've enabled it, you don't need to do any further setup, as you've already set up an API key above.)
 
 Next, you'll use the Natural Language API to analyze *entities* in text.
 
