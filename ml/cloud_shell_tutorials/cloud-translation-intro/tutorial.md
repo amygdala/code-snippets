@@ -45,12 +45,11 @@ Next, you'll enable the Translation API for your project, if you've not already 
 
 ## Enable the Translation API
 
-[** TODO: what's the best approach? **]
+Click on [this link](https://console.cloud.google.com/flows/enableapi?apiid=translate.googleapis.com) to enable the Translation API for your project.
 
 Next, you'll translate some text from English to Spanish.
 
 ## Translate Text
-
 
 In this example you will translate the string "My name is Steve" into Spanish. Pass the text to be translated, along with the API key environment variable you saved earlier, to the Translation API with the following curl command:
 
@@ -95,14 +94,14 @@ Your response should look like this:
     "detections": [
       [
         {
-          "confidence": 0.20671661198139191,
+          "confidence": 0.84644311666488647,
           "isReliable": false,
           "language": "pt"
         }
       ],
       [
         {
-          "confidence": 0.97750955820083618,
+          "confidence": 1,
           "isReliable": false,
           "language": "ja"
         }

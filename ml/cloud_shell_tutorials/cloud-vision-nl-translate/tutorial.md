@@ -50,7 +50,7 @@ Next, you'll enable the Vision, Translate, and Natural Language APIs for your pr
 
 ## Enable the Vision, Translate, and Natural Language APIs
 
-[** TODO: what's the best approach? **]
+Click on [this link](https://console.cloud.google.com/flows/enableapi?apiid=vision.googleapis.com,translate.googleapis.com,language.googleapis.com) to enable the Vision, Translate, and Natural Language APIs for your project.
 
 Next, you'll send a request to the Cloud Vision API.
 

@@ -49,7 +49,7 @@ Next, you'll enable the Natural Language API for your project, if you've not alr
 
 ## Enable the Natural Langage API
 
-[** TODO: what's the best approach? **]
+Click on [this link](https://console.cloud.google.com/flows/enableapi?apiid=language.googleapis.com) to enable the Natural Language API for your project.
 
 Next, you'll use the Natural Language API's `classifyText` method to classify a news article.
 
