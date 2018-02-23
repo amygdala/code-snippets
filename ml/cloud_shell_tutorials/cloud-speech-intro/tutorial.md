@@ -1,70 +1,92 @@
 # Speech to Text Transcription with the Cloud Speech API
 
-[Codelab Feedback](https://github.com/googlecodelabs/feedback/issues/new?title=[cloud-speech-intro]:&labels[]=content-platform&labels[]=cloud)
-
-
 ## Overview
-
-*Duration is 1 min*
-
 
 The Cloud Speech API lets you do speech to text transcription from audio files in over 80 languages.
 
-In this lab, we will record an audio file and send it to the Cloud Speech API for transcription.
+In this lab, you will see how to send an audio to the Cloud Speech API for transcription.
 
 #### What you'll learn
 
 * Creating a Speech API request and calling the API with curl
 * Calling the Speech API with audio files in different languages
 
-#### What you'll need
+![Speech API logo](https://storage.googleapis.com/aju-dev-demos-codelabs/images/speech_api_sm.png)
 
-* A Google Cloud Platform Project
-* A Browser, such  [Chrome](https://www.google.com/chrome/browser/desktop/) or  [Firefox](https://www.mozilla.org/firefox/)
+**Time to complete**: About 20 minutes
 
+Click the **Continue** button to move to the next step.
 
-## Create an API Key
+## Create a Google Cloud Platform (GCP) project if you don't have one
 
-*Duration is 2 min*
+**If you already have a Google Cloud Platform project, you can skip this step**.
 
+If you don't have a Google Cloud Platform (GCP) project yet, create one [here](https://cloud.google.com/free/). Be sure to sign up for free trial credits.
+**Note the name of your new project** — you'll use that in the next step.
 
-Since we'll be using curl to send a request to the Speech API, we'll need to generate an API key to pass in our request URL. To create an API key, navigate to the API Manager section of your project dashboard:
+Return to this tab once you're done.
 
-![8cbae8dc9ba56e1e.png](img/8cbae8dc9ba56e1e.png)
+## Set your project in the Cloud Shell and create an API Key
 
-Then, navigate to the __Credentials__ tab and click __Create credentials__:
+First, run the following command to ensure that the Cloud Shell is using the correct GCP project
+(replacing `<project-name>` with the name of your project):
 
-![fc9b83db953a127a.png](img/fc9b83db953a127a.png)
+```bash
+  gcloud config set project <project-name>
+```
 
-In the drop down menu, select __API key__:
+Next, since we'll be using curl to send a request to the Natural Language API, we'll need to generate an API key to pass in our request URL.
 
-![bc4940935c1bef7f.png](img/bc4940935c1bef7f.png)
+> **Note**: If you've already created an API key in this project during one of the other Cloud Shell tutorials, you can just use the existing key⸺you don't need to create another one. Just be sure to set the `API_KEY` environment variable with your existing key as described below.
 
-Next, copy the key you just generated.
+To create an API key, navigate to:
+
+**APIs & services > Credentials** in the [Cloud Console](https://console.cloud.google.com/):
+
+![apis_and_services](https://storage.googleapis.com/aju-dev-demos-codelabs/images/apis_and_services.png)
+
+Then click __Create credentials__:
+
+![create_credentials1](https://storage.googleapis.com/aju-dev-demos-codelabs/images/create_credentials1.png)
+
+In the drop-down menu, select __API key__:
+
+![create_credentials2](https://storage.googleapis.com/aju-dev-demos-codelabs/images/create_credentials2.png)
+
+Next, copy the key you just generated. Click __Close__.
 
 Now that you have an API key, save it to an environment variable to avoid having to insert the value of your API key in each request. You can do this in Cloud Shell. Be sure to replace `<your_api_key>` with the key you just copied.
 
-```
+```bash
 export API_KEY=<YOUR_API_KEY>
 ```
 
+Next, you'll enable the Speech API for your project, if you've not already done so.
+
+## Enable the Speech API
+
+Click on [this link](https://console.cloud.google.com/flows/enableapi?apiid=speech.googleapis.com) to enable the Speech API for your project.
+
+After you've enabled it, you don't need to do any further setup, as you've already set up an API key. Just return to this tab.
+
+Next, you'll use the Speech API to make a transcription request.
 
 ## Create your Speech API request
 
-*Duration is 2 min*
+First, change to this directory in the cloud shell:
 
-
-You can build your request to the speech API in a `request.json` file. First create this file in Cloud Shell:
-
-```
-touch request.json
+```bash
+cd ~/code-snippets/ml/cloud_shell_tutorials/cloud-nl-intro
 ```
 
-Open it using your preferred command line editor (`nano`, `vim`, `emacs`). Add the following to your `request.json` file, replacing the `uri` value with the uri of your raw audio file:
+You'll remain in this directory for the rest of the tutorial.
 
-#### __request.json__
+Bring up the `request.json` file
+`walkthrough editor-open-file "code-snippets/ml/cloud_shell_tutorials/cloud-speech-intro/request.json" "in the text editor"`.
 
-```
+It should look like this:
+
+```json
 {
   "config": {
       "encoding":"FLAC",
@@ -84,19 +106,19 @@ In the `audio` object, you pass the API the uri of our audio file in Cloud Stora
 
 ## Call the Speech API
 
-*Duration is 1 min*
 
+You can now pass your request body, along with the API key environment variable you saved earlier, to the Speech API with the following `curl` command:
 
-You can now pass your request body, along with the API key environment variable you saved earlier, to the Speech API with the following `curl` command (all in one single command line):
-
-```
+```bash
 curl -s -X POST -H "Content-Type: application/json" --data-binary @request.json \
 "https://speech.googleapis.com/v1beta1/speech:syncrecognize?key=${API_KEY}"
 ```
 
+Notice that the curl command used the API key that you generated.
+
 Your response should look something like the following:
 
-```
+```json
 {
   "results": [
     {
@@ -118,16 +140,12 @@ You'll notice that we called the `syncrecognize` method in our request above. Th
 
 ## Speech to text transcription in different languages
 
-*Duration is 2 min*
+Are you multilingual? The Speech API supports speech to text transcription in over 80 languages! You can change the `language_code` parameter in your json request. You can find a list of supported languages  [here](https://cloud.google.com/speech/docs/languages).
+
+For example, if you had a Spanish audio file, you could set the `language_code` attributes in the `request.json` file like this:
 
 
-Are you multilingual? The Speech API supports speech to text transcription in over 80 languages! You can change the `language_code` parameter in `request.json`. You can find a list of supported languages  [here](https://cloud.google.com/speech/docs/languages).
-
-For example, if you had a Spanish audio file, you can set the `language_code` attributes in the `request.json` file like this:
-
-#### __request.json__
-
-```
+```json
  {
   "config": {
       "encoding":"FLAC",
@@ -143,20 +161,30 @@ For example, if you had a Spanish audio file, you can set the `language_code` at
 
 ## Congratulations!
 
-
+`walkthrough conclusion-trophy`
 
 
 You've learned how to perform speech to text transcription with the Speech API. In this example you passed the API the Google Cloud Storage URI of your audio file. Alternatively, you can pass a base64 encoded string of your audio content.
 
-#### __What we've covered__
+#### What we've covered
 
 * Passing the Speech API a Google Cloud Storage URI of an audio file
 * Creating a Speech API request and calling the API with curl
 * Calling the Speech API with audio files in different languages
 
-#### Next Steps
+#### Some next Steps
 
-* Check out the Speech API  [tutorials](https://cloud.google.com/speech/docs/tutorials) in the documentations.
+* Check out the Speech API  [tutorials](https://cloud.google.com/speech/docs/tutorials) in the documentation.
 * Try out the  [Vision API](https://cloud.google.com/vision/) and  [Natural Language API](https://cloud.google.com/natural-language/)!
 
+---------------
+Copyright 2018 Google Inc. All Rights Reserved. Licensed under the Apache
+License, Version 2.0 (the "License"); you may not use this file except in
+compliance with the License. You may obtain a copy of the License at
+http://www.apache.org/licenses/LICENSE-2.0
 
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.

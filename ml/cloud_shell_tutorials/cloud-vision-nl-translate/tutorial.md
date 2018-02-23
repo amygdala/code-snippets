@@ -29,7 +29,8 @@ Return to this tab once you're done.
 
 ## Set your project in the Cloud Shell and create an API Key
 
-First, run the following command to ensure that the Cloud Shell is using the correct GCP project— whether new or existing— as follows (replacing `<project-name>` with the name of your project):
+First, run the following command to ensure that the Cloud Shell is using the correct GCP project
+(replacing `<project-name>` with the name of your project):
 
 ```bash
   gcloud config set project <project-name>
@@ -37,7 +38,7 @@ First, run the following command to ensure that the Cloud Shell is using the cor
 
 Next, since we'll be using curl to send a request to the Vision API, we'll need to generate an API key to pass in our request URL.
 
-> **Note**: If you've already created an API key in this project during one of the other Cloud Shell tutorials, you can just use the existing key⸺you don't need to create another one.
+> **Note**: If you've already created an API key in this project during one of the other Cloud Shell tutorials, you can just use the existing key⸺you don't need to create another one.  Just be sure to set the `API_KEY` environment variable with your existing key as described below.
 
 To create an API key, navigate to:
 
@@ -66,7 +67,8 @@ Next, you'll enable the Vision, Translate, and Natural Language APIs for your pr
 ## Enable the Vision, Translate, and Natural Language APIs
 
 Click on [this link](https://console.cloud.google.com/flows/enableapi?apiid=vision.googleapis.com,translate.googleapis.com,language.googleapis.com) to enable the Vision, Translate, and Natural Language APIs for your project.
-(After you've enabled them, you don't need to do any further setup, as you've already set up an API key above.)
+
+After you've enabled them, you don't need to do any further setup, as you've already set up an API key. Just return to this tab.
 
 Next, you'll send a request to the Cloud Vision API.
 

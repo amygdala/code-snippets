@@ -29,7 +29,8 @@ Return to this tab once you're done.
 
 ## Set your project in the Cloud Shell and create an API Key
 
-First, run the following command to ensure that the Cloud Shell is using the correct GCP project— whether new or existing— as follows (replacing `<project-name>` with the name of your project):
+First, run the following command to ensure that the Cloud Shell is using the correct GCP project
+(replacing `<project-name>` with the name of your project):
 
 ```bash
   gcloud config set project <project-name>
@@ -37,7 +38,7 @@ First, run the following command to ensure that the Cloud Shell is using the cor
 
 Next, since we'll be using curl to send a request to the Natural Language API, we'll need to generate an API key to pass in our request URL.
 
-> **Note**: If you've already created an API key in this project during one of the other Cloud Shell tutorials, you can just use the existing key⸺you don't need to create another one.
+> **Note**: If you've already created an API key in this project during one of the other Cloud Shell tutorials, you can just use the existing key⸺you don't need to create another one.  Just be sure to set the `API_KEY` environment variable with your existing key as described below.
 
 To create an API key, navigate to:
 
@@ -65,7 +66,9 @@ Next, you'll enable the Natural Language API for your project, if you've not alr
 
 ## Enable the Natural Langage API
 
-Click on [this link](https://console.cloud.google.com/flows/enableapi?apiid=language.googleapis.com) to enable the Natural Language API for your project. (After you've enabled it, you don't need to do any further setup, as you've already set up an API key above.)
+Click on [this link](https://console.cloud.google.com/flows/enableapi?apiid=language.googleapis.com) to enable the Natural Language API for your project.
+
+After you've enabled it, you don't need to do any further setup, as you've already set up an API key. Just return to this tab.
 
 Next, you'll use the Natural Language API to analyze *entities* in text.
 
