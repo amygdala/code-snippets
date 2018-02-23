@@ -13,15 +13,32 @@ In this lab, we'll use the Cloud Translation API from the command line to transl
 
 Click the **Continue** button to move to the next step.
 
-## Create an API Key
+## Create a Google Cloud Platform (GCP) project if you don't have one
 
-Since we'll be using curl to send a request to the Translation API, we'll need to generate an API key to pass in our request URL.
+If you already have a Google Cloud Platform project, you can skip this step.
+
+If you don't have a Google Cloud Platform (GCP) project yet, you can click this button to set one up. Be sure to sign up for the free trial when you do so. (You can also set up your project via [this link](https://cloud.google.com/free/)). 
+
+`walkthrough project-billing-setup`
+
+Once you have a GCP project created, note its name— you'll use that in the next step.
+
+## Set your project in the Cloud Shell and create an API Key
+
+Set the cloud shell to use your GCP project— whether new or existing— as follows (replacing `<project-name>` with the name of your project:
+
+```bash
+  gcloud config set project <project-name>
+```
+
+
+Next, since we'll be using curl to send a request to the Translation API, we'll need to generate an API key to pass in our request URL.
 
 > **Note**: If you've already created an API key in this project during one of the other Cloud Shell tutorials, you can just use the existing key⸺you don't need to create another one.
 
 To create an API key, navigate to:
 
-**APIs & services > Credentials**:
+**APIs & services > Credentials** in the [Cloud Console](https://console.cloud.google.com/):
 
 ![apis_and_services](https://storage.googleapis.com/aju-dev-demos-codelabs/images/apis_and_services.png)
 
@@ -131,3 +148,15 @@ You've learned how to translate text with the Cloud Translation API!
 
 * Check out the  [Translation API sample applications ](https://cloud.google.com/translate/docs/samples)built using client libraries using a variety of popular programming languages.
 * Try out the  [Vision API](https://cloud.google.com/vision/) and  [Speech API](https://cloud.google.com/speech/)!
+
+---------------
+Copyright 2018 Google Inc. All Rights Reserved. Licensed under the Apache
+License, Version 2.0 (the "License"); you may not use this file except in
+compliance with the License. You may obtain a copy of the License at
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
