@@ -15,17 +15,16 @@ Click the **Continue** button to move to the next step.
 
 ## Create a Google Cloud Platform (GCP) project if you don't have one
 
-If you already have a Google Cloud Platform project, you can skip this step.
+**If you already have a Google Cloud Platform project, you can skip this step**.
 
-If you don't have a Google Cloud Platform (GCP) project yet, you can click this button to set one up. Be sure to sign up for the free trial when you do so. (You can also set up your project via [this link](https://cloud.google.com/free/)). 
+If you don't have a Google Cloud Platform (GCP) project yet, create one [here](https://cloud.google.com/free/). Be sure to sign up for free trial credits.
+**Note the name of your new project** — you'll use that in the next step.
 
-`walkthrough project-billing-setup`
-
-Once you have a GCP project created, note its name— you'll use that in the next step.
+Return to this tab once you're done.
 
 ## Set your project in the Cloud Shell and create an API Key
 
-Set the cloud shell to use your GCP project— whether new or existing— as follows (replacing `<project-name>` with the name of your project:
+First, run the following command to ensure that the Cloud Shell is using the correct GCP project— whether new or existing— as follows (replacing `<project-name>` with the name of your project):
 
 ```bash
   gcloud config set project <project-name>
