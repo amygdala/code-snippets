@@ -3,7 +3,7 @@
 
 ## Overview
 
-The [[Cloud Translation API](https://cloud.google.com/translate/) lets you translate an arbitrary string into any supported language using state-of-the-art Neural Machine Translation. 
+The [[Cloud Translation API](https://cloud.google.com/translate/) lets you translate an arbitrary string into any supported language using state-of-the-art Neural Machine Translation.
 
 In this lab, we'll use the Cloud Translation API from the command line to translate text and detect the language of text if the language is unknown.
 
@@ -24,7 +24,8 @@ Return to this tab once you're done.
 
 ## Set your project in the Cloud Shell and create an API Key
 
-First, run the following command to ensure that the Cloud Shell is using the correct GCP project— whether new or existing— as follows (replacing `<project-name>` with the name of your project):
+First, run the following command to ensure that the Cloud Shell is using the correct GCP project
+(replacing `<project-name>` with the name of your project):
 
 ```bash
   gcloud config set project <project-name>
@@ -33,7 +34,7 @@ First, run the following command to ensure that the Cloud Shell is using the cor
 
 Next, since we'll be using curl to send a request to the Translation API, we'll need to generate an API key to pass in our request URL.
 
-> **Note**: If you've already created an API key in this project during one of the other Cloud Shell tutorials, you can just use the existing key⸺you don't need to create another one.
+> **Note**: If you've already created an API key in this project during one of the other Cloud Shell tutorials, you can just use the existing key⸺you don't need to create another one.  Just be sure to set the `API_KEY` environment variable with your existing key as described below.
 
 To create an API key, navigate to:
 
@@ -61,7 +62,9 @@ Next, you'll enable the Translation API for your project, if you've not already 
 
 ## Enable the Translation API
 
-Click on [this link](https://console.cloud.google.com/flows/enableapi?apiid=translate.googleapis.com) to enable the Translation API for your project. (After you've enabled it, you don't need to do any further setup, as you've already set up an API key above.)
+Click on [this link](https://console.cloud.google.com/flows/enableapi?apiid=translate.googleapis.com) to enable the Translation API for your project.
+
+After you've enabled it, you don't need to do any further setup, as you've already set up an API key. Just return to this tab.
 
 Next, you'll translate some text from English to Spanish.
 
@@ -94,7 +97,7 @@ In the response, you can see that the translated text as well as the source lang
 
 ## Detect Language
 
-In addition to translating text, the Translation API also lets you detect the language of text. In this example you will detect the language of two strings. Pass the text to be examined, along with the API key environment variable you saved earlier, to the Translation API with the following curl command: 
+In addition to translating text, the Translation API also lets you detect the language of text. In this example you will detect the language of two strings. Pass the text to be examined, along with the API key environment variable you saved earlier, to the Translation API with the following curl command:
 
 ```bash
 TEXT_ONE="Meu%20nome%20é%20Steven"
@@ -134,7 +137,7 @@ The languages returned by this sample are "pt" and "ja". These are the  [ISO-639
 
 `walkthrough conclusion-trophy`
 
-You've learned how to translate text with the Cloud Translation API! 
+You've learned how to translate text with the Cloud Translation API!
 
 #### What we've covered
 

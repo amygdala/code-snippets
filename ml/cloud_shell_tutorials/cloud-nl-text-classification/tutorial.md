@@ -27,7 +27,8 @@ Return to this tab once you're done.
 
 ## Set your project in the Cloud Shell and create an API Key
 
-First, run the following command to ensure that the Cloud Shell is using the correct GCP project— whether new or existing— as follows (replacing `<project-name>` with the name of your project):
+First, run the following command to ensure that the Cloud Shell is using the correct GCP project
+(replacing `<project-name>` with the name of your project):
 
 ```bash
   gcloud config set project <project-name>
@@ -35,7 +36,7 @@ First, run the following command to ensure that the Cloud Shell is using the cor
 
 Next, since we'll be using curl to send a request to the Natural Language API, we'll need to generate an API key to pass in our request URL.
 
-> **Note**: If you've already created an API key in this project during one of the other Cloud Shell tutorials, you can just use the existing key⸺you don't need to create another one.
+> **Note**: If you've already created an API key in this project during one of the other Cloud Shell tutorials, you can just use the existing key⸺you don't need to create another one.  Just be sure to set the `API_KEY` environment variable with your existing key as described below.
 
 To create an API key, navigate to:
 
@@ -63,7 +64,9 @@ Next, you'll enable the Natural Language API for your project, if you've not alr
 
 ## Enable the Natural Langage API
 
-Click on [this link](https://console.cloud.google.com/flows/enableapi?apiid=language.googleapis.com) to enable the Natural Language API for your project. (After you've enabled it, you don't need to do any further setup, as you've already set up an API key above.)
+Click on [this link](https://console.cloud.google.com/flows/enableapi?apiid=language.googleapis.com) to enable the Natural Language API for your project.
+
+After you've enabled it, you don't need to do any further setup, as you've already set up an API key. Just return to this tab.
 
 Next, you'll use the Natural Language API's `classifyText` method to classify a news article.
 
@@ -81,7 +84,7 @@ Using the Natural Language API's `classifyText` method, we can sort our text dat
 
 We'll start by classifying a single article, and then we'll see how we can use this method to make sense of a large news corpus. To start, let's take this headline and description from a New York Times article in the food section:
 
-> *A Smoky Lobster Salad With a Tapa Twist. This spin on the Spanish pulpo a la gallega skips the octopus, but keeps the sea salt, olive oil, pimentón and boiled potatoes.* 
+> *A Smoky Lobster Salad With a Tapa Twist. This spin on the Spanish pulpo a la gallega skips the octopus, but keeps the sea salt, olive oil, pimentón and boiled potatoes.*
 
 Bring up the `request.json` file
 `walkthrough editor-open-file "code-snippets/ml/cloud_shell_tutorials/cloud-nl-text-classification/request.json" "in the text editor"`.
@@ -110,17 +113,17 @@ Notice that the curl command used the API key that you generated.
 Let's take a look at the response:
 
 ```json
-{ categories: 
-  [ 
-    { 
+{ categories:
+  [
+    {
       name: '/Food & Drink/Cooking & Recipes',
-       confidence: 0.85 
+       confidence: 0.85
     },
-    { 
+    {
        name: '/Food & Drink/Food/Meat & Seafood',
-       confidence: 0.63 
+       confidence: 0.63
      }
-  ] 
+  ]
 }
 ```
 
@@ -131,9 +134,9 @@ Classifying a single article is cool, but to really see the power of this featur
 ## Classifying a large text dataset
 
 
-To see how the `classifyText` method can help us understand a dataset with lots of text, we'll use this  [public dataset](http://mlg.ucd.ie/datasets/bbc.html) of BBC news articles. The dataset consists of 2,225 articles in five topic areas (business, entertainment, politics, sport, tech) from 2004 - 2005. We've put a subset of these articles into a public [Google Cloud Storage](https://cloud.google.com/storage/) (GCS) bucket. Each of the articles is in a `.txt` file. 
+To see how the `classifyText` method can help us understand a dataset with lots of text, we'll use this  [public dataset](http://mlg.ucd.ie/datasets/bbc.html) of BBC news articles. The dataset consists of 2,225 articles in five topic areas (business, entertainment, politics, sport, tech) from 2004 - 2005. We've put a subset of these articles into a public [Google Cloud Storage](https://cloud.google.com/storage/) (GCS) bucket. Each of the articles is in a `.txt` file.
 
-To examine the data and send it to the NL API, we'll write a Python script to read each text file from GCS, send it to the `classifyText` endpoint, and store the results in a [BigQuery](https://cloud.google.com/bigquery/) table. BigQuery is Google Cloud's big data warehouse tool - it lets us easily store and analyze large datasets. 
+To examine the data and send it to the NL API, we'll write a Python script to read each text file from GCS, send it to the `classifyText` endpoint, and store the results in a [BigQuery](https://cloud.google.com/bigquery/) table. BigQuery is Google Cloud's big data warehouse tool - it lets us easily store and analyze large datasets.
 
 To see the type of text we'll be working with, run the following command to view one article (`gsutil` provides a command line interface for GCS):
 
@@ -151,7 +154,7 @@ Before we send the text to the Natural Language API, we need a place to store th
 
 ![Navigate to the BigQuery web UI](https://storage.googleapis.com/aju-dev-demos-codelabs/images/bigquery1.png)
 
-Then click on the dropdown arrow next to your project name and select __Create new dataset__: 
+Then click on the dropdown arrow next to your project name and select __Create new dataset__:
 
 ![Create a new BigQuery dataset](https://storage.googleapis.com/aju-dev-demos-codelabs/images/bigquery2.png)
 
@@ -188,7 +191,7 @@ gcloud iam service-accounts keys create key.json --iam-account=my-account@$PROJE
 export GOOGLE_APPLICATION_CREDENTIALS=key.json
 ```
 
-Now we're ready to send the text data to the NL API. To do that we'll use a Python script using the Python module for Google Cloud (note that you could accomplish the same thing from many other languages; there are many different cloud  [client libraries](https://cloud.google.com/apis/docs/cloud-client-libraries)). 
+Now we're ready to send the text data to the NL API. To do that we'll use a Python script using the Python module for Google Cloud (note that you could accomplish the same thing from many other languages; there are many different cloud  [client libraries](https://cloud.google.com/apis/docs/cloud-client-libraries)).
 
 Bring up the `classify-text.py` file
 `walkthrough editor-open-file "code-snippets/ml/cloud_shell_tutorials/cloud-nl-text-classification/classify-text.py" "in the text editor"`, and in the code, **replace `YOUR_PROJECT`** with the name of your project.
@@ -244,9 +247,9 @@ We're ready to start classifying articles and importing them to BigQuery. Run th
 python classify-text.py
 ```
 
-The script takes about two minutes to complete, so while it's running we'll discuss what's happening. 
+The script takes about two minutes to complete, so while it's running we'll discuss what's happening.
 
-We're using the `google-cloud` [Python client library](https://googlecloudplatform.github.io/google-cloud-python/) to access Google Cloud Storage, the NL API, and BigQuery. First we create a client for each service we'll be using, and then we create references to our BigQuery table. 
+We're using the `google-cloud` [Python client library](https://googlecloudplatform.github.io/google-cloud-python/) to access Google Cloud Storage, the NL API, and BigQuery. First we create a client for each service we'll be using, and then we create references to our BigQuery table.
 
 `files` is a reference to each of the BBC dataset files in the public bucket. We iterate through these files, download the articles as strings, and send each one to the NL API's in our `classify_text` function. For all articles where the NL API returns a category, we save the article and its category data to a `rows_for_bq` list. When we're done classifying each article, we insert our data into BigQuery using `create_rows()`.
 
@@ -261,7 +264,7 @@ Enter the following query in the **Compose Query** box, **first replacing `YOUR_
 SELECT * FROM `YOUR_PROJECT.news_classification.article_data`
 ```
 
-You should see your data when the query completes. The `category` column has the name of the first category the NL API returned for our article, and `confidence` is a value between 0 and 1 indicating how confident the API is that it categorized the article correctly. 
+You should see your data when the query completes. The `category` column has the name of the first category the NL API returned for our article, and `confidence` is a value between 0 and 1 indicating how confident the API is that it categorized the article correctly.
 
 We'll learn how to perform more complex queries on the data in the next step.
 
@@ -273,14 +276,14 @@ First, let's see which categories were most common in our dataset. Enter the fol
 
 ```sql
 #standardSQL
-SELECT 
-  category, 
-  COUNT(*) c 
-FROM 
-  `YOUR_PROJECT.news_classification.article_data` 
-GROUP BY 
-  category 
-ORDER BY 
+SELECT
+  category,
+  COUNT(*) c
+FROM
+  `YOUR_PROJECT.news_classification.article_data`
+GROUP BY
+  category
+ORDER BY
   c DESC
 ```
 
@@ -300,10 +303,10 @@ Or, we could get only the articles where the NL API returned a confidence score 
 
 ```sql
 #standardSQL
-SELECT 
-  article_text, 
-  category 
-FROM `YOUR_PROJECT.news_classification.article_data` 
+SELECT
+  article_text,
+  category
+FROM `YOUR_PROJECT.news_classification.article_data`
 WHERE cast(confidence as float64) > 0.9
 ```
 
