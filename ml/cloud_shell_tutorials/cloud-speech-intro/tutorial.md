@@ -2,9 +2,9 @@
 
 ## Overview
 
-The Cloud Speech API lets you do speech to text transcription from audio files in over 80 languages.
+The [Cloud Speech API](https://cloud.google.com/speech/) lets you do speech-to-text transcription from audio files in over 80 languages.
 
-In this lab, you will see how to send an audio to the Cloud Speech API for transcription.
+In this lab, you will see how to send an audio file to the Cloud Speech API for transcription.
 
 #### What you'll learn
 
@@ -37,7 +37,7 @@ First, run the following command to ensure that the Cloud Shell is using the cor
 
 Next, since we'll be using curl to send a request to the Natural Language API, we'll need to generate an API key to pass in our request URL.
 
-> **Note**: If you've already created an API key in this project during one of the other Cloud Shell tutorials, you can just use the existing key⸺you don't need to create another one. Just be sure to set the `API_KEY` environment variable with your existing key as described below.
+> **Note**: If you've already created an API key in this project during one of the other Cloud Shell tutorials, you can just use the existing key— you don't need to create another one. Just be sure to set the `API_KEY` environment variable with your existing key as described below.
 
 To create an API key, navigate to:
 
@@ -76,7 +76,7 @@ Next, you'll use the Speech API to make a transcription request.
 First, change to this directory in the cloud shell:
 
 ```bash
-cd ~/code-snippets/ml/cloud_shell_tutorials/cloud-nl-intro
+cd ~/code-snippets/ml/cloud_shell_tutorials/cloud-speech-intro
 ```
 
 You'll remain in this directory for the rest of the tutorial.
@@ -101,7 +101,9 @@ It should look like this:
 
 The request body has a `config` and `audio` object. In `config`, we tell the Speech API how to process the request. The `encoding` parameter tells the API which type of audio encoding you're using for the audio file you're sending to the API. `FLAC` is the encoding type for .raw files (see the  [documentation](https://cloud.google.com/speech/reference/rest/v1/speech/recognize#audioencoding) for encoding type for more details). `sample_rate` is the rate in Hertz of the audio data you're sending to the API. There are other parameters you can add to your `config` object, but `encoding` and `sample_rate` are the only required ones.
 
-In the `audio` object, you pass the API the uri of our audio file in Cloud Storage. Now you're ready to call the Speech API!
+In the `audio` object, you're passing the URI of an audio file in [Google Cloud Storage](https://cloud.google.com/storage/).
+
+Now you're ready to call the Speech API!
 
 
 ## Call the Speech API
@@ -125,7 +127,7 @@ Your response should look something like the following:
       "alternatives": [
         {
           "transcript": "how old is the Brooklyn Bridge",
-          "confidence": 0.98267895
+          "confidence": 0.9840146
         }
       ]
     }
@@ -172,7 +174,7 @@ You've learned how to perform speech to text transcription with the Speech API. 
 * Creating a Speech API request and calling the API with curl
 * Calling the Speech API with audio files in different languages
 
-#### Some next Steps
+#### Some next steps
 
 * Check out the Speech API  [tutorials](https://cloud.google.com/speech/docs/tutorials) in the documentation.
 * Try out the  [Vision API](https://cloud.google.com/vision/) and  [Natural Language API](https://cloud.google.com/natural-language/)!
