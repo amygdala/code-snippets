@@ -18,15 +18,31 @@ What you'll learn:
 
 Click the **Continue** button to move to the next step.
 
-## Create an API Key
+## Create a Google Cloud Platform (GCP) project if you don't have one
 
-Since we'll be using curl to send a request to the Natural Language API, we'll need to generate an API key to pass in our request URL.
+If you already have a Google Cloud Platform project, you can skip this step.
+
+If you don't have a Google Cloud Platform (GCP) project yet, you can click this button to set one up. Be sure to sign up for the free trial when you do so. (You can also set up your project via [this link](https://cloud.google.com/free/)). 
+
+`walkthrough project-billing-setup`
+
+Once you have a GCP project created, note its name— you'll use that in the next step.
+
+## Set your project in the Cloud Shell and create an API Key
+
+Set the cloud shell to use your GCP project— whether new or existing— as follows (replacing `<project-name>` with the name of your project:
+
+```bash
+  gcloud config set project <project-name>
+```
+
+Next, since we'll be using curl to send a request to the Natural Language API, we'll need to generate an API key to pass in our request URL.
 
 > **Note**: If you've already created an API key in this project during one of the other Cloud Shell tutorials, you can just use the existing key⸺you don't need to create another one.
 
 To create an API key, navigate to:
 
-**APIs & services > Credentials**:
+**APIs & services > Credentials** in the [Cloud Console](https://console.cloud.google.com/):
 
 ![apis_and_services](https://storage.googleapis.com/aju-dev-demos-codelabs/images/apis_and_services.png)
 
@@ -397,13 +413,13 @@ It should look like this:
 {
   "document":{
     "type":"PLAIN_TEXT",
-    "content":"日本のグーグルのオフィスは、東京の六本木ヒルズにあります"
+    "content":"Google lance un nouveau centre de recherche en Intelligence Artificielle en France."
   }
 }
 ```
 
-The text can translate in English as: "Google's office in Japan is in Roppongi Hills, Tokyo".
-Notice that you didn't need to tell the API which language the text is — it can automatically detect it!
+The text translates to: "Google is launching a new Artificial Intelligence research center in France".
+Notice that you don't need to tell the API which language the text is — it can automatically detect it!
 
 Next, you'll send this request to the `analyzeEntities` endpoint:
 
@@ -418,35 +434,17 @@ You should get the following response:
 {
   "entities": [
     {
-      "name": "日本",
-      "type": "LOCATION",
-      "metadata": {
-        "wikipedia_url": "https://en.wikipedia.org/wiki/Japan",
-        "mid": "/m/03_3d"
-      },
-      "salience": 0.23854347,
-      "mentions": [
-        {
-          "text": {
-            "content": "日本",
-            "beginOffset": -1
-          },
-          "type": "PROPER"
-        }
-      ]
-    },
-    {
-      "name": "グーグル",
+      "name": "Google",
       "type": "ORGANIZATION",
       "metadata": {
-        "wikipedia_url": "https://en.wikipedia.org/wiki/Google",
-        "mid": "/m/045c7b"
+        "mid": "/m/045c7b",
+        "wikipedia_url": "https://en.wikipedia.org/wiki/Google"
       },
-      "salience": 0.21155767,
+      "salience": 0.3203956,
       "mentions": [
         {
           "text": {
-            "content": "グーグル",
+            "content": "Google",
             "beginOffset": -1
           },
           "type": "PROPER"
@@ -454,36 +452,17 @@ You should get the following response:
       ]
     },
     {
-      "name": "六本木ヒルズ",
-      "type": "PERSON",
-      "metadata": {
-        "mid": "/m/01r2_k",
-        "wikipedia_url": "https://en.wikipedia.org/wiki/Roppongi_Hills"
-      },
-      "salience": 0.18502845,
-      "mentions": [
-        {
-          "text": {
-            "content": "六本木ヒルズ",
-            "beginOffset": -1
-          },
-          "type": "PROPER"
-        }
-      ]
-    },
-    {
-      "name": "東京",
+      "name": "France",
       "type": "LOCATION",
-      "mentions": [
       "metadata": {
-        "mid": "/g/12lnhn10f",
-        "wikipedia_url": "https://de.wikipedia.org/wiki/Tokio"
+        "mid": "/m/0f8l9c",
+        "wikipedia_url": "https://en.wikipedia.org/wiki/France"
       },
-      "salience": 0.18378882,
+      "salience": 0.24790826,
       "mentions": [
         {
           "text": {
-            "content": "東京",
+            "content": "France",
             "beginOffset": -1
           },
           "type": "PROPER"
@@ -491,14 +470,44 @@ You should get the following response:
       ]
     },
     {
-      "name": "オフィス",
+      "name": "Intelligence Artificielle",
       "type": "OTHER",
       "metadata": {},
-      "salience": 0.1810816,
+      "salience": 0.19215278,
       "mentions": [
         {
           "text": {
-            "content": "オフィス",
+            "content": "Intelligence Artificielle",
+            "beginOffset": -1
+          },
+          "type": "COMMON"
+        }
+      ]
+    },
+    {
+      "name": "centre",
+      "type": "LOCATION",
+      "metadata": {},
+      "salience": 0.121489875,
+      "mentions": [
+        {
+          "text": {
+            "content": "centre",
+            "beginOffset": -1
+          },
+          "type": "COMMON"
+        }
+      ]
+    },
+    {
+      "name": "recherche",
+      "type": "EVENT",
+      "metadata": {},
+      "salience": 0.11805349,
+      "mentions": [
+        {
+          "text": {
+            "content": "recherche",
             "beginOffset": -1
           },
           "type": "COMMON"
@@ -506,9 +515,11 @@ You should get the following response:
       ]
     }
   ],
-  "language": "ja"
+  "language": "fr"
 }
 ```
+
+Notice that in addition to the entity analysis, the language is correctly detected.
 
 ## Congratulations!
 

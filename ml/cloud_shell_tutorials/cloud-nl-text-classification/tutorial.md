@@ -16,16 +16,31 @@ What you'll learn:
 
 Click the **Continue** button to move to the next step.
 
+## Create a Google Cloud Platform (GCP) project if you don't have one
 
-## Create an API Key
+If you already have a Google Cloud Platform project, you can skip this step.
 
-Since we'll be using curl to send a request to the Natural Language API, we'll need to generate an API key to pass in our request URL.
+If you don't have a Google Cloud Platform (GCP) project yet, you can click this button to set one up. Be sure to sign up for the free trial when you do so. (You can also set up your project via [this link](https://cloud.google.com/free/)). 
+
+`walkthrough project-billing-setup`
+
+Once you have a GCP project created, note its name— you'll use that in the next step.
+
+## Set your project in the Cloud Shell and create an API Key
+
+Set the cloud shell to use your GCP project— whether new or existing— as follows (replacing `<project-name>` with the name of your project:
+
+```bash
+  gcloud config set project <project-name>
+```
+
+Next, since we'll be using curl to send a request to the Natural Language API, we'll need to generate an API key to pass in our request URL.
 
 > **Note**: If you've already created an API key in this project during one of the other Cloud Shell tutorials, you can just use the existing key⸺you don't need to create another one.
 
 To create an API key, navigate to:
 
-**APIs & services > Credentials**:
+**APIs & services > Credentials** in the [Cloud Console](https://console.cloud.google.com/):
 
 ![apis_and_services](https://storage.googleapis.com/aju-dev-demos-codelabs/images/apis_and_services.png)
 
