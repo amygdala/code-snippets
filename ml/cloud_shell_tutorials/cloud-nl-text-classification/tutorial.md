@@ -20,14 +20,14 @@ Click the **Continue** button to move to the next step.
 
 **If you already have a Google Cloud Platform project, you can skip this step**.
 
-If you don't have a Google Cloud Platform (GCP) project yet, create one [here](https://cloud.google.com/free/)). Be sure to sign up for free trial credits.
+If you don't have a Google Cloud Platform (GCP) project yet, create one [here](https://cloud.google.com/free/). Be sure to sign up for free trial credits.
 **Note the name of your new project** — you'll use that in the next step.
 
 Return to this tab once you're done.
 
 ## Set your project in the Cloud Shell and create an API Key
 
-Set the cloud shell to use your GCP project— whether new or existing— as follows (replacing `<project-name>` with the name of your project:
+First, run the following command to ensure that the Cloud Shell is using the correct GCP project— whether new or existing— as follows (replacing `<project-name>` with the name of your project:
 
 ```bash
   gcloud config set project <project-name>
