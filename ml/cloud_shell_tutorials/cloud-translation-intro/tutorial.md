@@ -24,7 +24,7 @@ Return to this tab once you're done.
 
 ## Set your project in the Cloud Shell and create an API Key
 
-First, run the following command to ensure that the Cloud Shell is using the correct GCP project— whether new or existing— as follows (replacing `<project-name>` with the name of your project:
+First, run the following command to ensure that the Cloud Shell is using the correct GCP project— whether new or existing— as follows (replacing `<project-name>` with the name of your project):
 
 ```bash
   gcloud config set project <project-name>
