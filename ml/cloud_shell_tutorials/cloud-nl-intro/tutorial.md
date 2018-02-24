@@ -394,7 +394,7 @@ The response should return an object like the one below for each token in the se
 * `partOfSpeech` tells us that "uses" is a verb.
 * `dependencyEdge` includes data that you can use to create a  [dependency parse tree](https://en.wikipedia.org/wiki/Parse_tree#Dependency-based_parse_trees) of the text. Essentially, this is a diagram showing how words in a sentence relate to each other. The (first part) of a dependency parse tree for the sentence above looks like this:
 
-![parse tree](https://storage.googleapis.com/aju-dev-demos-codelabs/images/hermione.png)
+![parse tree](https://storage.googleapis.com/aju-dev-demos-codelabs/images/hermione_md.png)
 
 * `lemma` is the canonical form of the word. The lemma value is useful for tracking occurrences of a word in a large piece of text over time.
 

@@ -36,7 +36,7 @@ First, run the following command to ensure that the Cloud Shell is using the cor
   gcloud config set project <project-name>
 ```
 
-Next, since we'll be using curl to send a request to the Vision API, we'll need to generate an API key to pass in our request URL.
+Next, since we'll be using curl to send a request to the ML APIs, we'll need to generate an API key to pass in our request URL.
 
 > **Note**: If you've already created an API key in this project during one of the other Cloud Shell tutorials, you can just use the existing key— you don't need to create another one.  Just be sure to set the `API_KEY` environment variable with your existing key as described below.
 
