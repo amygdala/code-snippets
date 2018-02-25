@@ -25,7 +25,7 @@ Click the **Continue** button to move to the next step.
 If you don't have a Google Cloud Platform (GCP) project yet, create one [here](https://cloud.google.com/free/). Be sure to sign up for free trial credits.
 **Note the name of your new project** — you'll use that in the next step.
 
-Return to this tab once you're done.
+Return to this window once you're done.
 
 ## Set your project in the Cloud Shell and create an API Key
 
@@ -68,7 +68,7 @@ Next, you'll enable the Natural Language API for your project, if you've not alr
 
 Click on [this link](https://console.cloud.google.com/flows/enableapi?apiid=language.googleapis.com) to enable the Natural Language API for your project.
 
-After you've enabled it, you don't need to do any further setup, as you've already set up an API key. Just return to this tab.
+After you've enabled it, you don't need to do any further setup, as you've already set up an API key. Just return to this window.
 
 Next, you'll use the Natural Language API to analyze *entities* in text.
 

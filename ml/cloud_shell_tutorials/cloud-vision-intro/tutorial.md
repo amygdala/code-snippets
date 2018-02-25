@@ -26,7 +26,7 @@ Click the **Continue** button to move to the next step.
 If you don't have a Google Cloud Platform (GCP) project yet, create one [here](https://cloud.google.com/free/). Be sure to sign up for free trial credits.
 **Note the name of your new project** — you'll use that in the next step.
 
-Return to this tab once you're done.
+Return to this window once you're done.
 
 ## Set your project in the Cloud Shell and create an API Key
 
@@ -69,7 +69,7 @@ Next, you'll enable the Vision API for your project, if you've not already done 
 
 Click on [this link](https://console.cloud.google.com/flows/enableapi?apiid=vision.googleapis.com) to enable the Vision API for your project, if you haven't already done so.
 
-After you've enabled it, you don't need to do any further setup, as you've already set up an API key. Just return to this tab.
+After you've enabled it, you don't need to do any further setup, as you've already set up an API key. Just return to this window.
 
 Next, you'll send a request to the Vision API.
 
