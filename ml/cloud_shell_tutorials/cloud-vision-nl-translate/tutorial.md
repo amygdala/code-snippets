@@ -25,7 +25,7 @@ Click the **Continue** button to move to the next step.
 If you don't have a Google Cloud Platform (GCP) project yet, create one [here](https://cloud.google.com/free/). Be sure to sign up for free trial credits.
 **Note the name of your new project** — you'll use that in the next step.
 
-Return to this tab once you're done.
+Return to this window once you're done.
 
 ## Set your project in the Cloud Shell and create an API Key
 
@@ -36,7 +36,7 @@ First, run the following command to ensure that the Cloud Shell is using the cor
   gcloud config set project <project-name>
 ```
 
-Next, since we'll be using curl to send a request to the Vision API, we'll need to generate an API key to pass in our request URL.
+Next, since we'll be using curl to send a request to the ML APIs, we'll need to generate an API key to pass in our request URL.
 
 > **Note**: If you've already created an API key in this project during one of the other Cloud Shell tutorials, you can just use the existing key— you don't need to create another one.  Just be sure to set the `API_KEY` environment variable with your existing key as described below.
 
@@ -68,7 +68,7 @@ Next, you'll enable the Vision, Translate, and Natural Language APIs for your pr
 
 Click on [this link](https://console.cloud.google.com/flows/enableapi?apiid=vision.googleapis.com,translate.googleapis.com,language.googleapis.com) to enable the Vision, Translate, and Natural Language APIs for your project.
 
-After you've enabled them, you don't need to do any further setup, as you've already set up an API key. Just return to this tab.
+After you've enabled them, you don't need to do any further setup, as you've already set up an API key. Just return to this window.
 
 Next, you'll send a request to the Cloud Vision API.
 

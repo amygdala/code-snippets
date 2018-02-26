@@ -25,7 +25,7 @@ Click the **Continue** button to move to the next step.
 If you don't have a Google Cloud Platform (GCP) project yet, create one [here](https://cloud.google.com/free/). Be sure to sign up for free trial credits.
 **Note the name of your new project** — you'll use that in the next step.
 
-Return to this tab once you're done.
+Return to this window once you're done.
 
 ## Set your project in the Cloud Shell and create an API Key
 
@@ -68,7 +68,7 @@ Next, you'll enable the Natural Language API for your project, if you've not alr
 
 Click on [this link](https://console.cloud.google.com/flows/enableapi?apiid=language.googleapis.com) to enable the Natural Language API for your project.
 
-After you've enabled it, you don't need to do any further setup, as you've already set up an API key. Just return to this tab.
+After you've enabled it, you don't need to do any further setup, as you've already set up an API key. Just return to this window.
 
 Next, you'll use the Natural Language API to analyze *entities* in text.
 
@@ -394,7 +394,7 @@ The response should return an object like the one below for each token in the se
 * `partOfSpeech` tells us that "uses" is a verb.
 * `dependencyEdge` includes data that you can use to create a  [dependency parse tree](https://en.wikipedia.org/wiki/Parse_tree#Dependency-based_parse_trees) of the text. Essentially, this is a diagram showing how words in a sentence relate to each other. The (first part) of a dependency parse tree for the sentence above looks like this:
 
-![parse tree](https://storage.googleapis.com/aju-dev-demos-codelabs/images/hermione.png)
+![parse tree](https://storage.googleapis.com/aju-dev-demos-codelabs/images/hermione_md.png)
 
 * `lemma` is the canonical form of the word. The lemma value is useful for tracking occurrences of a word in a large piece of text over time.
 
