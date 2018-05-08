@@ -87,7 +87,7 @@ We'll send a larger version of this image (of donuts) to the Vision API:
 ![donuts](https://storage.googleapis.com/aju-dev-demos-codelabs/images/vision_donuts_sm.jpeg)
 
 Bring up the `request.json` file
-`walkthrough editor-open-file "code-snippets/ml/cloud_shell_tutorials/cloud-vision-intro/request.json" "in the text editor"`.
+<walkthrough-editor-open-file filePath="code-snippets/ml/cloud_shell_tutorials/cloud-vision-intro/request.json">in the text editor</walkthrough-editor-open-file>
 
 It should look like this:
 
@@ -192,7 +192,7 @@ In addition to getting labels on what's in our image, the Vision API can also se
 To try out web detection, we'll use the same image of beignets from above so all we need to change is one line in our request file (you can also venture out into the unknown and use an entirely different image). Under the features list, we'll just change "type" from `LABEL_DETECTION` to `WEB_DETECTION`.
 
 Bring up the `request2.json` file
-`walkthrough editor-open-file "code-snippets/ml/cloud_shell_tutorials/cloud-vision-intro/request2.json" "in the text editor"`.
+<walkthrough-editor-open-file filePath="code-snippets/ml/cloud_shell_tutorials/cloud-vision-intro/request2.json">in the text editor</walkthrough-editor-open-file>
 
 The request should look like this, with just the "type" different from the previous request:
 
@@ -291,7 +291,7 @@ To use these two new methods, let's use a new image with faces and landmarks:
 Next, we'll update our json request to include the URL of the new image, and to use face and landmark detection instead of label detection.
 
 Bring up the `request3.json` file
-`walkthrough editor-open-file "code-snippets/ml/cloud_shell_tutorials/cloud-vision-intro/request3.json" "in the text editor"`.
+<walkthrough-editor-open-file filePath="code-snippets/ml/cloud_shell_tutorials/cloud-vision-intro/request3.json">in the text editor</walkthrough-editor-open-file>
 
 It contains the following request. Note the 'types' specified:
 
@@ -419,8 +419,7 @@ We've looked at the Vision API's label, face, and landmark detection methods, bu
 
 ## Congratulations!
 
-`walkthrough conclusion-trophy`
-
+<walkthrough-conclusion-trophy></walkthrough-conclusion-trophy>
 
 You've learned how to analyze images with the Vision API. In this example you passed the API the URLs of your images. Alternatively, you can pass a base64 encoded string of your image.
 
