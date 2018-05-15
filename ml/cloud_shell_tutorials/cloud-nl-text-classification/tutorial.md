@@ -87,7 +87,7 @@ We'll start by classifying a single article, and then we'll see how we can use t
 > *A Smoky Lobster Salad With a Tapa Twist. This spin on the Spanish pulpo a la gallega skips the octopus, but keeps the sea salt, olive oil, pimentón and boiled potatoes.*
 
 Bring up the `request.json` file
-`walkthrough editor-open-file "code-snippets/ml/cloud_shell_tutorials/cloud-nl-text-classification/request.json" "in the text editor"`.
+<walkthrough-editor-open-file filePath="code-snippets/ml/cloud_shell_tutorials/cloud-nl-text-classification/request.json">in the text editor</walkthrough-editor-open-file>.
 
 It should look like this:
 
@@ -185,16 +185,17 @@ export PROJECT=<your_project_name>
 Then run the following commands from Cloud Shell to create a service account:
 
 ```bash
-gcloud iam service-accounts create my-account --display-name my-account
-gcloud projects add-iam-policy-binding $PROJECT --member=serviceAccount:my-account@$PROJECT.iam.gserviceaccount.com --role=roles/bigquery.admin
-gcloud iam service-accounts keys create key.json --iam-account=my-account@$PROJECT.iam.gserviceaccount.com
+gcloud iam service-accounts create my-bqsvc-account --display-name my-bqsvc-account
+gcloud projects add-iam-policy-binding $PROJECT --member=serviceAccount:my-bqsvc-account@$PROJECT.iam.gserviceaccount.com --role=roles/bigquery.admin
+gcloud iam service-accounts keys create key.json --iam-account=my-bqsvc-account@$PROJECT.iam.gserviceaccount.com
 export GOOGLE_APPLICATION_CREDENTIALS=key.json
 ```
 
 Now we're ready to send the text data to the NL API. To do that we'll use a Python script using the Python module for Google Cloud (note that you could accomplish the same thing from many other languages; there are many different cloud  [client libraries](https://cloud.google.com/apis/docs/cloud-client-libraries)).
 
 Bring up the `classify-text.py` file
-`walkthrough editor-open-file "code-snippets/ml/cloud_shell_tutorials/cloud-nl-text-classification/classify-text.py" "in the text editor"`, and in the code, **replace `YOUR_PROJECT`** with the name of your project.
+<walkthrough-editor-open-file filePath="code-snippets/ml/cloud_shell_tutorials/cloud-nl-text-classification/classify-text.py">in the text editor</walkthrough-editor-open-file>,
+and in the code, **replace `YOUR_PROJECT`** with the name of your project.
 
 The file looks like this:
 
@@ -317,7 +318,7 @@ To perform more queries on your data, explore the [BigQuery documentation](https
 
 ## Congratulations!
 
-`walkthrough conclusion-trophy`
+<walkthrough-conclusion-trophy></walkthrough-conclusion-trophy>
 
 You've learned how to use the Natural Language API's text classification method to classify news articles. You started by classifying one article, and then learned how to classify and analyze a large news dataset using the NL API with BigQuery.
 

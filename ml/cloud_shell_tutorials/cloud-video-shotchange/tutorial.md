@@ -57,7 +57,7 @@ Next, you'll create a service account, in order to allow our Python script to au
 First, change to this directory in the cloud shell:
 
 ```bash
-cd ~/code-snippets/ml/cloud_shell_tutorials/cloud-video-shotchange
+cd ml/cloud_shell_tutorials/cloud-video-shotchange
 ```
 
 You'll remain in this directory for the rest of the tutorial.
@@ -69,8 +69,8 @@ Here, we'll create the service account from the command line, though it's also p
 Run the following commands from Cloud Shell to create a service account and set the `GOOGLE_APPLICATION_CREDENTIALS` environment variable to the downloaded service account key file. Note that the `PROJECT` environment variable must be set, as done in the previous section.
 
 ```bash
-gcloud iam service-accounts create my-account --display-name my-account
-gcloud iam service-accounts keys create key.json --iam-account=my-account@$PROJECT.iam.gserviceaccount.com
+gcloud iam service-accounts create my-svc-account --display-name my-svc-account
+gcloud iam service-accounts keys create key.json --iam-account=my-svc-account@$PROJECT.iam.gserviceaccount.com
 export GOOGLE_APPLICATION_CREDENTIALS=key.json
 ```
 
@@ -85,14 +85,10 @@ cat key.json
 ## Run a Python script to analyze video shot changes
 
 We'll run a script that uses the Video Intelligence API to analyze shot changes in a video.
-Install the python library requirements for the example:
-
-```bash
-pip install --upgrade -r requirements.txt
-```
+We'll use the `google-cloud-videointelligence` python client library, which is already installed in the cloud shell.
 
 Bring up the `shotchange.py` file
-`walkthrough editor-open-file "code-snippets/ml/cloud_shell_tutorials/cloud-video-shotchange/shotchange.py" "in the text editor"`.
+<walkthrough-editor-open-file filePath="code-snippets/ml/cloud_shell_tutorials/cloud-video-shotchange/shotchange.py">in the text editor</walkthrough-editor-open-file>.
 
 It should look like this (a few comments have been removed for conciseness):
 
@@ -218,7 +214,7 @@ for i, shot in enumerate(result.annotation_results[0].shot_annotations):
 
 ## Congratulations!
 
-`walkthrough conclusion-trophy`
+<walkthrough-conclusion-trophy></walkthrough-conclusion-trophy>
 
 
 You've learned how to make a request to the Video Intelligence API and parse the results.
