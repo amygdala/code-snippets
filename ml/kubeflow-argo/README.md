@@ -1,5 +1,28 @@
 
+
 # Examples of Kubeflow + Argo for ML workflow
+
+
+  - [Installation and setup](#installation-and-setup)
+    - [Create a GCP project and enable the necessary APIs](#create-a-gcp-project-and-enable-the-necessary-apis)
+    - [Install the gcloud sdk (or use the Cloud Shell)](#install-the-gcloud-sdk-or-use-the-cloud-shell)
+    - [Set up a Kubernetes Engine (GKE) cluster](#set-up-a-kubernetes-engine-gke-cluster)
+    - [Install ksonnet](#install-ksonnet)
+    - [Install Kubeflow + Argo on the GKE cluster](#install-kubeflow--argo-on-the-gke-cluster)
+    - [Create a Google Cloud Storage (GCS) bucket](#create-a-google-cloud-storage-gcs-bucket)
+  - [Running the examples](#running-the-examples)
+    - [Example workflow 1](#example-workflow-1)
+      - [View the results of model analysis in a Jupyter notebook](#view-the-results-of-model-analysis-in-a-jupyter-notebook)
+      - [Use your models for prediction with Cloud ML Engine Online Prediction](#use-your-models-for-prediction-with-cloud-ml-engine-online-prediction)
+      - [Access the TF-serving endpoints for your learned model](#access-the-tf-serving-endpoints-for-your-learned-model)
+    - [Example workflow 2](#example-workflow-2)
+      - [View the results of model analysis in a Jupyter notebook](#view-the-results-of-model-analysis-in-a-jupyter-notebook-1)
+      - [Use your models for prediction with Cloud ML Engine Online Prediction](#use-your-models-for-prediction-with-cloud-ml-engine-online-prediction-1)
+  - [Navigating the example code](#navigating-the-example-code)
+  - [Cleanup](#cleanup)
+    - [Delete the completed pods for a workflow](#delete-the-completed-pods-for-a-workflow)
+    - [Take down the TF-serving endpoints](#take-down-the-tf-serving-endpoints)
+  - [Summary](#summary)
 
 [Kubeflow](https://www.kubeflow.org/) is an OSS project to support a machine learning stack on Kubernetes, towards making deployments of ML workflows on Kubernetes simple, portable and scalable.
 
@@ -7,7 +30,7 @@ This directory contains some ML workflow examples that run on Kubeflow plus [Arg
 
 The examples highlight how Kubeflow can help support portability, composability and reproducibility, scalability, and visualization and collaboration in your ML lifecycle; and make it easier to support hybrid ML solutions.
 
-The examples include use of [TensorFlow Transform](https://github.com/tensorflow/transform) for preprocessing and to avoid training/serving skew; Kubeflow's tf-jobs CRD for supporting distributed training; and [TFMA](https://github.com/tensorflow/model-analysis/) for model analysis.
+The examples include use of [TensorFlow Transform](https://github.com/tensorflow/transform) (TFT) for preprocessing and to avoid training/serving skew; Kubeflow's tf-jobs CRD for supporting distributed training; and [TFMA](https://github.com/tensorflow/model-analysis/) for model analysis.
 The workflows also include deployment of the trained models to both
 [Cloud ML Engine Online Prediction](https://cloud.google.com/ml-engine/docs/tensorflow/prediction-overview);
 and to [TensorFlow Serving](https://github.com/tensorflow/serving) via Kubeflow.
@@ -35,7 +58,7 @@ Or, if you don't want to install `gcloud` locally, you can bring up the [Cloud S
 
 ### Set up a Kubernetes Engine (GKE) cluster
 
-Visit the [cloud console](https://console.cloud.google.com/kubernetes) for your project and create a GKE cluster. Give it at least 3 nodes.
+Visit the [Cloud Console](https://console.cloud.google.com/kubernetes) for your project and create a GKE cluster. Give it at least 3 nodes.
 
 <a href="https://storage.googleapis.com/amy-jo/images/kf-argo/gke_setup1.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf-argo/gke_setup1.png" width=600/></a>
 
@@ -43,8 +66,10 @@ Click The '__Advanced edit__' button, and under **Access scopes**, click 'Allow 
 
 <figure>
 <a href="https://storage.googleapis.com/amy-jo/images/kf-argo/gke_setup2.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf-argo/gke_setup2.png" /></a>
-<figcaption>_Set up your GKE cluster to allow full access to all Cloud APIs._</figcaption>
+<figcaption><br/><i>Set up your GKE cluster to allow full access to all Cloud APIs.</i></figcaption>
 </figure>
+
+<p></p>
 
 After your GKE cluster is up and running, click the "Connect" button
 [to the right of the cluster](https://console.cloud.google.com/kubernetes) to set your `kubectl` context to the new cluster.  The gcloud command will look like the following, replacing `<your cluster zone>`, `<your cluster name>`,
@@ -94,14 +119,14 @@ So we'll build but not deploy the ksonnet app, edit the tf-jobs API info, then d
 
 First build the ks app:
 
-```
+```sh
 export KUBEFLOW_VERSION=0.2.2; export KUBEFLOW_DEPLOY=false
 curl https://raw.githubusercontent.com/kubeflow/kubeflow/v${KUBEFLOW_VERSION}/scripts/deploy.sh | bash
 ```
 
 Then do the actual deployment as follows.  If you built into a different directory than `kubeflow_ks_app`, change to that subdir instead.
 
-```
+```sh
 cd kubeflow_ks_app
 ks param set kubeflow-core tfJobVersion v1alpha1
 ks apply default
@@ -122,14 +147,14 @@ Change to the [`samples/kubeflow-tf`](samples/kubeflow-tf) directory to run the 
 
 For both workflows, you can use the Argo UI to track the progress of a workflow over time, e.g.:
 
-```
+```sh
 kubectl port-forward $(kubectl get pods -n default -l app=argo-ui -o jsonpath='{.items[0].metadata.name}') -n default 8001:8001
 ```
 See the Argo documentation for more.
 
 You can also use `kubectl` to watch the pods created in the various stages of the workflows.
 
-```
+```sh
 kubectl get pods -o wide --watch=true
 ```
 
@@ -137,23 +162,44 @@ In particular, this lets you monitor creation and status of the pods used for Ku
 
 ### Example workflow 1
 
-Run the first example [as described here](samples/kubeflow-tf/README.md).
-
-<2 paths, feature experimentation via passing in the preprocessing function.... deployment to CMLE as well as TF-serving..>
+Run the first example [as described here](samples/kubeflow-tf/README.md#example-workflow-1).
+This example illustrates how you can use a ML workflow to experiment with
+[TFT](https://github.com/tensorflow/transform)-based feature engineering, and how you can serve your trained model from both on-prem and cloud endpoints.
 
 <figure>
 <a href="https://storage.googleapis.com/amy-jo/images/kf-argo/argo_workflow1.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf-argo/argo_workflow1.png" width="90%"/></a>
-<figcaption>_..._</figcaption>
+<figcaption><br><i>A workflow for TFT-based feature engineering experimentation</i></figcaption>
 </figure>
 
+<p></p>
+
+The workflow runs two paths concurrently, passing a different TFT preprocessing function to each ([`preprocessing.py`](components/dataflow/tft/preprocessing.py) vs [`preprocessing2.py`](components/dataflow/tft/preprocessing.py)).
+When the training is finished, both models are deployed to both CMLE and TF-Serving.  Additionally, the the models are analyzed using [TFMA](https://github.com/tensorflow/model-analysis/), as described below.
 
 #### View the results of model analysis in a Jupyter notebook
 
-One of the workflow steps runs TensorFlow Model Analysis (TFMA) on the trained model, using a given [specification of how to slice the data](xxx).  You can visualize the results via a Jupyter notebook. Kubeflow's JupyterHub installation makes this easy to do, via a `port-forward` to your GKE cluster. The necessary libraries and visualization widgets are already installed.
+One of the workflow steps runs TensorFlow Model Analysis (TFMA) on the trained model, using a given [specification of how to slice the data](components/dataflow/tfma/model_analysis-taxi.py#L45).  You can visualize the results via a Jupyter notebook.
+You can do this in a local notebook (see the TFMA docs for installation).
+
+Or, kubeflow's JupyterHub installation makes this easy to do, via a `port-forward` to your GKE cluster. The necessary libraries and visualization widgets are already installed.
 See the "To connect to your Jupyter Notebook locally:" section in this [Kubeflow guide](https://www.kubeflow.org/docs/guides/components/jupyter/) for more info.
 
-<point to notebook in the repo...>
-<this notebook also... CMLE OP..>
+Load and run the [`tfma_expers.ipynb`](components/dataflow/tfma/tfma_expers.ipynb) notebook to explore the results of the TFMA analysis.
+
+#### Use your models for prediction with Cloud ML Engine Online Prediction
+
+As part of the workflow, your models were deployed to Cloud ML Engine Online Prediction. The model name is `taxifare`, and the version names are derived from the workflow name.
+
+You can view the versions of the `taxifare` model in the Cloud Console:
+[https://console.cloud.google.com/mlengine/models](https://console.cloud.google.com/mlengine/models).
+
+Make a prediction using one of the deployed model versions as follows.  Change to the [`components/cmle`](components/cmle) directory, and run the following command, replacing `<YOUR_PROJECT_NAME>` and `<MODEL_VERSION_NAME>`.
+
+```sh
+gcloud ml-engine predict --model=taxifare --json-instances=temp_input2.json --project=<YOUR_PROJECT_NAME> \
+ --version=<MODEL_VERSION_NAME>
+```
+You can set any of these model versions to be the default. For the default model, the request does not need to include the `--version` arg.
 
 #### Access the TF-serving endpoints for your learned model
 
@@ -163,7 +209,7 @@ To make it easy to demo, the TF-serving deployments use a Kubernetes service of 
 
 View the TF-serving endpoint services by:
 
-```
+```sh
 kubectl get services
 ```
 
@@ -172,7 +218,7 @@ Look for the services with prefix `preproc-train-deploy2-analyze`, and note thei
 You can make requests against these endpoints using this script: [`chicago_taxi_client.py`](components/kubeflow/tf-serving/chicago_taxi_client.py).
 Change to the `components/kubeflow/tf-serving` directory and run the script as follows, replacing the following with your external IP address and service name. You'll need to have `tensorflow_serving` installed to do this.
 
-```
+```sh
 python chicago_taxi_client.py \
   --num_examples=1 \
   --examples_file='../taxi_model/data/eval/data.csv' \
@@ -184,23 +230,28 @@ When you're done experimenting, you'll probably want to take down the tf-serving
 
 ### Example workflow 2
 
-<...option to grab data from bigquery as part of preprocessing.. evaluate 2 models (built with diff input datasets) against three different eval files...>
+This workflow shows how you might use TFMA to investigate relative accuracies of models trained on different datasets, evaluating against fresh data. As part of the preprocessing step, it pulls data directly from the source [BigQuery Chicago taxi dataset](https://cloud.google.com/bigquery/public-data/chicago-taxi), with differing min and max time boundaries, effectively training on 'recent' data vs a batch that includes older data.  Then, it runs TFMA analysis on both learned models, using 'recent' data for evaluation.  (It also evaluates one of the learned models against an older eval dataset). As with Workflow 1 above, it also deploys the trained models to Cloud ML Engine.
 
-Run the second example [as described here](samples/kubeflow-tf/README.md).
+Run the second example [as described here](samples/kubeflow-tf/README.md#example-workflow-2).
 
 <figure>
 <a href="https://storage.googleapis.com/amy-jo/images/kf-argo/argo_workflow2.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf-argo/argo_workflow2.png" width="90%"/></a>
-<figcaption>_...._</figcaption>
+<figcaption><br/><i>Comparing models trained on datasets that cover differing time intervals</i></figcaption>
 </figure>
+
+<p></p>
 
 #### View the results of model analysis in a Jupyter notebook
 
-As above for Example 1, you can view the
+As for Workflow 1, you can view the results of the TFMA analysis in a Jupyter notebook.
+See [above](#view-the-results-of-model-analysis-in-a-jupyter-notebook) for details.
 
 
-### Using Cloud Dataflow for TFT and/or TFMA
+#### Use your models for prediction with Cloud ML Engine Online Prediction
 
-... <slow to start up, so for our small datasets is slower, but this will be amortized for larger jobs that benefit from dataflows ability to scale out automatically...>
+As part of the workflow, your trained models were deployed to Cloud ML Engine Online Prediction. As with Workflow 1, you can use these models for prediction.
+See [above](#use-your-models-for-prediction-with-cloud-ml-engine-online-prediction) for details.
+
 
 ## Navigating the example code
 
@@ -208,22 +259,43 @@ The code is organized into two subdirectories.
 
 - [`components`](components) holds the implementation of the various Argo steps used in the workflows. These steps are container-based, so for each such step, we need to provide both the source code used in the container, and the specification of how to build the container.
 
-
 - [`samples`](samples) holds the Argo workflow definitions.
-We link to prebuilt containers so that the examples are easy to run, but if you want to do any customization, you can build your own component containers and use those instead.
+The definitions use prebuilt containers so that the examples are easy to run, but if you want to do any customization, you can build your own component containers and use those instead.
 
 ## Cleanup
 
-...
+When you're done, __delete your GKE cluster so that you don't incur extra charges__. An easy way to do this is via the
+[Cloud Console](https://console.cloud.google.com/kubernetes).
 
-### Delete the completed argo pods
+
+If you're running many workflows, you might also want to do some finer-grained cleanup.
+
+### Delete the completed pods for a workflow
+
+The completed Argo pods aren't deleted by default -- this allows easier debugging, since you can view their logs via
+`kubectl logs <podname> main`.
+To delete the completed Kubernetes pods for a given Argo workflow, run the following, replacing `<WORKFLOW_NAME>` with the name of the workflow:
+
+```sh
+argo delete <WORKFLOW_NAME>
+```
 
 ### Take down the TF-serving endpoints
 
-### Delete your GKE cluster
+When you're done running the examples, you can take down your TF-serving endpoints by deleting their Kubernetes services & deployments. The default quota of external IP addresses for a project is quite small, so you'll probably want to do this.
+
+Run:
+
+```
+kubectl get services
+```
+
+Look for the services with prefix `preproc-train-deploy2-analyze` and delete those via `kubectl get services ...`.
+
+Then look for the related deployments (`kubectl get deployments`) and delete those as well (`kubectl delete deployments ...`).
 
 ## Summary
 
-[add some of the points from the slide deck?...]
+[TBD..]
 
 

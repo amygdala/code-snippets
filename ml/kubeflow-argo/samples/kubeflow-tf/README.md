@@ -1,21 +1,26 @@
 
 # Run the example workflows
 
-See the top-level [README](../../README.md) for these examples for more context and demo setup instructions.
+See the top-level [`README.md`](../../README.md) for these examples for more context and demo setup instructions.
 
 Run the following from the command line, after editing appropriately for your project and GCS bucket.
 
 ## Example workflow 1
 
-<2 paths, feature experimentation..>
+This example illustrates how you can use a ML workflow to experiment with [TFT](https://github.com/tensorflow/transform)-based feature engineering, and how you can serve your trained model from both on-prem and cloud endpoints.
 
 <figure>
 <a href="https://storage.googleapis.com/amy-jo/images/kf-argo/argo_workflow1.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf-argo/argo_workflow1.png" width="90%"/></a>
-<figcaption>_..._</figcaption>
+<figcaption><br/><i>A workflow for TFT-based feature engineering experimentation</i></figcaption>
 </figure>
 
+<p></p>
+
 Before running, replace `<YOUR_BUCKET>` and `<YOUR_PROJECT>` with your info.
+
 You can set `preprocess-mode` and `tfma-mode` to either `local` or `cloud`, to run the [Apache Beam](https://beam.apache.org/) pipelines either locally (on your GKE cluster), or via [Dataflow](https://cloud.google.com/dataflow).
+(Running the pipelines on the Dataflow service will actually take a bit longer than running locally for these relatively small jobs, since since it includes time starting up the Dataflow workers.  If you were to scale out to large datasets, this would not be the case).
+
 
 ```
 argo submit workflow1.yaml \
@@ -38,14 +43,20 @@ argo submit workflow1.yaml \
 ## Example workflow 2
 
 <option to grab data from bigquery as part of preprocessing..>
+<old-eval-model dir: 2015-08-01 to 2015-09-01>
 
 <figure>
 <a href="https://storage.googleapis.com/amy-jo/images/kf-argo/argo_workflow2.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf-argo/argo_workflow2.png" width="90%"/></a>
-<figcaption>_..._</figcaption>
+
+<figcaption><br/><i>Comparing models trained on datasets that cover differing time intervals</i></figcaption>
 </figure>
 
+<p></p>
+
 Before running, replace `<YOUR_BUCKET>` and `<YOUR_PROJECT>` with your info.
+
 You can set `preprocess-mode` and `tfma-mode` to either `local` or `cloud`, to run the [Apache Beam](https://beam.apache.org/) pipelines either locally (on your GKE cluster), or via [Dataflow](https://cloud.google.com/dataflow).
+(Running the pipelines on the Dataflow service will actually take a bit longer than running locally for these relatively small jobs, since since it includes time starting up the Dataflow workers.  If you were to scale out to large datasets, this would not be the case).
 
 
 ```
