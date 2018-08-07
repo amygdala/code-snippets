@@ -21,7 +21,7 @@ else
   PROJECT_ID=$1
 fi
 
-#build base image
+# build base image
 pushd ../base
 ./build.sh
 popd

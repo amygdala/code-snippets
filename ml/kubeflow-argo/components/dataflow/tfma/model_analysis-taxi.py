@@ -89,7 +89,13 @@ def run_tfma(slice_spec, eval_model_base_dir, tfma_run_dir, input_csv,
         eval_model_dir = os.path.join(
             eval_model_base_dir, file_io.list_directory(eval_model_base_dir)[-1])
         print("eval model dir: %s" % eval_model_dir)
-        break
+        if 'temp' not in eval_model_dir:
+          break
+        else:
+          print("Sleeping %s seconds to sync with GCS..." % sleeptime)
+          time.sleep(sleeptime)
+          retries += 1
+          sleeptime *= 2
       except Exception as e:
         print(e)
         print("Sleeping %s seconds to sync with GCS..." % sleeptime)

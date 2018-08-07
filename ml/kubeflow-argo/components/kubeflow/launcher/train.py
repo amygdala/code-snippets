@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Launch a potentially distributed TensorFlow training job using the Kubeflow tf-jobs API."""
+
 
 import argparse
 import datetime
@@ -31,15 +33,15 @@ def main(argv=None):
   parser = argparse.ArgumentParser(description='ML Trainer')
   parser.add_argument(
       '--working-dir',
-      help='...',
+      help='Training job working directory.',
       required=True)
   parser.add_argument(
       '--train-files-dir',
-      help='GCS or local paths to training data',
+      help='Path to training data',
       required=True)
   parser.add_argument(
       '--train-files-prefix',
-      help='...',
+      help='The prefix of the training input files.',
       required=True)
 
   parser.add_argument(
@@ -57,12 +59,12 @@ def main(argv=None):
 
   parser.add_argument(
       '--eval-files-dir',
-      help='GCS or local paths to evaluation data',
+      help='Path to evaluation data',
       required=True
   )
   parser.add_argument(
       '--eval-files-prefix',
-      help='...',
+      help='The prefix of the eval input files.',
       required=True)
 
   # Training arguments
@@ -145,6 +147,7 @@ def main(argv=None):
         spec['replicas'] = workers
       elif spec['tfReplicaType'] == 'PS':
         spec['replicas'] = pss
+      # add the args to be passed to the training module.
       spec['template']['spec']['containers'][0]['command'].extend(args_list)
   else:
     # No workers and pss set. Remove the sections because setting replicas=0 doesn't work.
@@ -153,6 +156,7 @@ def main(argv=None):
                                        if r['tfReplicaType'] not in ['WORKER', 'PS']]
     # Set master parameters. master is the only item in replicaSpecs in this case.
     master_spec = content['spec']['replicaSpecs'][0]
+    # add the args to be passed to the training module.
     master_spec['template']['spec']['containers'][0]['command'].extend(args_list)
 
   with open('train.yaml', 'w') as f:
@@ -180,7 +184,7 @@ def main(argv=None):
     status = parts[1].strip()
     if status == 'Done':
       # TODO: status == 'Done' may not always indicate success.
-      # Switching to K8s API to handle errors.
+      # Switch to K8s API.
       logging.info('Training done.')
       break
     elif status == 'Failed':

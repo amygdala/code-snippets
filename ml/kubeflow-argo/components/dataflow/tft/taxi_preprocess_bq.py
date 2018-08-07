@@ -269,17 +269,17 @@ def main():
   parser.add_argument('--stage',
                       choices=['train', 'eval'],
                       required=True,
-                      help='...')
+                      help='Whether this is training or eval data.')
   parser.add_argument('--setup_file',
                       type=str,
                       required=True,
                       help='Path to setup.py file.')
   parser.add_argument('--ts1',
                       type=str,
-                      help='...')
+                      help="When generating data via a BigQuery query, the lower bound on 'trip_start_timestamp'")
   parser.add_argument('--ts2',
                       type=str,
-                      help='...')
+                      help="When generating data via a BigQuery query, the upper bound on 'trip_start_timestamp'")
   parser.add_argument('--preprocessing_module',
                       type=str,
                       required=False,

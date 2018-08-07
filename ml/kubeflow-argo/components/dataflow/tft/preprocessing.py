@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Preprocessor applying tf.transform to the chicago_taxi data."""
+"""Preprocessing function, for applying tf.transform to the chicago_taxi data."""
 
 from __future__ import absolute_import
 from __future__ import division

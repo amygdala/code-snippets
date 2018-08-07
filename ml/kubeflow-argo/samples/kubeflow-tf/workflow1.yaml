@@ -17,7 +17,6 @@ spec:
       - name: train-steps
         value: 10000
       - name: project
-        value: aju-dev-demos
       - name: working-dir
       - name: tft-setup-file
         value: "/ml/transform/setup.py"
