@@ -1,7 +1,7 @@
 
 # Run the example workflows
 
-See the top-level [`README.md`](../../README.md) for these examples for more context and demo setup instructions.
+See the top-level [`README.md`](../../README.md) for more info on what these examples do as well as setup instructions.
 
 Run the following from the command line, after editing appropriately for your project and GCS bucket.
 

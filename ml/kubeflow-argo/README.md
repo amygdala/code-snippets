@@ -24,9 +24,10 @@
     - [Take down the TF-serving endpoints](#take-down-the-tf-serving-endpoints)
   - [Summary](#summary)
 
-[Kubeflow](https://www.kubeflow.org/) is an OSS project to support a machine learning stack on Kubernetes, towards making deployments of ML workflows on Kubernetes simple, portable and scalable.
+[Kubeflow](https://www.kubeflow.org/) is an OSS project to support a machine learning stack on Kubernetes, to make deployments of ML workflows on Kubernetes simple, portable and scalable.
 
-This directory contains some ML workflow examples that run on Kubeflow plus [Argo](https://github.com/argoproj/argo).
+This directory contains some ML workflow examples that run on Kubeflow plus
+[Argo](https://github.com/argoproj/argo) (a container-native workflow framework for Kubernetes).
 
 The examples highlight how Kubeflow can help support portability, composability and reproducibility, scalability, and visualization and collaboration in your ML lifecycle; and make it easier to support hybrid ML solutions.
 
@@ -37,7 +38,7 @@ and to [TensorFlow Serving](https://github.com/tensorflow/serving) via Kubeflow.
 
 ## Installation and setup
 
-The examples require a Google Cloud Platform (GCP) account and project, a Google Kubernetes Engine (GKE) cluster running Kubeflow and Argo.
+The examples require a Google Cloud Platform (GCP) account and project, and a Google Kubernetes Engine (GKE) cluster running Kubeflow and Argo.
 (It's not necessary that Kubeflow be run on GKE, but it would require some additional credentials setup to run these examples elsewhere).
 
 You'll also either need [gcloud](https://cloud.google.com/sdk/) installed on your laptop; or alternately you can run gcloud in the [Cloud Shell](https://cloud.google.com/shell/docs/) via the GCP [Cloud Console](https://console.cloud.google.com).
@@ -48,7 +49,7 @@ If you don't have a Google Cloud Platform (GCP) account yet, create one [here](h
 
 Then, [create a GCP Project](https://console.cloud.google.com/) if you don't have one.
 
-Then, __[enable](https://support.google.com/cloud/answer/6158841?hl=en) the following APIs__ for your project: Dataflow, BigQuery, Cloud Machine Learning Engine, and Kubernetes Engine. (You don't need to create any credentials for these examples, as we'll set up a Kubernetes Engine (GKE) cluster with sufficient access).
+Then, __[enable](https://support.google.com/cloud/answer/6158841?hl=en) the following APIs__ for your project: Dataflow, BigQuery, Cloud Machine Learning Engine, and Kubernetes Engine. (You don't need to create any credentials for these APIs, as we'll set up a Kubernetes Engine (GKE) cluster with sufficient access).
 
 ### Install the gcloud sdk (or use the Cloud Shell)
 
@@ -62,7 +63,7 @@ Visit the [Cloud Console](https://console.cloud.google.com/kubernetes) for your 
 
 <a href="https://storage.googleapis.com/amy-jo/images/kf-argo/gke_setup1.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf-argo/gke_setup1.png" width=600/></a>
 
-Click The '__Advanced edit__' button, and under **Access scopes**, click 'Allow full access to all Cloud APIs'. (You can also enable autoscaling in this panel).
+Click The '__Advanced edit__' button, and under **Access scopes**, click 'Allow full access to all Cloud APIs'. (You can also enable autoscaling in this panel if you want).
 
 <figure>
 <a href="https://storage.googleapis.com/amy-jo/images/kf-argo/gke_setup2.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf-argo/gke_setup2.png" /></a>
@@ -72,16 +73,16 @@ Click The '__Advanced edit__' button, and under **Access scopes**, click 'Allow 
 <p></p>
 
 After your GKE cluster is up and running, click the "Connect" button
-[to the right of the cluster](https://console.cloud.google.com/kubernetes) to set your `kubectl` context to the new cluster.  The gcloud command will look like the following, replacing `<your cluster zone>`, `<your cluster name>`,
+[to the right of the cluster](https://console.cloud.google.com/kubernetes) in the Console, to set your `kubectl` context to the new cluster.  The gcloud command will look like the following, replacing `<your cluster zone>`, `<your cluster name>`,
 and `<your project>` with the correct zone, cluster name, and project name.
 
-```
+```sh
 gcloud container clusters get-credentials <your cluster name> --zone <your cluster zone> --project
 ```
 
 Then run the following command, replacing `<your gcp account email>` with the email associated with your GCP project.
 
-```
+```sh
 kubectl create clusterrolebinding default-admin --clusterrole=cluster-admin --user=<your gcp account email>
 ```
 
@@ -91,13 +92,13 @@ You'll first need to [install ksonnet](https://github.com/ksonnet/ksonnet#instal
 
 To install on Cloud Shell or a local Linux machine, set this environment variable:
 
-```
+```sh
 export KS_VER=ks_0.11.0_linux_amd64
 ```
 
 Then download and unpack the appropriate binary, and add it to your $PATH:
 
-```
+```sh
 wget -O /tmp/$KS_VER.tar.gz https://github.com/ksonnet/ksonnet/releases/download/v0.11.0/$KS_VER.tar.gz
 
 mkdir -p ${HOME}/bin
@@ -108,29 +109,32 @@ export PATH=$PATH:${HOME}/bin/$KS_VER
 
 ### Install Kubeflow + Argo on the GKE cluster
 
-Now you're ready to install Kubeflow and Argo. The order doesn't matter.
+Now you're ready to install Kubeflow and Argo.
 
 Install Argo as described [here](https://github.com/argoproj/argo/blob/master/demo.md).
 
 Then install Kubeflow. These instructions are for version 0.2.2.
 We're following nearly the same process as described in the [quick start](https://www.kubeflow.org/docs/started/getting-started#quick-start), but we need to do an extra step.
 The example code uses the tf-jobs API `v1alpha1`, which is not the 0.2.2 default.
-So we'll build but not deploy the ksonnet app, edit the tf-jobs API info, then deploy.
+So we'll build but not deploy the ksonnet app, edit the tf-jobs API info, _then_ deploy.
 
-First build the ks app:
+First build the ksonnet app:
 
 ```sh
 export KUBEFLOW_VERSION=0.2.2; export KUBEFLOW_DEPLOY=false
 curl https://raw.githubusercontent.com/kubeflow/kubeflow/v${KUBEFLOW_VERSION}/scripts/deploy.sh | bash
 ```
 
-Then do the actual deployment as follows.  If you built into a different directory than `kubeflow_ks_app`, change to that subdir instead.
+Then do the actual deployment as follows.  If you generated your build into a different directory than
+`kubeflow_ks_app`, change to that subdir instead.
 
 ```sh
 cd kubeflow_ks_app
 ks param set kubeflow-core tfJobVersion v1alpha1
 ks apply default
 ```
+
+(If you see errors, double check that you've installed ksonnet).
 
 ### Create a Google Cloud Storage (GCS) bucket
 
@@ -140,7 +144,7 @@ Your ML workflow will need access to a GCS bucket. Create one as [described here
 
 There are two examples. Both revolve around a TensorFlow 'taxi fare tip prediction' model, with data pulled from a [public BigqQery dataset of Chicago taxi trips](https://cloud.google.com/bigquery/public-data/chicago-taxi).
 
-Both examples use [TFT](https://github.com/tensorflow/transform) for data preprocessing and [TFMA](https://github.com/tensorflow/model-analysis/) for model analysis (either can be run via local [Apache Beam](https://beam.apache.org/), or via [Dataflow](https://cloud.google.com/dataflow)); do distributed training via the Kubeflow tf-jobs CRD; and deploy to the Cloud ML Engine Online Prediction service.
+Both examples use [TFT](https://github.com/tensorflow/transform) for data preprocessing and [TFMA](https://github.com/tensorflow/model-analysis/) for model analysis (either can be run via local [Apache Beam](https://beam.apache.org/), or via [Dataflow](https://cloud.google.com/dataflow)); do distributed training via the Kubeflow tf-jobs [custom resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/); and deploy to the Cloud ML Engine Online Prediction service.
 The first example also includes use of [TF-Serving](https://github.com/tensorflow/serving) via Kubeflow, and the second includes use of [BigQuery](cloud.google.com/bigquery) as a data source.
 
 Change to the [`samples/kubeflow-tf`](samples/kubeflow-tf) directory to run the examples.
@@ -174,6 +178,9 @@ This example illustrates how you can use a ML workflow to experiment with
 <p></p>
 
 The workflow runs two paths concurrently, passing a different TFT preprocessing function to each ([`preprocessing.py`](components/dataflow/tft/preprocessing.py) vs [`preprocessing2.py`](components/dataflow/tft/preprocessing.py)).
+
+Then each model is trained, using Kubeflow's tf-jobs [CRD](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).  For example purposes, distributed training is used for one path, and single-node training is used for the other.  This is done by specifying the number of *workers* and *parameter servers* to use for the training job.
+
 When the training is finished, both models are deployed to both CMLE and TF-Serving.  Additionally, the the models are analyzed using [TFMA](https://github.com/tensorflow/model-analysis/), as described below.
 
 #### View the results of model analysis in a Jupyter notebook
@@ -182,7 +189,7 @@ One of the workflow steps runs TensorFlow Model Analysis (TFMA) on the trained m
 You can do this in a local notebook (see the TFMA docs for installation).
 
 Or, kubeflow's JupyterHub installation makes this easy to do, via a `port-forward` to your GKE cluster. The necessary libraries and visualization widgets are already installed.
-See the "To connect to your Jupyter Notebook locally:" section in this [Kubeflow guide](https://www.kubeflow.org/docs/guides/components/jupyter/) for more info.
+See the *"To connect to your Jupyter Notebook locally"* section in this [Kubeflow guide](https://www.kubeflow.org/docs/guides/components/jupyter/) for more info.
 
 Load and run the [`tfma_expers.ipynb`](components/dataflow/tfma/tfma_expers.ipynb) notebook to explore the results of the TFMA analysis.
 
@@ -267,8 +274,7 @@ The definitions use prebuilt containers so that the examples are easy to run, bu
 When you're done, __delete your GKE cluster so that you don't incur extra charges__. An easy way to do this is via the
 [Cloud Console](https://console.cloud.google.com/kubernetes).
 
-
-If you're running many workflows, you might also want to do some finer-grained cleanup.
+If you're not ready to take down the whole GKE cluster, you might want to do some finer-grained cleanup, as follows:
 
 ### Delete the completed pods for a workflow
 
@@ -286,16 +292,20 @@ When you're done running the examples, you can take down your TF-serving endpoin
 
 Run:
 
-```
+```sh
 kubectl get services
 ```
 
-Look for the services with prefix `preproc-train-deploy2-analyze` and delete those via `kubectl get services ...`.
+Look for the services with prefix `preproc-train-deploy2-analyze` and delete those via:
 
-Then look for the related deployments (`kubectl get deployments`) and delete those as well (`kubectl delete deployments ...`).
+```sh
+kubectl delete services <service names>
+```
 
-## Summary
+Then look for the related deployments (`kubectl get deployments`) and delete those as well (`kubectl delete deployments <deployment names>`).
 
-[TBD..]
+<!-- ## Summary
+
+[TBD..] -->
 
 
