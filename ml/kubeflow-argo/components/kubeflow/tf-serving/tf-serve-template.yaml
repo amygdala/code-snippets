@@ -1,0 +1,90 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    getambassador.io/config: |-
+      ---
+      apiVersion: ambassador/v0
+      kind:  Mapping
+      name: tfserving-mapping-MODEL_NAME-get
+      prefix: /models/MODEL_NAME/
+      rewrite: /
+      method: GET
+      service: MODEL_NAME.kubeflow:8000
+      ---
+      apiVersion: ambassador/v0
+      kind:  Mapping
+      name: tfserving-mapping-MODEL_NAME-post
+      prefix: /models/MODEL_NAME/
+      rewrite: /model/MODEL_NAME:predict
+      method: POST
+      service: MODEL_NAME.kubeflow:8000
+  labels:
+    app: MODEL_NAME
+  name: MODEL_NAME
+  namespace: KUBEFLOW_NAMESPACE
+spec:
+  ports:
+  - name: grpc-tf-serving
+    port: 9000
+    targetPort: 9000
+  - name: http-tf-serving-proxy
+    port: 8000
+    targetPort: 8000
+  selector:
+    app: MODEL_NAME
+  type: LoadBalancer
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: MODEL_NAME
+  name: MODEL_NAME-v1
+  namespace: KUBEFLOW_NAMESPACE
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: MODEL_NAME
+        version: v1
+    spec:
+      containers:
+      - args:
+        - /usr/bin/tensorflow_model_server
+        - --port=9000
+        - --model_name=MODEL_NAME
+        - --model_base_path=MODEL_PATH
+        image: gcr.io/kubeflow-images-public/tensorflow-serving-1.7:v20180604-0da89b8a
+        imagePullPolicy: IfNotPresent
+        name: MODEL_NAME
+        ports:
+        - containerPort: 9000
+        resources:
+          limits:
+            cpu: "4"
+            memory: 4Gi
+          requests:
+            cpu: "1"
+            memory: 1Gi
+      - command:
+        - python
+        - /usr/src/app/server.py
+        - --port=8000
+        - --rpc_port=9000
+        - --rpc_timeout=10.0
+        image: gcr.io/kubeflow-images-public/tf-model-server-http-proxy:v20180606-9dfda4f2
+        imagePullPolicy: IfNotPresent
+        name: MODEL_NAME-http-proxy
+        ports:
+        - containerPort: 8000
+        resources:
+          limits:
+            cpu: "4"
+            memory: 4Gi
+          requests:
+            cpu: "1"
+            memory: 1Gi
+
