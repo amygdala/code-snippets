@@ -59,14 +59,15 @@ Or, if you don't want to install `gcloud` locally, you can bring up the [Cloud S
 
 ### Set up a Kubernetes Engine (GKE) cluster
 
-Visit the [Cloud Console](https://console.cloud.google.com/kubernetes) for your project and create a GKE cluster. Give it at least 3 nodes.
+Visit the [Cloud Console](https://console.cloud.google.com/kubernetes) for your project and create a GKE cluster.
+So that you don't have any Kubernetes pods stuck in "Pending" for lack of resources, give it at least 4 4-core nodes. (See the 'Cleanup' section below so that you don't get charged for the cluster after you're done experimenting).
 
-<a href="https://storage.googleapis.com/amy-jo/images/kf-argo/gke_setup1.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf-argo/gke_setup1.png" width=600/></a>
+<a href="https://storage.googleapis.com/amy-jo/images/kf-argo/gke_setup_start.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf-argo/gke_setup_start.png" width="600"/></a>
 
 Click The '__Advanced edit__' button, and under **Access scopes**, click 'Allow full access to all Cloud APIs'. (You can also enable autoscaling in this panel if you want).
 
 <figure>
-<a href="https://storage.googleapis.com/amy-jo/images/kf-argo/gke_setup2.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf-argo/gke_setup2.png" /></a>
+<a href="https://storage.googleapis.com/amy-jo/images/kf-argo/gke_setup_adv.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf-argo/gke_setup_adv.png" /></a>
 <figcaption><br/><i>Set up your GKE cluster to allow full access to all Cloud APIs.</i></figcaption>
 </figure>
 
@@ -181,7 +182,17 @@ The workflow runs two paths concurrently, passing a different TFT preprocessing 
 
 Then each model is trained, using Kubeflow's tf-jobs [CRD](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).  For example purposes, distributed training is used for one path, and single-node training is used for the other.  This is done by specifying the number of *workers* and *parameter servers* to use for the training job.
 
-When the training is finished, both models are deployed to both CMLE and TF-Serving.  Additionally, the the models are analyzed using [TFMA](https://github.com/tensorflow/model-analysis/), as described below.
+For this workflow, one processing path used two workers and one parameter server as well as a 'master' (for distributed training), and the other is hardwired to use just one 'master' (single-node training).  While the training parts of the workflow are running, you'll see something like the following in your list of pods:
+
+```
+trainer-4d449038-afa7-4906-98ad-4e32b811-master-qm3y-0-qp1b0   1/1       Running     0          1m        10.20.0.12   gke-pipelines-default-pool-2a81a07a-ptmq
+trainer-b64ef136-953d-4b57-b4e1-604aabff-master-huex-0-szz88   1/1       Running     0          1m        10.20.0.10   gke-pipelines-default-pool-2a81a07a-ptmq
+trainer-b64ef136-953d-4b57-b4e1-604aabff-ps-huex-0-x983w       1/1       Running     0          1m        10.20.2.9    gke-pipelines-default-pool-2a81a07a-26k2
+trainer-b64ef136-953d-4b57-b4e1-604aabff-worker-huex-0-ki35n   1/1       Running     0          1m        10.20.2.10   gke-pipelines-default-pool-2a81a07a-26k2
+trainer-b64ef136-953d-4b57-b4e1-604aabff-worker-huex-1-imzg0   1/1       Running     0          1m        10.20.0.11   gke-pipelines-default-pool-2a81a07a-ptmq
+```
+
+When the training is finished, both models are deployed to both Cloud ML Engine and TF-Serving.  Additionally, the the models are analyzed using [TFMA](https://github.com/tensorflow/model-analysis/), as described below.
 
 #### View the results of model analysis in a Jupyter notebook
 
@@ -197,7 +208,7 @@ Load and run the [`tfma_expers.ipynb`](components/dataflow/tfma/tfma_expers.ipyn
 
 As part of the workflow, your models were deployed to Cloud ML Engine Online Prediction. The model name is `taxifare`, and the version names are derived from the workflow name.
 
-You can view the versions of the `taxifare` model in the Cloud Console:
+You can view the deployed versions of the `taxifare` model in the Cloud Console:
 [https://console.cloud.google.com/mlengine/models](https://console.cloud.google.com/mlengine/models).
 
 Make a prediction using one of the deployed model versions as follows.  Change to the [`components/cmle`](components/cmle) directory, and run the following command, replacing `<YOUR_PROJECT_NAME>` and `<MODEL_VERSION_NAME>`.
@@ -237,7 +248,7 @@ When you're done experimenting, you'll probably want to take down the tf-serving
 
 ### Example workflow 2
 
-This workflow shows how you might use TFMA to investigate relative accuracies of models trained on different datasets, evaluating against fresh data. As part of the preprocessing step, it pulls data directly from the source [BigQuery Chicago taxi dataset](https://cloud.google.com/bigquery/public-data/chicago-taxi), with differing min and max time boundaries, effectively training on 'recent' data vs a batch that includes older data.  Then, it runs TFMA analysis on both learned models, using 'recent' data for evaluation.  (It also evaluates one of the learned models against an older eval dataset). As with Workflow 1 above, it also deploys the trained models to Cloud ML Engine.
+This workflow shows how you might use TFMA to investigate relative accuracies of models trained on different datasets, evaluating against fresh data. As part of the preprocessing step, it pulls data directly from the source [BigQuery Chicago taxi dataset](https://cloud.google.com/bigquery/public-data/chicago-taxi), with differing min and max time boundaries, effectively training on 'recent' data vs a batch that includes older data.  Then, it runs TFMA analysis on both learned models, using 'recent' data for evaluation.  (It also evaluates the 'recent' data against an older model trained on older data). As with Workflow 1 above, it also deploys the trained models to Cloud ML Engine.
 
 Run the second example [as described here](samples/kubeflow-tf/README.md#example-workflow-2).
 

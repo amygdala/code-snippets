@@ -75,9 +75,9 @@ argo submit workflow2.yaml \
      -p ts2-2="2016-03-01 00:00:00" \
      -p max-rows=50000 \
      -p train-steps=20000 \
-     -p workers=3 \
+     -p workers=2 \
      -p pss=1 \
      -p preprocessing-module=gs://aju-dev-demos-pipelines/taxi-preproc/preprocessing.py \
-     -p old-eval-model-dir="gs://aju-dev-demos-pipelines/taxidata/prev/eval_model_dir" \
+     -p old-eval-model-dir="gs://aju-dev-demos-codelabs/KF/prev/eval_model_dir" \
      --entrypoint preproc-train-analyze-deploy
 ```
