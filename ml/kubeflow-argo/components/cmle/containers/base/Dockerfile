@@ -27,7 +27,7 @@ RUN pip install pyyaml==3.12 six==1.11.0
 
 # RUN pip install tensorflow-model-analysis==0.6.0
 # RUN pip install tensorflow-serving-api==1.6.0
-RUN pip install tensorflow-transform==0.6.0
+# RUN pip install tensorflow-transform==0.6.0
 
 RUN wget -nv https://dl.google.com/dl/cloudsdk/release/google-cloud-sdk.zip && \
     unzip -qq google-cloud-sdk.zip -d tools && \

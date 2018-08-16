@@ -75,7 +75,7 @@ def main(argv=None):
   result = subprocess.call(model_create_command)
   print(result)
 
-  proper_version_name = args.version_name.replace('_', '-')
+  proper_version_name = args.version_name.replace('-', '_')
   print("using version name: %s" % proper_version_name)
 
   model_deploy_command = ['gcloud', 'ml-engine', 'versions', 'create', proper_version_name,

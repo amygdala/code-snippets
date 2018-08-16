@@ -24,8 +24,8 @@ You can set `preprocess-mode` and `tfma-mode` to either `local` or `cloud`, to r
 
 ```
 argo submit workflow1.yaml \
-     -p input-handle-eval=gs://aju-dev-demos-pipelines/taxidata/eval/data.csv \
-     -p input-handle-train=gs://aju-dev-demos-pipelines/taxidata/train/data.csv \
+     -p input-handle-eval=gs://aju-dev-demos-codelabs/KF/taxidata/eval/data.csv \
+     -p input-handle-train=gs://aju-dev-demos-codelabs/KF/taxidata/train/data.csv \
      -p outfile-prefix-eval=eval_transformed \
      -p outfile-prefix-train=train_transformed \
      -p working-dir=gs://<YOUR_BUCKET>/taxifare \
@@ -34,8 +34,8 @@ argo submit workflow1.yaml \
      -p tfma-mode=local \
      -p workers=2 \
      -p pss=1 \
-     -p preprocessing-module1=gs://aju-dev-demos-pipelines/taxi-preproc/preprocessing.py \
-     -p preprocessing-module2=gs://aju-dev-demos-pipelines/taxi-preproc/preprocessing2.py \
+     -p preprocessing-module1=gs://aju-dev-demos-codelabs/KF/taxi-preproc/preprocessing.py \
+     -p preprocessing-module2=gs://aju-dev-demos-codelabs/KF/taxi-preproc/preprocessing2.py \
      --entrypoint preproc-train-deploy2-analyze
 ```
 
@@ -77,7 +77,7 @@ argo submit workflow2.yaml \
      -p train-steps=20000 \
      -p workers=2 \
      -p pss=1 \
-     -p preprocessing-module=gs://aju-dev-demos-pipelines/taxi-preproc/preprocessing.py \
+     -p preprocessing-module=gs://aju-dev-demos-codelabs/KF/taxi-preproc/preprocessing.py \
      -p old-eval-model-dir="gs://aju-dev-demos-codelabs/KF/prev/eval_model_dir" \
      --entrypoint preproc-train-analyze-deploy
 ```
