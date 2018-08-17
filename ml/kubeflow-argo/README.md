@@ -60,7 +60,8 @@ Or, if you don't want to install `gcloud` locally, you can bring up the [Cloud S
 ### Set up a Kubernetes Engine (GKE) cluster
 
 Visit the [Cloud Console](https://console.cloud.google.com/kubernetes) for your project and create a GKE cluster.
-So that you don't have any Kubernetes pods stuck in "Pending" for lack of resources, give it at least 4 4-core nodes. (See the 'Cleanup' section below so that you don't get charged for the cluster after you're done experimenting).
+So that you don't have any Kubernetes pods stuck in "Pending" for lack of resources, give it at least 4 4-core nodes. You may need to [increase your Compute Engine API CPUs quota](https://console.cloud.google.com/iam-admin/quotas) before you do this.
+(See the 'Cleanup' section below so that you don't get further charged for the cluster after you're done experimenting).
 
 <a href="https://storage.googleapis.com/amy-jo/images/kf-argo/gke_setup_start.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf-argo/gke_setup_start.png" width="600"/></a>
 
@@ -86,6 +87,7 @@ Then run the following command, replacing `<your gcp account email>` with the em
 ```sh
 kubectl create clusterrolebinding default-admin --clusterrole=cluster-admin --user=<your gcp account email>
 ```
+(You need to be a project *owner* to run this command).
 
 ### Install ksonnet
 
