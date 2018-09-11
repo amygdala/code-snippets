@@ -25,8 +25,37 @@ import subprocess
 import six
 from tensorflow.python.lib.io import file_io
 import time
-import uuid
+# import uuid
 import yaml
+from py import tf_job_client
+from kubernetes import client as k8s_client
+from kubernetes import config
+
+
+def _generate_train_yaml(src_filename, tfjob_ns, workers, pss, args_list):
+  """_generate_train_yaml  generates train yaml files based on train.template.yaml"""
+  with open(src_filename, 'r') as f:
+    content = yaml.load(f)
+
+  content['metadata']['generateName'] = 'trainer-'
+  content['metadata']['namespace'] = tfjob_ns
+
+  if workers and pss:
+    content['spec']['tfReplicaSpecs']['PS']['replicas'] = pss
+    content['spec']['tfReplicaSpecs']['PS']['template']['spec']['containers'][0]['command'].extend(args_list)
+    content['spec']['tfReplicaSpecs']['Worker']['replicas'] = workers
+    content['spec']['tfReplicaSpecs']['Worker']['template']['spec']['containers'][0]['command'].extend(args_list)
+    content['spec']['tfReplicaSpecs']['MASTER']['template']['spec']['containers'][0]['command'].extend(args_list)
+  else:
+    # If no workers and pss set, default is 1.
+    master_spec = content['spec']['tfReplicaSpecs']['MASTER']
+    worker_spec = content['spec']['tfReplicaSpecs']['Worker']
+    ps_spec = content['spec']['tfReplicaSpecs']['PS']
+    master_spec['template']['spec']['containers'][0]['command'].extend(args_list)
+    worker_spec['template']['spec']['containers'][0]['command'].extend(args_list)
+    ps_spec['template']['spec']['containers'][0]['command'].extend(args_list)
+
+  return content
 
 
 def main(argv=None):
@@ -97,9 +126,20 @@ def main(argv=None):
                            'If not set, assuming this runs in a GKE container and current ' +
                            'cluster is used.')
   parser.add_argument('--zone', type=str, help='zone of the kubeflow cluster.')
+  parser.add_argument('--kfversion', type=str,
+                      default='v1alpha2',
+                      help='The version of the deployed kubeflow. ' +
+                           'If not set, the default version is v1alpha2')
+  parser.add_argument('--tfjob-ns', type=str,
+                      default='default',
+                      help='The namespace where the tfjob is submitted' +
+                           'If not set, the default namespace is default')
+  parser.add_argument('--tfjob-timeout-minutes', type=int,
+                      default=10,
+                      help='Time in minutes to wait for the TFJob to complete')
   args = parser.parse_args()
 
-  KUBEFLOW_NAMESPACE = 'default'
+  # KUBEFLOW_NAMESPACE = 'default'
 
   logging.getLogger().setLevel(logging.INFO)
   args_dict = vars(args)
@@ -127,70 +167,64 @@ def main(argv=None):
       'source': tb_dir,
     }]
   }
-  with file_io.FileIO(os.path.join(tb_dir, 'metadata.json'), 'w') as f:
+  with file_io.FileIO('/mlpipeline-ui-metadata.json', 'w') as f:
     json.dump(metadata, f)
 
   workers = args_dict.pop('workers')
   pss = args_dict.pop('pss')
+  kf_version = args_dict.pop('kfversion')
+  tfjob_ns = args_dict.pop('tfjob_ns')
+  tfjob_timeout_minutes = args_dict.pop('tfjob_timeout_minutes')
   args_list = ['--%s=%s' % (k.replace('_', '-'),v)
                for k,v in six.iteritems(args_dict) if v is not None]
   logging.info('Generating training template.')
   template_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'train.template.yaml')
-  with open(template_file, 'r') as f:
-    content = yaml.load(f)
-
-  job_name = 'trainer-' + str(uuid.uuid4())
-  content['metadata']['name'] = job_name
-  if workers and pss:
-    for spec in content['spec']['replicaSpecs']:
-      if spec['tfReplicaType'] == 'WORKER':
-        spec['replicas'] = workers
-      elif spec['tfReplicaType'] == 'PS':
-        spec['replicas'] = pss
-      # add the args to be passed to the training module.
-      spec['template']['spec']['containers'][0]['command'].extend(args_list)
-  else:
-    # No workers and pss set. Remove the sections because setting replicas=0 doesn't work.
-    replicas = content['spec']['replicaSpecs']
-    content['spec']['replicaSpecs'] = [r for r in replicas
-                                       if r['tfReplicaType'] not in ['WORKER', 'PS']]
-    # Set master parameters. master is the only item in replicaSpecs in this case.
-    master_spec = content['spec']['replicaSpecs'][0]
-    # add the args to be passed to the training module.
-    master_spec['template']['spec']['containers'][0]['command'].extend(args_list)
-
-  with open('train.yaml', 'w') as f:
-    yaml.dump(content, f, default_flow_style=False)
+  content_yaml = _generate_train_yaml(template_file, tfjob_ns, workers, pss, args_list)
 
   logging.info('Start training.')
-  subprocess.call(['kubectl', 'create', '-f', 'train.yaml', '--namespace', KUBEFLOW_NAMESPACE])
+  # Set up handler for k8s clients
+  config.load_incluster_config()
+  api_client = k8s_client.ApiClient()
+  create_response = tf_job_client.create_tf_job(api_client, content_yaml, version=kf_version)
+  job_name = create_response['metadata']['name']
 
 
-  # TODO: Replace polling with kubeflow API calls.
-  while True:
-    time.sleep(2)
-    check_job_commands = ['kubectl', 'describe', 'tfjob', job_name, '--namespace', KUBEFLOW_NAMESPACE]
-    kubectl_proc = subprocess.Popen(check_job_commands, stdout=subprocess.PIPE)
-    grep_proc = subprocess.Popen(['grep', 'Phase:'], stdin=kubectl_proc.stdout,
-                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    kubectl_proc.stdout.close()
-    stdout, stderr = grep_proc.communicate()
-    parts = stdout.rstrip().split(':')
-    if len(parts) != 2:
-      logging.error('Training failed.')
-      logging.info(subprocess.check_output(check_job_commands))
-      break
+  wait_response = tf_job_client.wait_for_job(
+      api_client, tfjob_ns, job_name, kf_version,
+      timeout=datetime.timedelta(minutes=tfjob_timeout_minutes))
+  succ = True
+  #TODO: update this failure checking after tf-operator has the condition checking function.
+  if 'Worker' in wait_response['status']['tfReplicaStatuses']:
+    if 'Failed' in wait_response['status']['tfReplicaStatuses']['Worker']:
+      logging.error('Training failed since workers failed.')
+      succ = False
+  if 'PS' in wait_response['status']['tfReplicaStatuses']:
+    if 'Failed' in wait_response['status']['tfReplicaStatuses']['PS']:
+      logging.error('Training failed since PSs failed.')
+      succ = False
+  if 'MASTER' in wait_response['status']['tfReplicaStatuses']:
+    if 'Failed' in wait_response['status']['tfReplicaStatuses']['MASTER']:
+      logging.error('Training failed since MASTER failed.')
+      succ = False
 
-    status = parts[1].strip()
-    if status == 'Done':
-      # TODO: status == 'Done' may not always indicate success.
-      # Switch to K8s API.
-      logging.info('Training done.')
-      break
-    elif status == 'Failed':
-      logging.error('Training failed.')
-      logging.info(subprocess.check_output(check_job_commands))
-      break
+  #TODO: remove this after kubeflow fixes the wait_for_job issue
+  # because the wait_for_job returns when the worker finishes but the master might not be complete yet.
+  if 'MASTER' in wait_response['status']['tfReplicaStatuses'] and 'active' in wait_response['status']['tfReplicaStatuses']['MASTER']:
+    master_active = True
+    while master_active:
+      # Wait for master to finish
+      time.sleep(2)
+      wait_response = tf_job_client.wait_for_job(api_client, tfjob_ns, job_name, kf_version,
+                                             timeout=datetime.timedelta(minutes=tfjob_timeout_minutes))
+      if 'active' not in wait_response['status']['tfReplicaStatuses']['MASTER']:
+        master_active = False
+
+  if succ:
+    logging.info('Training success.')
+
+  tf_job_client.delete_tf_job(api_client, tfjob_ns, job_name, version=kf_version)
+  with open('/output.txt', 'w') as f:
+    f.write(args.job_dir)
 
 if __name__== "__main__":
   main()

@@ -116,25 +116,11 @@ Now you're ready to install Kubeflow and Argo.
 
 Install Argo as described [here](https://github.com/argoproj/argo/blob/master/demo.md).
 
-Then install Kubeflow. These instructions are for version 0.2.2.
-We're following nearly the same process as described in the [quick start](https://www.kubeflow.org/docs/started/getting-started#quick-start), but we need to do an extra step.
-The example code uses the tf-jobs API `v1alpha1`, which is not the 0.2.2 default.
-So we'll build but not deploy the ksonnet app, edit the tf-jobs API info, _then_ deploy.
-
-First build the ksonnet app:
+Then install Kubeflow version 0.2.4 as follows:
 
 ```sh
-export KUBEFLOW_VERSION=0.2.2; export KUBEFLOW_DEPLOY=false
+export KUBEFLOW_VERSION=0.2.4
 curl https://raw.githubusercontent.com/kubeflow/kubeflow/v${KUBEFLOW_VERSION}/scripts/deploy.sh | bash
-```
-
-Then do the actual deployment as follows.  If you generated your build into a different directory than
-`kubeflow_ks_app`, change to that subdir instead.
-
-```sh
-cd kubeflow_ks_app
-ks param set kubeflow-core tfJobVersion v1alpha1
-ks apply default
 ```
 
 (If you see errors, double check that you've installed ksonnet).
