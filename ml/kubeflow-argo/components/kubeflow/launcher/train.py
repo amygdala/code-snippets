@@ -131,9 +131,9 @@ def main(argv=None):
                       help='The version of the deployed kubeflow. ' +
                            'If not set, the default version is v1alpha2')
   parser.add_argument('--tfjob-ns', type=str,
-                      default='default',
+                      default='kubeflow',
                       help='The namespace where the tfjob is submitted' +
-                           'If not set, the default namespace is default')
+                           'If not set, the namespace is kubeflow')
   parser.add_argument('--tfjob-timeout-minutes', type=int,
                       default=10,
                       help='Time in minutes to wait for the TFJob to complete')

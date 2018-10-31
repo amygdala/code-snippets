@@ -222,7 +222,13 @@ kubectl get services
 Look for the services with prefix `preproc-train-deploy2-analyze`, and note their names and external IP addresses.
 
 You can make requests against these endpoints using this script: [`chicago_taxi_client.py`](components/kubeflow/tf-serving/chicago_taxi_client.py).
-Change to the `components/kubeflow/tf-serving` directory and run the script as follows, replacing the following with your external IP address and service name. You'll need to have `tensorflow_serving` installed to do this.
+Change to the `components/kubeflow/tf-serving` directory, and copy the `trainer` module from the `taxi_model` directory into this directory:
+
+```sh
+cp -pr ../taxi_model/trainer .
+```
+
+Then, run the script as follows, replacing the following with your external IP address and service name. You'll need to have `tensorflow_serving` installed to do this.
 
 ```sh
 python chicago_taxi_client.py \

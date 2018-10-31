@@ -46,7 +46,8 @@ def main(argv=None):
   parser.add_argument('--zone', type=str, help='zone of the kubeflow cluster.')
   args = parser.parse_args()
 
-  KUBEFLOW_NAMESPACE = 'default'
+  # KUBEFLOW_NAMESPACE = 'default'
+  KUBEFLOW_NAMESPACE = 'kubeflow'
 
   # Make sure model dir exists before proceeding
   retries = 0
