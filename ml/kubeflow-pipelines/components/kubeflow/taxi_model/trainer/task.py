@@ -18,11 +18,12 @@ import argparse
 import os
 
 import model
+import taxi
 
 import tensorflow as tf
 from tensorflow.python.lib.io import file_io
 
-from tensorflow.contrib.training.python.training import hparam
+# from tensorflow.contrib.training.python.training import hparam
 
 import tensorflow_model_analysis as tfma
 
@@ -47,6 +48,8 @@ def train_and_maybe_evaluate(train_files, eval_files, hparams):
   Returns:
     The estimator that was used for training (and maybe eval)
   """
+  cschema = taxi.read_schema('schema.pbtxt')
+
   train_input = lambda: model.input_fn(
       train_files,
       hparams.tf_transform_dir,
@@ -60,10 +63,10 @@ def train_and_maybe_evaluate(train_files, eval_files, hparams):
   )
 
   train_spec = tf.estimator.TrainSpec(
-     train_input, max_steps=hparams.train_steps)
+      train_input, max_steps=hparams.train_steps)
 
   serving_receiver_fn = lambda: model.example_serving_receiver_fn(
-      hparams.tf_transform_dir)
+      hparams.tf_transform_dir, schema)
 
   exporter = tf.estimator.FinalExporter('chicago-taxi', serving_receiver_fn)
   eval_spec = tf.estimator.EvalSpec(
@@ -81,7 +84,7 @@ def train_and_maybe_evaluate(train_files, eval_files, hparams):
   estimator = model.build_estimator(
       hparams.tf_transform_dir,
 
-      # Construct layers sizes with exponential decay
+      # Construct layers sizes with exponetial decay
       hidden_units=[
           max(2, int(FIRST_DNN_LAYER_SIZE * DNN_DECAY_FACTOR**i))
           for i in range(NUM_DNN_LAYERS)
@@ -100,10 +103,13 @@ def run_experiment(train_files, eval_files, hparams):
     hparams: Holds hyperparameters used to train the model as name/value pairs.
   """
   estimator = train_and_maybe_evaluate(train_files, eval_files, hparams)
+  schema = taxi.read_schema('schema.pbtxt')
+
 
   # Save a model for tfma eval
   eval_model_dir = os.path.join(hparams.output_dir, EVAL_MODEL_DIR)
-  receiver_fn = lambda: model.eval_input_receiver_fn(hparams.tf_transform_dir)
+  receiver_fn = lambda: model.eval_input_receiver_fn(  # pylint: disable=g-long-lambda
+      hparams.tf_transform_dir, schema)
 
   tfma.export.export_eval_savedmodel(
       estimator=estimator,
@@ -191,5 +197,5 @@ if __name__ == '__main__':
   print("eval files list: %s" % eval_files)
 
   # Run the training job
-  hparams = hparam.HParams(**args.__dict__)
+  hparams = tf.contrib.training.HParams(**args.__dict__)
   run_experiment(train_files, eval_files, hparams)

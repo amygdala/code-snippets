@@ -37,8 +37,25 @@ from tensorflow_transform.tf_metadata import dataset_schema
 
 from tensorflow_transform import coders as tft_coders
 
-import taxi_schema.taxi_schema as ts
+import taxi_schema.taxi_schema as taxi
 
+def _fill_in_missing(x):
+  """Replace missing values in a SparseTensor.
+
+  Fills in missing values of `x` with '' or 0, and converts to a dense tensor.
+
+  Args:
+    x: A `SparseTensor` of rank 2.  Its dense shape should have size at most 1
+      in the second dimension.
+
+  Returns:
+    A rank 1 tensor where missing values of `x` have been filled in.
+  """
+  default_value = '' if x.dtype == tf.string else 0
+  return tf.squeeze(
+      tf.sparse_to_dense(x.indices, [x.dense_shape[0], 1], x.values,
+                         default_value),
+      axis=1)
 
 def make_sql(table_name, ts1, ts2, stage, max_rows=None, for_eval=False):
   """Creates the sql command for pulling data from BigQuery.
@@ -98,6 +115,54 @@ def make_sql(table_name, ts1, ts2, stage, max_rows=None, for_eval=False):
            where_clause=where_clause,
            limit_clause=limit_clause)
 
+# new version
+# def make_sql(table_name, max_rows=None, for_eval=False):
+#   """Creates the sql command for pulling data from BigQuery.
+
+#   Args:
+#     table_name: BigQuery table name
+#     max_rows: if set, limits the number of rows pulled from BigQuery
+#     for_eval: True if this is for evaluation, false otherwise
+
+#   Returns:
+#     sql command as string
+#   """
+#   if for_eval:
+#     # 1/3 of the dataset used for eval
+#     where_clause = 'WHERE MOD(FARM_FINGERPRINT(unique_key), 3) = 0'
+#   else:
+#     # 2/3 of the dataset used for training
+#     where_clause = 'WHERE MOD(FARM_FINGERPRINT(unique_key), 3) > 0'
+
+#   limit_clause = ''
+#   if max_rows:
+#     limit_clause = 'LIMIT {max_rows}'.format(max_rows=max_rows)
+#   return """
+#   SELECT
+#       CAST(pickup_community_area AS string) AS pickup_community_area,
+#       CAST(dropoff_community_area AS string) AS dropoff_community_area,
+#       CAST(pickup_census_tract AS string) AS pickup_census_tract,
+#       CAST(dropoff_census_tract AS string) AS dropoff_census_tract,
+#       fare,
+#       EXTRACT(MONTH FROM trip_start_timestamp) AS trip_start_month,
+#       EXTRACT(HOUR FROM trip_start_timestamp) AS trip_start_hour,
+#       EXTRACT(DAYOFWEEK FROM trip_start_timestamp) AS trip_start_day,
+#       UNIX_SECONDS(trip_start_timestamp) AS trip_start_timestamp,
+#       pickup_latitude,
+#       pickup_longitude,
+#       dropoff_latitude,
+#       dropoff_longitude,
+#       trip_miles,
+#       payment_type,
+#       company,
+#       trip_seconds,
+#       tips
+#   FROM `{table_name}`
+#   {where_clause}
+#   {limit_clause}
+# """.format(
+#     table_name=table_name, where_clause=where_clause, limit_clause=limit_clause)
+
 
 def transform_data(input_handle,
                    outfile_prefix,
@@ -131,43 +196,52 @@ def transform_data(input_handle,
       Map from string feature key to transformed feature operations.
     """
     outputs = {}
-    for key in ts.DENSE_FLOAT_FEATURE_KEYS:
+    for key in taxi.DENSE_FLOAT_FEATURE_KEYS:
       # Preserve this feature as a dense float, setting nan's to the mean.
-      outputs[key] = transform.scale_to_z_score(inputs[key])
+      outputs[taxi.transformed_name(key)] = transform.scale_to_z_score(
+          _fill_in_missing(inputs[key]))
 
-    for key in ts.VOCAB_FEATURE_KEYS:
+    for key in taxi.VOCAB_FEATURE_KEYS:
       # Build a vocabulary for this feature.
-      outputs[key] = transform.string_to_int(
-          inputs[key], top_k=ts.VOCAB_SIZE, num_oov_buckets=ts.OOV_SIZE)
+      outputs[
+          taxi.transformed_name(key)] = transform.compute_and_apply_vocabulary(
+              _fill_in_missing(inputs[key]),
+              top_k=taxi.VOCAB_SIZE,
+              num_oov_buckets=taxi.OOV_SIZE)
 
-    for key in ts.BUCKET_FEATURE_KEYS:
-      outputs[key] = transform.bucketize(inputs[key], ts.FEATURE_BUCKET_COUNT)
+    for key in taxi.BUCKET_FEATURE_KEYS:
+      outputs[taxi.transformed_name(key)] = transform.bucketize(
+          _fill_in_missing(inputs[key]), taxi.FEATURE_BUCKET_COUNT)
 
-    for key in ts.CATEGORICAL_FEATURE_KEYS:
-      outputs[key] = inputs[key]
+    for key in taxi.CATEGORICAL_FEATURE_KEYS:
+      outputs[taxi.transformed_name(key)] = _fill_in_missing(inputs[key])
 
     # Was this passenger a big tipper?
-    def convert_label(label):
-      taxi_fare = inputs[ts.FARE_KEY]
-      return tf.where(
-          tf.is_nan(taxi_fare),
-          tf.cast(tf.zeros_like(taxi_fare), tf.int64),
-          # Test if the tip was > 20% of the fare.
-          tf.cast(
-              tf.greater(label, tf.multiply(taxi_fare, tf.constant(0.2))),
-              tf.int64))
-
-    outputs[ts.LABEL_KEY] = transform.apply_function(convert_label,
-                                                       inputs[ts.LABEL_KEY])
+    taxi_fare = _fill_in_missing(inputs[taxi.FARE_KEY])
+    tips = _fill_in_missing(inputs[taxi.LABEL_KEY])
+    outputs[taxi.transformed_name(taxi.LABEL_KEY)] = tf.where(
+        tf.is_nan(taxi_fare),
+        tf.cast(tf.zeros_like(taxi_fare), tf.int64),
+        # Test if the tip was > 20% of the fare.
+        tf.cast(
+            tf.greater(tips, tf.multiply(taxi_fare, tf.constant(0.2))),
+            tf.int64))
 
     return outputs
 
-  preprocessing_fn = preprocessing_fn or def_preprocessing_fn
+  ## temp
+  preprocessing_fn = def_preprocessing_fn
+  # preprocessing_fn = preprocessing_fn or def_preprocessing_fn
 
   print('ts1 %s, ts2 %s' % (ts1,ts2))
-  raw_feature_spec = ts.get_raw_feature_spec()
+
+  schema = taxi.read_schema('./schema.pbtxt')
+  raw_feature_spec = taxi.get_raw_feature_spec(schema)
   raw_schema = dataset_schema.from_feature_spec(raw_feature_spec)
   raw_data_metadata = dataset_metadata.DatasetMetadata(raw_schema)
+
+  transform_dir = None
+
   temp_dir = os.path.join(working_dir, 'tmp')
   if stage is None:
     stage = 'train'
@@ -192,30 +266,35 @@ def transform_data(input_handle,
 
   with beam.Pipeline(runner, options=pipeline_options) as pipeline:
     with beam_impl.Context(temp_dir=temp_dir):
-      csv_coder = ts.make_csv_coder()
-      if 'csv' in input_handle.lower():
+      if input_handle.lower().endswith('csv'):
+        csv_coder = taxi.make_csv_coder(schema)
         raw_data = (
             pipeline
             | 'ReadFromText' >> beam.io.ReadFromText(
                 input_handle, skip_header_lines=1)
             | 'ParseCSV' >> beam.Map(csv_coder.decode))
       else:
-        query = make_sql(input_handle, ts1, ts2, stage, max_rows=max_rows, for_eval=False)
+        query = taxi.make_sql(input_handle, max_rows, for_eval=False)
         raw_data = (
             pipeline
             | 'ReadBigQuery' >> beam.io.Read(
-                beam.io.BigQuerySource(query=query, use_standard_sql=True)))
+                beam.io.BigQuerySource(query=query, use_standard_sql=True))
+            | 'CleanData' >> beam.Map(
+                taxi.clean_raw_data_dict, raw_feature_spec=raw_feature_spec))
 
-      raw_data |= 'CleanData' >> beam.Map(ts.clean_raw_data_dict)
+      if transform_dir is None:
+        transform_fn = (
+            (raw_data, raw_data_metadata)
+            | ('Analyze' >> beam_impl.AnalyzeDataset(preprocessing_fn)))
 
-      transform_fn = ((raw_data, raw_data_metadata)
-                      | 'Analyze' >> beam_impl.AnalyzeDataset(preprocessing_fn))
+        _ = (
+            transform_fn
+            | ('WriteTransformFn' >>
+               transform_fn_io.WriteTransformFn(working_dir)))
+      else:
+        transform_fn = pipeline | transform_fn_io.ReadTransformFn(transform_dir)
 
-      _ = (
-          transform_fn
-          | 'WriteTransformFn' >> transform_fn_io.WriteTransformFn(working_dir))
-
-      # Shuffling the data before materialization will improve training
+      # Shuffling the data before materialization will improve Training
       # effectiveness downstream.
       shuffled_data = raw_data | 'RandomizeData' >> beam.transforms.Reshuffle()
 
@@ -223,21 +302,63 @@ def transform_data(input_handle,
           ((shuffled_data, raw_data_metadata), transform_fn)
           | 'Transform' >> beam_impl.TransformDataset())
 
-      if 'csv' not in input_handle.lower():  # if querying BQ
-        _ = (
-            raw_data
-            | beam.Map(csv_coder.encode)
-            | beam.io.WriteToText(os.path.join(working_dir, '{}.csv'.format(stage)), num_shards=1)
-            )
-
       coder = example_proto_coder.ExampleProtoCoder(transformed_metadata.schema)
       _ = (
           transformed_data
           | 'SerializeExamples' >> beam.Map(coder.encode)
           | 'WriteExamples' >> beam.io.WriteToTFRecord(
-              os.path.join(working_dir, outfile_prefix),
-              compression_type=beam.io.filesystem.CompressionTypes.GZIP)
-          )
+              os.path.join(working_dir, outfile_prefix), file_name_suffix='.gz')
+      )
+
+  # with beam.Pipeline(runner, options=pipeline_options) as pipeline:
+  #   with beam_impl.Context(temp_dir=temp_dir):
+  #     csv_coder = taxi.make_csv_coder(schema)
+  #     if 'csv' in input_handle.lower():
+  #       raw_data = (
+  #           pipeline
+  #           | 'ReadFromText' >> beam.io.ReadFromText(
+  #               input_handle, skip_header_lines=1)
+  #           | 'ParseCSV' >> beam.Map(csv_coder.decode))
+  #     else:
+  #       query = make_sql(input_handle, ts1, ts2, stage, max_rows=max_rows, for_eval=False)
+  #       raw_data = (
+  #           pipeline
+  #           | 'ReadBigQuery' >> beam.io.Read(
+  #               beam.io.BigQuerySource(query=query, use_standard_sql=True)))
+
+  #     raw_data |= 'CleanData' >> beam.Map(taxi.clean_raw_data_dict,
+  #                                         raw_feature_spec=raw_feature_spec)
+
+  #     transform_fn = ((raw_data, raw_data_metadata)
+  #                     | 'Analyze' >> beam_impl.AnalyzeDataset(preprocessing_fn))
+
+  #     _ = (
+  #         transform_fn
+  #         | 'WriteTransformFn' >> transform_fn_io.WriteTransformFn(working_dir))
+
+  #     # Shuffling the data before materialization will improve training
+  #     # effectiveness downstream.
+  #     shuffled_data = raw_data | 'RandomizeData' >> beam.transforms.Reshuffle()
+
+  #     (transformed_data, transformed_metadata) = (
+  #         ((shuffled_data, raw_data_metadata), transform_fn)
+  #         | 'Transform' >> beam_impl.TransformDataset())
+
+  #     if 'csv' not in input_handle.lower():  # if querying BQ
+  #       _ = (
+  #           raw_data
+  #           | beam.Map(csv_coder.encode)
+  #           | beam.io.WriteToText(os.path.join(working_dir, '{}.csv'.format(stage)), num_shards=1)
+  #           )
+
+  #     coder = example_proto_coder.ExampleProtoCoder(transformed_metadata.schema)
+  #     _ = (
+  #         transformed_data
+  #         | 'SerializeExamples' >> beam.Map(coder.encode)
+  #         | 'WriteExamples' >> beam.io.WriteToTFRecord(
+  #             os.path.join(working_dir, outfile_prefix),
+  #             file_name_suffix='.gz')
+  #         )
 
 
 def main():

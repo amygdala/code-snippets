@@ -20,7 +20,7 @@ RUN apt-get install --no-install-recommends -y -q ca-certificates python-dev pyt
 
 RUN easy_install pip
 
-RUN pip install pyyaml==3.12 six==1.11.0 requests==2.18.4 tensorflow==1.6.0 \
+RUN pip install pyyaml==3.12 six==1.11.0 requests==2.18.4 tensorflow==1.10.0 \
       kubernetes google-api-python-client retrying
 
 RUN wget -nv https://dl.google.com/dl/cloudsdk/release/google-cloud-sdk.zip && \
@@ -35,14 +35,16 @@ RUN wget -nv https://dl.google.com/dl/cloudsdk/release/google-cloud-sdk.zip && \
     tools/google-cloud-sdk/bin/gcloud config set component_manager/disable_update_check true && \
     touch /tools/google-cloud-sdk/lib/third_party/google.py
 
-RUN wget -nv https://github.com/ksonnet/ksonnet/releases/download/v0.9.0/ks_0.9.0_linux_amd64.tar.gz && \
-    tar -xvzf ks_0.9.0_linux_amd64.tar.gz && \
+RUN wget -nv https://github.com/ksonnet/ksonnet/releases/download/v0.13.0/ks_0.13.0_linux_amd64.tar.gz && \
+    tar -xvzf ks_0.13.0_linux_amd64.tar.gz && \
     mkdir -p /tools/ks/bin && \
-    cp ./ks_0.9.0_linux_amd64/ks /tools/ks/bin && \
-    rm ks_0.9.0_linux_amd64.tar.gz && \
-    rm -r ks_0.9.0_linux_amd64
+    cp ./ks_0.13.0_linux_amd64/ks /tools/ks/bin && \
+    rm ks_0.13.0_linux_amd64.tar.gz && \
+    rm -r ks_0.13.0_linux_amd64
 
-RUN git clone https://github.com/kubeflow/tf-operator.git
+RUN wget https://github.com/kubeflow/tf-operator/archive/v0.3.0.zip && \
+    unzip v0.3.0.zip && \
+    mv tf-operator-0.3.0 tf-operator
 
 ENV PYTHONPATH $PYTHONPATH:/tf-operator
 

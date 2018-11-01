@@ -79,7 +79,7 @@ def main(argv=None):
   print("using version name: %s" % proper_version_name)
 
   model_deploy_command = ['gcloud', 'ml-engine', 'versions', 'create', proper_version_name,
-    '--model', args.model_name, '--runtime-version', '1.6', '--project', args.project,
+    '--model', args.model_name, '--runtime-version', '1.10', '--project', args.project,
     '--origin', model_location
       ]
   print(model_deploy_command)

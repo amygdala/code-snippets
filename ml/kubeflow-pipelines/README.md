@@ -82,12 +82,13 @@ and `<your project>` with the correct zone, cluster name, and project name.
 gcloud container clusters get-credentials <your cluster name> --zone <your cluster zone> --project
 ```
 
-Then run the following command, replacing `<your gcp account email>` with the email associated with your GCP project.
+Then run the following two commands, replacing `<your gcp account email>` with the email associated with your GCP project.
 
 ```sh
 kubectl create clusterrolebinding default-admin --clusterrole=cluster-admin --user=<your gcp account email>
+kubectl create clusterrolebinding sa-admin --clusterrole=cluster-admin --serviceaccount=kubeflow:pipeline-runner
 ```
-(You need to be a project *owner* to run this command).
+(You may need to be a project *owner* to run these).
 
 ### Install ksonnet
 

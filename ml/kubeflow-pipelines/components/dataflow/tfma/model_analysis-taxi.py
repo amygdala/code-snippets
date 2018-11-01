@@ -21,6 +21,7 @@ from __future__ import print_function
 import argparse
 import datetime
 import os
+import tempfile
 import time
 import uuid
 
@@ -34,12 +35,12 @@ from tensorflow_model_analysis.eval_saved_model.post_export_metrics import post_
 from tensorflow_model_analysis.slicer import slicer
 
 from tensorflow_transform import coders as tft_coders
-from tensorflow_transform.tf_metadata import dataset_schema
+# from tensorflow_transform.tf_metadata import dataset_schema
 
 from tensorflow_transform.beam import impl as beam_impl
-from tensorflow_transform.coders import example_proto_coder
+# from tensorflow_transform.coders import example_proto_coder
 
-import taxi_schema.taxi_schema as ts
+import taxi_schema.taxi_schema as taxi
 
 
 # An empty slice spec means the overall slice, that is, the whole dataset.
@@ -103,9 +104,8 @@ def run_tfma(slice_spec, eval_model_base_dir, tfma_run_dir, input_csv,
         retries += 1
         sleeptime *= 2
 
-    raw_feature_spec = ts.get_raw_feature_spec()
-    raw_schema = dataset_schema.from_feature_spec(raw_feature_spec)
-    coder = example_proto_coder.ExampleProtoCoder(raw_schema)
+
+    schema = taxi.read_schema('schema.pbtxt')
 
     temp_dir = os.path.join(working_dir, 'tmp')
 
@@ -133,18 +133,21 @@ def run_tfma(slice_spec, eval_model_base_dir, tfma_run_dir, input_csv,
 
     with beam.Pipeline(runner, options=pipeline_options) as pipeline:
       with beam_impl.Context(temp_dir=temp_dir):
-        csv_coder = ts.make_csv_coder()
+        csv_coder = taxi.make_csv_coder(schema)
         raw_data = (
             pipeline
             | 'ReadFromText' >> beam.io.ReadFromText(
                 input_csv,
-                coder=beam.coders.BytesCoder(),
-                skip_header_lines=True)
+                # coder=beam.coders.BytesCoder(),
+                skip_header_lines=1)
             | 'ParseCSV' >> beam.Map(csv_coder.decode))
+
+        # Examples must be in clean tf-example format.
+        coder = taxi.make_proto_coder(schema)
 
         raw_data = (
             raw_data
-            | 'CleanData' >> beam.Map(ts.clean_raw_data_dict)
+            # | 'CleanData' >> beam.Map(taxi.clean_raw_data_dict)
             | 'ToSerializedTFExample' >> beam.Map(coder.encode))
 
         _ = raw_data | 'EvaluateAndWriteResults' >> tfma.EvaluateAndWriteResults(
@@ -196,7 +199,10 @@ def main():
                          slice_spec=ALL_SPECS,
                          working_dir=args.tfma_run_dir,
                          mode=args.mode, project=args.project,
-                         setup_file=args.setup_file
+                         setup_file=args.setup_file,
+                         add_metrics_callbacks=[
+                            post_export_metrics.calibration_plot_and_prediction_histogram(),
+                            post_export_metrics.auc_plots()]
                          )
 
 

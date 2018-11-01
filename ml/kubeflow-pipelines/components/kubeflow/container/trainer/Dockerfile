@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM tensorflow/tensorflow:1.6.0
+FROM tensorflow/tensorflow:1.10.0
 
 RUN apt-get update -y && \
     apt-get install --no-install-recommends -y -q build-essential && \
     pip install pyyaml==3.12 six==1.11.0 \
-        tensorflow-transform==0.6.0 \
-        tensorflow-model-analysis==0.6.0 && \
+        tensorflow-transform==0.9.0 \
+        tensorflow-model-analysis==0.9.2 && \
     apt-get --purge autoremove -y build-essential
 
 ADD build /ml
