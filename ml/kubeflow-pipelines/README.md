@@ -193,20 +193,30 @@ See the *"To connect to your Jupyter Notebook locally"* section in this [Kubeflo
 
 Load and run the [`tfma_expers.ipynb`](components/dataflow/tfma/tfma_expers.ipynb) notebook to explore the results of the TFMA analysis.
 
-#### Use your models for prediction with Cloud ML Engine Online Prediction
+#### Use your models for prediction
 
-As part of the workflow, your models were deployed to Cloud ML Engine Online Prediction. The model name is `taxifare`, and the version names are derived from the workflow name.
+Change to the [`components/kubeflow/tf-serving`](components/kubeflow/tf-serving) directory, and copy the `trainer` module from the `taxi_model` directory into this directory:
+
+```sh
+cp -pr ../taxi_model/trainer .
+```
+
+#### Use the Cloud ML Engine Online Prediction service
+
+As part of the workflow, your models were deployed to the Cloud ML Engine online prediction service. The model name is `taxifare`, and the version names are derived from the workflow name.
 
 You can view the deployed versions of the `taxifare` model in the Cloud Console:
 [https://console.cloud.google.com/mlengine/models](https://console.cloud.google.com/mlengine/models).
 
-Make a prediction using one of the deployed model versions as follows.  Change to the [`components/cmle`](components/cmle) directory, and run the following command, replacing `<YOUR_PROJECT_NAME>` and `<MODEL_VERSION_NAME>`.
+Make a prediction using one of the deployed model versions as follows.
+In the [`components/kubeflow/tf-serving`](components/kubeflow/tf-serving) directory, run the following client script, replacing `<MODEL_VERSION_NAME>` with one of your deployed versions. (Note that this script assumes that you have gcloud configured to point to the correct project.  If it is not, first run `gcloud config set project <YOUR_PROJECT_NAME>`).
 
 ```sh
-gcloud ml-engine predict --model=taxifare --json-instances=temp_input2.json --project=<YOUR_PROJECT_NAME> \
- --version=<MODEL_VERSION_NAME>
+python chicago_taxi_client.py \
+  --num_examples=1 \
+  --examples_file='../taxi_model/data/eval/data.csv' \
+  --server=mlengine:taxifare --model_name=<CMLE_MODEL_VERSION_NAME>
 ```
-You can set any of these model versions to be the default. For the default model, the request does not need to include the `--version` arg.
 
 #### Access the TF-serving endpoints for your learned model
 
@@ -222,14 +232,7 @@ kubectl get services
 
 Look for the services with prefix `preproc-train-deploy2-analyze`, and note their names and external IP addresses.
 
-You can make requests against these endpoints using this script: [`chicago_taxi_client.py`](components/kubeflow/tf-serving/chicago_taxi_client.py).
-Change to the `components/kubeflow/tf-serving` directory, and copy the `trainer` module from the `taxi_model` directory into this directory:
-
-```sh
-cp -pr ../taxi_model/trainer .
-```
-
-Then, run the script as follows, replacing the following with your external IP address and service name. You'll need to have `tensorflow_serving` installed to do this.
+Then, run the client script as follows, replacing the following with your external IP address and service name. You'll need to have `tensorflow_serving` installed to do this.
 
 ```sh
 python chicago_taxi_client.py \
@@ -237,7 +240,6 @@ python chicago_taxi_client.py \
   --examples_file='../taxi_model/data/eval/data.csv' \
   --server=<EXTERNAL IP>:9000 --model_name=<SERVICE NAME>
 ```
-
 
 When you're done experimenting, you'll probably want to take down the tf-serving endpoints.  See the "Cleanup" section below.
 

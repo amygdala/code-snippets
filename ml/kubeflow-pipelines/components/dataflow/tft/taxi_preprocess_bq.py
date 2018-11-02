@@ -115,54 +115,6 @@ def make_sql(table_name, ts1, ts2, stage, max_rows=None, for_eval=False):
            where_clause=where_clause,
            limit_clause=limit_clause)
 
-# new version
-# def make_sql(table_name, max_rows=None, for_eval=False):
-#   """Creates the sql command for pulling data from BigQuery.
-
-#   Args:
-#     table_name: BigQuery table name
-#     max_rows: if set, limits the number of rows pulled from BigQuery
-#     for_eval: True if this is for evaluation, false otherwise
-
-#   Returns:
-#     sql command as string
-#   """
-#   if for_eval:
-#     # 1/3 of the dataset used for eval
-#     where_clause = 'WHERE MOD(FARM_FINGERPRINT(unique_key), 3) = 0'
-#   else:
-#     # 2/3 of the dataset used for training
-#     where_clause = 'WHERE MOD(FARM_FINGERPRINT(unique_key), 3) > 0'
-
-#   limit_clause = ''
-#   if max_rows:
-#     limit_clause = 'LIMIT {max_rows}'.format(max_rows=max_rows)
-#   return """
-#   SELECT
-#       CAST(pickup_community_area AS string) AS pickup_community_area,
-#       CAST(dropoff_community_area AS string) AS dropoff_community_area,
-#       CAST(pickup_census_tract AS string) AS pickup_census_tract,
-#       CAST(dropoff_census_tract AS string) AS dropoff_census_tract,
-#       fare,
-#       EXTRACT(MONTH FROM trip_start_timestamp) AS trip_start_month,
-#       EXTRACT(HOUR FROM trip_start_timestamp) AS trip_start_hour,
-#       EXTRACT(DAYOFWEEK FROM trip_start_timestamp) AS trip_start_day,
-#       UNIX_SECONDS(trip_start_timestamp) AS trip_start_timestamp,
-#       pickup_latitude,
-#       pickup_longitude,
-#       dropoff_latitude,
-#       dropoff_longitude,
-#       trip_miles,
-#       payment_type,
-#       company,
-#       trip_seconds,
-#       tips
-#   FROM `{table_name}`
-#   {where_clause}
-#   {limit_clause}
-# """.format(
-#     table_name=table_name, where_clause=where_clause, limit_clause=limit_clause)
-
 
 def transform_data(input_handle,
                    outfile_prefix,
@@ -264,21 +216,25 @@ def transform_data(input_handle,
 
   with beam.Pipeline(runner, options=pipeline_options) as pipeline:
     with beam_impl.Context(temp_dir=temp_dir):
-      if input_handle.lower().endswith('csv'):
-        csv_coder = taxi.make_csv_coder(schema)
+      csv_coder = taxi.make_csv_coder(schema)
+      if 'csv' in input_handle.lower():
+      # if input_handle.lower().endswith('csv'):
         raw_data = (
             pipeline
             | 'ReadFromText' >> beam.io.ReadFromText(
                 input_handle, skip_header_lines=1)
             | 'ParseCSV' >> beam.Map(csv_coder.decode))
       else:
-        query = taxi.make_sql(input_handle, max_rows, for_eval=False)
-        raw_data = (
+        query = make_sql(input_handle, ts1, ts2, stage, max_rows=max_rows, for_eval=False)
+        # query = taxi.make_sql(input_handle, max_rows, for_eval=False)
+        raw_data1 = (
             pipeline
             | 'ReadBigQuery' >> beam.io.Read(
-                beam.io.BigQuerySource(query=query, use_standard_sql=True))
+                beam.io.BigQuerySource(query=query, use_standard_sql=True)))
+        raw_data = (
+            raw_data1
             | 'CleanData' >> beam.Map(
-                taxi.clean_raw_data_dict, raw_feature_spec=raw_feature_spec))
+                lambda x: (taxi.clean_raw_data_dict(x, raw_feature_spec))))
 
       if transform_dir is None:
         transform_fn = (
@@ -299,6 +255,14 @@ def transform_data(input_handle,
       (transformed_data, transformed_metadata) = (
           ((shuffled_data, raw_data_metadata), transform_fn)
           | 'Transform' >> beam_impl.TransformDataset())
+
+      # TODO(aju): fix this!!
+      if 'csv' not in input_handle.lower():  # if querying BQ
+        _ = (
+            raw_data
+            | beam.Map(csv_coder.encode)
+            | beam.io.WriteToText(os.path.join(working_dir, '{}.csv'.format(stage)), num_shards=1)
+            )
 
       coder = example_proto_coder.ExampleProtoCoder(transformed_metadata.schema)
       _ = (

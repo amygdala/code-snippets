@@ -64,6 +64,7 @@ def _do_mlengine_inference(model, version, serialized_examples):
     # https://github.com/GoogleCloudPlatform/training-data-analyst/blob/master/quests/tpu/invoke_model.py
     json_examples.append(
         '{ "inputs": { "b64": "%s" } }' % base64.b64encode(serialized_example))
+  # print('\n'.join(json_examples))
   file_io.write_string_to_file(instances_file, '\n'.join(json_examples))
   gcloud_command = [
       'gcloud', 'ml-engine', 'predict', '--model', model, '--version', version,
@@ -113,7 +114,7 @@ def _do_inference(model_handle, examples_file, num_examples, schema, model_name)
   if parsed_model_handle[0] == 'mlengine':
     _do_mlengine_inference(
         model=parsed_model_handle[1],
-        version=parsed_model_handle[2],
+        version=model_name,
         serialized_examples=serialized_examples,
         )
   else:
@@ -134,7 +135,7 @@ def main(_):
 
   parser.add_argument(
       '--server',
-      help=('Prediction service host:port or mlengine:model:version'),
+      help=('Prediction service host:port or mlengine:model'),
       required=True)
 
   parser.add_argument(

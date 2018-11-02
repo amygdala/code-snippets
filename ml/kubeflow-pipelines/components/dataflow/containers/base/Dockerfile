@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM ubuntu
+FROM ubuntu:18.04
 
 RUN apt-get update -y
 RUN apt-get -y install build-essential python-pip python2.7
@@ -23,11 +23,11 @@ RUN apt-get install --no-install-recommends -y -q ca-certificates python-dev pyt
 # RUN easy_install pip
 
 RUN pip install --upgrade pip
-RUN pip install tensorflow==1.10
+RUN pip install tensorflow==1.11
 RUN pip install pyyaml==3.12 six==1.11.0
 # RUN pip install pyyaml six
 
-RUN pip install tensorflow-transform==0.9.0
+RUN pip install tensorflow-transform==0.11.0
 
 RUN wget -nv https://dl.google.com/dl/cloudsdk/release/google-cloud-sdk.zip && \
     unzip -qq google-cloud-sdk.zip -d tools && \
