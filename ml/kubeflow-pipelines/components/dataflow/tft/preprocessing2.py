@@ -20,20 +20,24 @@ from __future__ import print_function
 
 import argparse
 import datetime
+import uuid
 import os
 
 import apache_beam as beam
 
 import tensorflow as tf
 import tensorflow_transform as transform
+from tensorflow.python.lib.io import file_io
 
 from tensorflow_transform.beam import impl as beam_impl
+from tensorflow_transform.beam.tft_beam_io import transform_fn_io
+from tensorflow_transform.coders import example_proto_coder
 from tensorflow_transform.tf_metadata import dataset_metadata
 from tensorflow_transform.tf_metadata import dataset_schema
 
 from tensorflow_transform import coders as tft_coders
 
-import taxi_schema.taxi_schema as ts
+import taxi_schema.taxi_schema as taxi
 
 
 # Number of buckets used by tf.transform for encoding each feature.
@@ -42,6 +46,24 @@ FEATURE_BUCKET_COUNT = 2
 VOCAB_SIZE = 10
 # Count of out-of-vocab buckets in which unrecognized VOCAB_FEATURES are hashed.
 OOV_SIZE = 1
+
+def _fill_in_missing(x):
+  """Replace missing values in a SparseTensor.
+
+  Fills in missing values of `x` with '' or 0, and converts to a dense tensor.
+
+  Args:
+    x: A `SparseTensor` of rank 2.  Its dense shape should have size at most 1
+      in the second dimension.
+
+  Returns:
+    A rank 1 tensor where missing values of `x` have been filled in.
+  """
+  default_value = '' if x.dtype == tf.string else 0
+  return tf.squeeze(
+      tf.sparse_to_dense(x.indices, [x.dense_shape[0], 1], x.values,
+                         default_value),
+      axis=1)
 
 
 def preprocessing_fn(inputs):
@@ -54,33 +76,35 @@ def preprocessing_fn(inputs):
     Map from string feature key to transformed feature operations.
   """
   outputs = {}
-  for key in ts.DENSE_FLOAT_FEATURE_KEYS:
+  for key in taxi.DENSE_FLOAT_FEATURE_KEYS:
     # Preserve this feature as a dense float, setting nan's to the mean.
-    outputs[key] = transform.scale_to_z_score(inputs[key])
+    outputs[taxi.transformed_name(key)] = transform.scale_to_z_score(
+        _fill_in_missing(inputs[key]))
 
-  for key in ts.VOCAB_FEATURE_KEYS:
+  for key in taxi.VOCAB_FEATURE_KEYS:
     # Build a vocabulary for this feature.
-    outputs[key] = transform.string_to_int(
-        inputs[key], top_k=VOCAB_SIZE, num_oov_buckets=OOV_SIZE)
+    outputs[
+        taxi.transformed_name(key)] = transform.compute_and_apply_vocabulary(
+            _fill_in_missing(inputs[key]),
+            top_k=taxi.VOCAB_SIZE,
+            num_oov_buckets=taxi.OOV_SIZE)
 
-  for key in ts.BUCKET_FEATURE_KEYS:
-    outputs[key] = transform.bucketize(inputs[key], FEATURE_BUCKET_COUNT)
+  for key in taxi.BUCKET_FEATURE_KEYS:
+    outputs[taxi.transformed_name(key)] = transform.bucketize(
+        _fill_in_missing(inputs[key]), taxi.FEATURE_BUCKET_COUNT)
 
-  for key in ts.CATEGORICAL_FEATURE_KEYS:
-    outputs[key] = inputs[key]
+  for key in taxi.CATEGORICAL_FEATURE_KEYS:
+    outputs[taxi.transformed_name(key)] = _fill_in_missing(inputs[key])
 
   # Was this passenger a big tipper?
-  def convert_label(label):
-    taxi_fare = inputs[ts.FARE_KEY]
-    return tf.where(
-        tf.is_nan(taxi_fare),
-        tf.cast(tf.zeros_like(taxi_fare), tf.int64),
-        # Test if the tip was > 5% of the fare.
-        tf.cast(
-            tf.greater(label, tf.multiply(taxi_fare, tf.constant(0.05))),
-            tf.int64))
-
-  outputs[ts.LABEL_KEY] = transform.apply_function(convert_label,
-                                                     inputs[ts.LABEL_KEY])
+  taxi_fare = _fill_in_missing(inputs[taxi.FARE_KEY])
+  tips = _fill_in_missing(inputs[taxi.LABEL_KEY])
+  outputs[taxi.transformed_name(taxi.LABEL_KEY)] = tf.where(
+      tf.is_nan(taxi_fare),
+      tf.cast(tf.zeros_like(taxi_fare), tf.int64),
+      # Test if the tip was > 5% of the fare.
+      tf.cast(
+          tf.greater(tips, tf.multiply(taxi_fare, tf.constant(0.05))),
+          tf.int64))
 
   return outputs

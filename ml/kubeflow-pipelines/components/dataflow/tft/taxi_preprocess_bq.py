@@ -229,9 +229,7 @@ def transform_data(input_handle,
 
     return outputs
 
-  ## temp
-  preprocessing_fn = def_preprocessing_fn
-  # preprocessing_fn = preprocessing_fn or def_preprocessing_fn
+  preprocessing_fn = preprocessing_fn or def_preprocessing_fn
 
   print('ts1 %s, ts2 %s' % (ts1,ts2))
 

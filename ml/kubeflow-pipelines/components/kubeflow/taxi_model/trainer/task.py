@@ -48,7 +48,7 @@ def train_and_maybe_evaluate(train_files, eval_files, hparams):
   Returns:
     The estimator that was used for training (and maybe eval)
   """
-  cschema = taxi.read_schema('schema.pbtxt')
+  schema = taxi.read_schema('schema.pbtxt')
 
   train_input = lambda: model.input_fn(
       train_files,
