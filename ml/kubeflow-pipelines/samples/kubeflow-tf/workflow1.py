@@ -31,8 +31,8 @@ def workflow1(
   working_dir: dsl.PipelineParam=dsl.PipelineParam(name='working-dir', value='YOUR_GCS_DIR_HERE'),
   tft_setup_file: dsl.PipelineParam=dsl.PipelineParam(name='tft-setup-file', value='/ml/transform/setup.py'),
   tfma_setup_file: dsl.PipelineParam=dsl.PipelineParam(name='tfma-setup-file', value='/ml/analysis/setup.py'),
-  workers: dsl.PipelineParam=dsl.PipelineParam(name='workers', value=0),
-  pss: dsl.PipelineParam=dsl.PipelineParam(name='pss', value=0),
+  workers: dsl.PipelineParam=dsl.PipelineParam(name='workers', value=1),
+  pss: dsl.PipelineParam=dsl.PipelineParam(name='pss', value=1),
   max_rows: dsl.PipelineParam=dsl.PipelineParam(name='max-rows', value=10000),
   ts1: dsl.PipelineParam=dsl.PipelineParam(name='ts1', value=''),
   ts2: dsl.PipelineParam=dsl.PipelineParam(name='ts2', value=''),
@@ -130,8 +130,8 @@ def workflow1(
           "--train-files-prefix", outfile_prefix_train,
           "--eval-files-prefix", outfile_prefix_eval,
           "--train-steps", train_steps,
-          "--workers", workers,
-          "--pss", pss]
+          "--workers", 1,
+          "--pss", 1]
       )
   train2.after(tfteval2)
   train2.after(tfttrain2)
