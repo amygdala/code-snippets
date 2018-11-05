@@ -245,7 +245,7 @@ When you're done experimenting, you'll probably want to take down the tf-serving
 
 ### Example workflow 2
 
-This workflow shows how you might use TFMA to investigate relative accuracies of models trained on different datasets, evaluating against fresh data. As part of the preprocessing step, it pulls data directly from the source [BigQuery Chicago taxi dataset](https://cloud.google.com/bigquery/public-data/chicago-taxi), with differing min and max time boundaries, effectively training on 'recent' data vs a batch that includes older data.  Then, it runs TFMA analysis on both learned models, using 'recent' data for evaluation.  (It also evaluates the 'recent' data against an older model trained on older data). As with Workflow 1 above, it also deploys the trained models to Cloud ML Engine.
+This workflow shows how you might use TFMA to investigate relative accuracies of models trained on different datasets, evaluating against fresh data. As part of the preprocessing step, it pulls data directly from the source [BigQuery Chicago taxi dataset](https://cloud.google.com/bigquery/public-data/chicago-taxi), with differing min and max time boundaries, effectively training on 'recent' data vs a batch that includes older data.  Then, it runs TFMA analysis on both learned models, using 'recent' data for evaluation. As with Workflow 1 above, it also deploys the trained models to Cloud ML Engine.
 
 Run the second example [as described here](samples/kubeflow-tf/README.md#example-workflow-2).
 
