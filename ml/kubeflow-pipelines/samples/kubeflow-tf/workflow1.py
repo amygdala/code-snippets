@@ -181,7 +181,7 @@ def workflow1(
   tfserving2 = dsl.ContainerOp(
       name = 'tfserving2',
       image = 'gcr.io/google-samples/ml-pipeline-kubeflow-tfserve-taxi',
-      arguments = ["--model_name", '{{workflow.name}}',
+      arguments = ["--model_name", '{{workflow.name}}-2',
           "--model_path", '%s/%s/tf2/serving_model_dir/export/chicago-taxi' % (working_dir, '{{workflow.name}}')]
       )
 
