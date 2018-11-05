@@ -39,6 +39,14 @@ from tensorflow_transform import coders as tft_coders
 
 import taxi_schema.taxi_schema as taxi
 
+import mcsv_coder
+
+def make_mcsv_coder(schema):
+  """Return a coder for tf.transform to read csv files."""
+  raw_feature_spec = taxi.get_raw_feature_spec(schema)
+  parsing_schema = dataset_schema.from_feature_spec(raw_feature_spec)
+  return mcsv_coder.CsvCoder(taxi.CSV_COLUMN_NAMES, parsing_schema)
+
 def _fill_in_missing(x):
   """Replace missing values in a SparseTensor.
 
@@ -217,6 +225,8 @@ def transform_data(input_handle,
   with beam.Pipeline(runner, options=pipeline_options) as pipeline:
     with beam_impl.Context(temp_dir=temp_dir):
       csv_coder = taxi.make_csv_coder(schema)
+      # temp tft bug workaround
+      mcsv_coder = make_mcsv_coder(schema)
       if 'csv' in input_handle.lower():
       # if input_handle.lower().endswith('csv'):
         raw_data = (
@@ -226,7 +236,6 @@ def transform_data(input_handle,
             | 'ParseCSV' >> beam.Map(csv_coder.decode))
       else:
         query = make_sql(input_handle, ts1, ts2, stage, max_rows=max_rows, for_eval=False)
-        # query = taxi.make_sql(input_handle, max_rows, for_eval=False)
         raw_data1 = (
             pipeline
             | 'ReadBigQuery' >> beam.io.Read(
@@ -256,11 +265,10 @@ def transform_data(input_handle,
           ((shuffled_data, raw_data_metadata), transform_fn)
           | 'Transform' >> beam_impl.TransformDataset())
 
-      # TODO(aju): fix this!!
       if 'csv' not in input_handle.lower():  # if querying BQ
         _ = (
             raw_data
-            | beam.Map(csv_coder.encode)
+            | beam.Map(mcsv_coder.encode)
             | beam.io.WriteToText(os.path.join(working_dir, '{}.csv'.format(stage)), num_shards=1)
             )
 
@@ -271,56 +279,6 @@ def transform_data(input_handle,
           | 'WriteExamples' >> beam.io.WriteToTFRecord(
               os.path.join(working_dir, outfile_prefix), file_name_suffix='.gz')
       )
-
-  # with beam.Pipeline(runner, options=pipeline_options) as pipeline:
-  #   with beam_impl.Context(temp_dir=temp_dir):
-  #     csv_coder = taxi.make_csv_coder(schema)
-  #     if 'csv' in input_handle.lower():
-  #       raw_data = (
-  #           pipeline
-  #           | 'ReadFromText' >> beam.io.ReadFromText(
-  #               input_handle, skip_header_lines=1)
-  #           | 'ParseCSV' >> beam.Map(csv_coder.decode))
-  #     else:
-  #       query = make_sql(input_handle, ts1, ts2, stage, max_rows=max_rows, for_eval=False)
-  #       raw_data = (
-  #           pipeline
-  #           | 'ReadBigQuery' >> beam.io.Read(
-  #               beam.io.BigQuerySource(query=query, use_standard_sql=True)))
-
-  #     raw_data |= 'CleanData' >> beam.Map(taxi.clean_raw_data_dict,
-  #                                         raw_feature_spec=raw_feature_spec)
-
-  #     transform_fn = ((raw_data, raw_data_metadata)
-  #                     | 'Analyze' >> beam_impl.AnalyzeDataset(preprocessing_fn))
-
-  #     _ = (
-  #         transform_fn
-  #         | 'WriteTransformFn' >> transform_fn_io.WriteTransformFn(working_dir))
-
-  #     # Shuffling the data before materialization will improve training
-  #     # effectiveness downstream.
-  #     shuffled_data = raw_data | 'RandomizeData' >> beam.transforms.Reshuffle()
-
-  #     (transformed_data, transformed_metadata) = (
-  #         ((shuffled_data, raw_data_metadata), transform_fn)
-  #         | 'Transform' >> beam_impl.TransformDataset())
-
-  #     if 'csv' not in input_handle.lower():  # if querying BQ
-  #       _ = (
-  #           raw_data
-  #           | beam.Map(csv_coder.encode)
-  #           | beam.io.WriteToText(os.path.join(working_dir, '{}.csv'.format(stage)), num_shards=1)
-  #           )
-
-  #     coder = example_proto_coder.ExampleProtoCoder(transformed_metadata.schema)
-  #     _ = (
-  #         transformed_data
-  #         | 'SerializeExamples' >> beam.Map(coder.encode)
-  #         | 'WriteExamples' >> beam.io.WriteToTFRecord(
-  #             os.path.join(working_dir, outfile_prefix),
-  #             file_name_suffix='.gz')
-  #         )
 
 
 def main():
