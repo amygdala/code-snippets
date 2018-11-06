@@ -34,7 +34,6 @@ spec:
       - name: ts2-1
       - name: ts1-2
       - name: ts2-2
-      - name: old-eval-model-dir
   templates:
   - name: preproc-train-analyze-deploy
     inputs:
@@ -58,7 +57,6 @@ spec:
       - name: ts2-1
       - name: ts1-2
       - name: ts2-2
-      - name: old-eval-model-dir
     dag:
       tasks:
       - name: preprocesseval
@@ -247,23 +245,6 @@ spec:
             value: "{{inputs.parameters.working-dir}}/{{workflow.name}}/tfma2/output"
           - name: eval-model-dir
             value: "{{inputs.parameters.working-dir}}/{{workflow.name}}/tf2/eval_model_dir"
-          - name: tfma-mode
-            value: "{{inputs.parameters.tfma-mode}}"
-          - name: project
-            value: "{{inputs.parameters.project}}"
-          - name: setup-file
-            value: "{{inputs.parameters.tfma-setup-file}}"
-      - name: analyze3
-        dependencies: [preprocesseval]
-        template: analyze
-        arguments:
-          parameters:
-          - name: input-csv
-            value: "{{inputs.parameters.working-dir}}/{{workflow.name}}/tft-eval/eval.csv-00000-of-00001"
-          - name: tfma-run-dir
-            value: "{{inputs.parameters.working-dir}}/{{workflow.name}}/tfma3/output"
-          - name: eval-model-dir
-            value: "{{inputs.parameters.old-eval-model-dir}}"
           - name: tfma-mode
             value: "{{inputs.parameters.tfma-mode}}"
           - name: project
