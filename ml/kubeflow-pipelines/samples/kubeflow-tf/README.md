@@ -78,6 +78,5 @@ argo submit workflow2.yaml \
      -p workers=2 \
      -p pss=1 \
      -p preprocessing-module=gs://aju-dev-demos-codelabs/KF/taxi-preproc/preprocessing.py \
-     -p old-eval-model-dir="gs://aju-dev-demos-codelabs/KF/prev/eval_model_dir" \
      --entrypoint preproc-train-analyze-deploy
 ```
