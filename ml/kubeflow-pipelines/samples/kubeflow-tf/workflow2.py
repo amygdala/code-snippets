@@ -40,7 +40,6 @@ def workflow2(
   ts2_2: dsl.PipelineParam=dsl.PipelineParam(name='ts2-2', value='2016-03-01 00:00:00'),
   preprocessing_module: dsl.PipelineParam=dsl.PipelineParam(name='preprocessing-module1', value='gs://aju-dev-demos-codelabs/KF/taxi-preproc/preprocessing.py'),
   preprocess_mode: dsl.PipelineParam=dsl.PipelineParam(name='preprocess-mode', value='local'),
-  old_eval_model_dir: dsl.PipelineParam=dsl.PipelineParam(name='old-eval-model-dir', value='gs://aju-dev-demos-codelabs/KF/prev/eval_model_dir'),
   tfma_mode: dsl.PipelineParam=dsl.PipelineParam(name='tfma-mode', value='local')):
 
 
@@ -157,17 +156,6 @@ def workflow2(
           "--setup_file", tfma_setup_file,
           "--project", project]
       )
-  analyze3 = dsl.ContainerOp(
-      name = 'analyze3',
-      image = 'gcr.io/google-samples/ml-pipeline-dataflow-tfma-taxi',
-      arguments = ["--input_csv", '%s/%s/tft-eval/eval.csv-00000-of-00001' % (working_dir, '{{workflow.name}}'),
-          "--tfma_run_dir", '%s/%s/tfma3/output' % (working_dir, '{{workflow.name}}'),
-          "--eval_model_dir", old_eval_model_dir,
-          "--mode", tfma_mode,
-          "--setup_file", tfma_setup_file,
-          "--project", project]
-      )
-
   cmleop = dsl.ContainerOp(
       name = 'cmleop',
       image = 'gcr.io/google-samples/ml-pipeline-cmle-op',
@@ -188,7 +176,6 @@ def workflow2(
   analyze.after(tfteval)
   analyze2.after(tfteval)
   analyze2.after(train2)
-  analyze3.after(tfteval)
   cmleop.after(train)
   cmleop2.after(train2)
 
