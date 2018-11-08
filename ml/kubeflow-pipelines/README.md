@@ -1,35 +1,32 @@
 
+# Kubeflow Pipelines examples
 
-# Examples of Kubeflow + Argo for ML workflow
 
-
-  - [Installation and setup](#installation-and-setup)
-    - [Create a GCP project and enable the necessary APIs](#create-a-gcp-project-and-enable-the-necessary-apis)
-    - [Install the gcloud sdk (or use the Cloud Shell)](#install-the-gcloud-sdk-or-use-the-cloud-shell)
-    - [Set up a Kubernetes Engine (GKE) cluster](#set-up-a-kubernetes-engine-gke-cluster)
-    - [Install ksonnet](#install-ksonnet)
-    - [Install Kubeflow + Argo on the GKE cluster](#install-kubeflow--argo-on-the-gke-cluster)
-    - [Create a Google Cloud Storage (GCS) bucket](#create-a-google-cloud-storage-gcs-bucket)
-  - [Running the examples](#running-the-examples)
-    - [Example workflow 1](#example-workflow-1)
-      - [View the results of model analysis in a Jupyter notebook](#view-the-results-of-model-analysis-in-a-jupyter-notebook)
-      - [Use your models for prediction with Cloud ML Engine Online Prediction](#use-your-models-for-prediction-with-cloud-ml-engine-online-prediction)
-      - [Access the TF-serving endpoints for your learned model](#access-the-tf-serving-endpoints-for-your-learned-model)
-    - [Example workflow 2](#example-workflow-2)
-      - [View the results of model analysis in a Jupyter notebook](#view-the-results-of-model-analysis-in-a-jupyter-notebook-1)
-      - [Use your models for prediction with Cloud ML Engine Online Prediction](#use-your-models-for-prediction-with-cloud-ml-engine-online-prediction-1)
-  - [Navigating the example code](#navigating-the-example-code)
-  - [Cleanup](#cleanup)
-    - [Delete the completed pods for a workflow](#delete-the-completed-pods-for-a-workflow)
-    - [Take down the TF-serving endpoints](#take-down-the-tf-serving-endpoints)
-  - [Summary](#summary)
+- [Installation and setup](#installation-and-setup)
+  - [Create a GCP project and enable the necessary APIs](#create-a-gcp-project-and-enable-the-necessary-apis)
+  - [Install the gcloud sdk (or use the Cloud Shell)](#install-the-gcloud-sdk-or-use-the-cloud-shell)
+  - [Set up a Kubernetes Engine (GKE) cluster](#set-up-a-kubernetes-engine-gke-cluster)
+  - [Install Kubeflow with Kubeflow Pipelines on the GKE cluster](#install-kubeflow-with-kubeflow-pipelines-on-the-gke-cluster)
+  - [Create a Google Cloud Storage (GCS) bucket](#create-a-google-cloud-storage-gcs-bucket)
+- [Running the examples](#running-the-examples)
+  - [Example workflow 1](#example-workflow-1)
+    - [View the results of model analysis in a Jupyter notebook](#view-the-results-of-model-analysis-in-a-jupyter-notebook)
+    - [Use your models for prediction](#use-your-models-for-prediction)
+    - [Use the Cloud ML Engine Online Prediction service](#use-the-cloud-ml-engine-online-prediction-service)
+    - [Access the TF-serving endpoints for your learned model](#access-the-tf-serving-endpoints-for-your-learned-model)
+  - [Example workflow 2](#example-workflow-2)
+    - [View the results of model analysis in a Jupyter notebook](#view-the-results-of-model-analysis-in-a-jupyter-notebook-1)
+    - [Use your models for prediction with Cloud ML Engine Online Prediction](#use-your-models-for-prediction-with-cloud-ml-engine-online-prediction)
+- [Navigating the example code](#navigating-the-example-code)
+- [Cleanup](#cleanup)
+  - [Take down the TF-serving endpoints](#take-down-the-tf-serving-endpoints)
 
 [Kubeflow](https://www.kubeflow.org/) is an OSS project to support a machine learning stack on Kubernetes, to make deployments of ML workflows on Kubernetes simple, portable and scalable.
 
-This directory contains some ML workflow examples that run on Kubeflow plus
-[Argo](https://github.com/argoproj/argo) (a container-native workflow framework for Kubernetes).
+[**Kubeflow Pipelines**](https://github.com/kubeflow/pipelines) is a new component of Kubeflow that makes it easy to compose, deploy and manage end-to-end machine learning workflows. The Kubeflow Pipelines documentation is [here]().
 
-The examples highlight how Kubeflow can help support portability, composability and reproducibility, scalability, and visualization and collaboration in your ML lifecycle; and make it easier to support hybrid ML solutions.
+This directory contains some Kubeflow Pipelines examples.
+The examples highlight how Kubeflow and Kubeflow Pipelines can help support portability, composability and reproducibility, scalability, and visualization and collaboration in your ML lifecycle; and make it easier to support hybrid ML solutions.
 
 The examples include use of [TensorFlow Transform](https://github.com/tensorflow/transform) (TFT) for preprocessing and to avoid training/serving skew; Kubeflow's tf-jobs CRD for supporting distributed training; and [TFMA](https://github.com/tensorflow/model-analysis/) for model analysis.
 The workflows also include deployment of the trained models to both
@@ -60,15 +57,15 @@ Or, if you don't want to install `gcloud` locally, you can bring up the [Cloud S
 ### Set up a Kubernetes Engine (GKE) cluster
 
 Visit the [Cloud Console](https://console.cloud.google.com/kubernetes) for your project and create a GKE cluster.
-So that you don't have any Kubernetes pods stuck in "Pending" for lack of resources while you run the examples, consider giving it 4 4-core nodes. You may need to [increase your Compute Engine API CPUs quota](https://console.cloud.google.com/iam-admin/quotas) before you do this.
+So that you don't have any Kubernetes pods stuck in "Pending" for lack of resources while you run the examples, consider giving it 4 8-core nodes. You may need to [increase your Compute Engine API CPUs quota](https://console.cloud.google.com/iam-admin/quotas) before you do this.
 (See the 'Cleanup' section below so that you don't get further charged for the cluster after you're done experimenting).
 
-<a href="https://storage.googleapis.com/amy-jo/images/kf-argo/gke_setup_start.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf-argo/gke_setup_start.png" width="600"/></a>
+<a href="https://storage.googleapis.com/amy-jo/images/kf-pls/cluster_create1.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf-pls/cluster_create1.png" width="600"/></a>
 
 Click The '__Advanced edit__' button, and under **Access scopes**, click 'Allow full access to all Cloud APIs'. (You can also enable autoscaling in this panel if you want).
 
 <figure>
-<a href="https://storage.googleapis.com/amy-jo/images/kf-argo/gke_setup_adv.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf-argo/gke_setup_adv.png" /></a>
+<a href="https://storage.googleapis.com/amy-jo/images/kf-pls/cluster_create2.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf-pls/cluster_create2.png" /></a>
 <figcaption><br/><i>Set up your GKE cluster to allow full access to all Cloud APIs.</i></figcaption>
 </figure>
 
@@ -90,41 +87,10 @@ kubectl create clusterrolebinding sa-admin --clusterrole=cluster-admin --service
 ```
 (You may need to be a project *owner* to run these).
 
-### Install ksonnet
 
-You'll first need to [install ksonnet](https://github.com/ksonnet/ksonnet#install) version 0.11.0 or greater. It is used for the Kubeflow install. Follow the instructions for your OS.
+### Install Kubeflow with Kubeflow Pipelines on the GKE cluster
 
-To install on Cloud Shell or a local Linux machine, set this environment variable:
-
-```sh
-export KS_VER=ks_0.11.0_linux_amd64
-```
-
-Then download and unpack the appropriate binary, and add it to your $PATH:
-
-```sh
-wget -O /tmp/$KS_VER.tar.gz https://github.com/ksonnet/ksonnet/releases/download/v0.11.0/$KS_VER.tar.gz
-
-mkdir -p ${HOME}/bin
-tar -xvf /tmp/$KS_VER.tar.gz -C ${HOME}/bin
-
-export PATH=$PATH:${HOME}/bin/$KS_VER
-```
-
-### Install Kubeflow + Argo on the GKE cluster
-
-Now you're ready to install Kubeflow and Argo.
-
-Install Argo as described [here](https://github.com/argoproj/argo/blob/master/demo.md).
-
-Then install Kubeflow version 0.2.4 as follows:
-
-```sh
-export KUBEFLOW_VERSION=0.2.4
-curl https://raw.githubusercontent.com/kubeflow/kubeflow/v${KUBEFLOW_VERSION}/scripts/deploy.sh | bash
-```
-
-(If you see errors, double check that you've installed ksonnet).
+Now you're ready to install Kubeflow with Kubeflow Pipelines.  Follow the instructions [here](https://github.com/kubeflow/pipelines/wiki/Deploy-the-Kubeflow-Pipelines-Service#deploy-kubeflow-pipelines) to use the *bootstrapper* to deploy.
 
 ### Create a Google Cloud Storage (GCS) bucket
 
@@ -137,44 +103,45 @@ There are two examples. Both revolve around a TensorFlow 'taxi fare tip predicti
 Both examples use [TFT](https://github.com/tensorflow/transform) for data preprocessing and [TFMA](https://github.com/tensorflow/model-analysis/) for model analysis (either can be run via local [Apache Beam](https://beam.apache.org/), or via [Dataflow](https://cloud.google.com/dataflow)); do distributed training via the Kubeflow tf-jobs [custom resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/); and deploy to the Cloud ML Engine Online Prediction service.
 The first example also includes use of [TF-Serving](https://github.com/tensorflow/serving) via Kubeflow, and the second includes use of [BigQuery](cloud.google.com/bigquery) as a data source.
 
-Change to the [`samples/kubeflow-tf`](samples/kubeflow-tf) directory to run the examples.
+Change to the [`samples/kubeflow-tf`](samples/kubeflow-tf) directory, and see that [README](samples/kubeflow-tf/README.md) for details on runing the examples. To bring up the Pipelines UI, set up a port-forward to the Kubeflow dashboard:
 
-For both workflows, you can use the Argo UI to track the progress of a workflow over time, e.g.:
-
-```sh
-kubectl port-forward $(kubectl get pods -n default -l app=argo-ui -o jsonpath='{.items[0].metadata.name}') -n default 8001:8001
 ```
-See the Argo documentation for more.
-
-You can also use `kubectl` to watch the pods created in the various stages of the workflows.
-
-```sh
-kubectl get pods -o wide --watch=true
+export NAMESPACE=kubeflow
+kubectl port-forward -n ${NAMESPACE}  `kubectl get pods -n ${NAMESPACE} --selector=service=ambassador -o jsonpath='{.items[0].metadata.name}'` 8080:80
 ```
 
-In particular, this lets you monitor creation and status of the pods used for Kubeflow tf-job distributed training.
+and then visit the Pipelines page: `http://localhost:8080/pipeline`
+
+Once you've uploaded a pipeline, you can then create *Experiments* based on that pipeline.  When you initiate an experiment *run*, fill in the `<YOUR_BUCKET>` and `<YOUR_PROJECT>` parameter values with your information. You can then monitor the run in the Pipelines UI, as well as view information about each step: its logs, configuration, and inputs and outputs.
+
+You can also use `kubectl` to watch the pods created in the various stages of the workflows:
+
+```sh
+kubectl get pods -o wide --all-namespaces=true --watch=true
+```
+
+In particular, this lets you monitor creation and status of the pods used for Kubeflow `TF-job` distributed training.
 
 ### Example workflow 1
 
 Run the first example [as described here](samples/kubeflow-tf/README.md#example-workflow-1).
-This example illustrates how you can use a ML workflow to experiment with
+This example illustrates how you can use a Kubeflow pipeline to experiment with
 [TFT](https://github.com/tensorflow/transform)-based feature engineering, and how you can serve your trained model from both on-prem and cloud endpoints.
 
 <figure>
-<a href="https://storage.googleapis.com/amy-jo/images/kf-argo/argo_workflow1.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf-argo/argo_workflow1.png" width="90%"/></a>
-<figcaption><br><i>A workflow for TFT-based feature engineering experimentation</i></figcaption>
+<a href="https://storage.googleapis.com/amy-jo/images/kf-pls/workflow1_graph_ds.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf-pls/workflow1_graph_ds.png" width="90%"/></a>
+<figcaption><br/><i>A workflow for TFT-based feature engineering experimentation</i></figcaption>
 </figure>
 
 <p></p>
 
-The workflow runs two paths concurrently, passing a different TFT preprocessing function to each ([`preprocessing.py`](components/dataflow/tft/preprocessing.py) vs [`preprocessing2.py`](components/dataflow/tft/preprocessing.py)).
+The pipeline runs two paths concurrently, passing a different TFT preprocessing function to each ([`preprocessing.py`](components/dataflow/tft/preprocessing.py) vs [`preprocessing2.py`](components/dataflow/tft/preprocessing.py)).
 
 Then each model is trained, using Kubeflow's tf-jobs [CRD](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).  For example purposes, distributed training is used for one path, and single-node training is used for the other.  This is done by specifying the number of *workers* and *parameter servers* to use for the training job.
 
-For this workflow, one processing path used two workers and one parameter server as well as a 'master' (for distributed training), and the other is hardwired to use just one 'master' (single-node training).  While the training parts of the workflow are running, you'll see something like the following in your list of pods:
+For this workflow, one processing path used two workers and one parameter server as well as a 'master' (for distributed training), and the other is hardwired to use just one of each.  While the training parts of the workflow are running, you'll see something like the following in your list of pods:
 
 ```
-trainer-4d449038-afa7-4906-98ad-4e32b811-master-qm3y-0-qp1b0   1/1       Running     0          1m        10.20.0.12   gke-pipelines-default-pool-2a81a07a-ptmq
 trainer-b64ef136-953d-4b57-b4e1-604aabff-master-huex-0-szz88   1/1       Running     0          1m        10.20.0.10   gke-pipelines-default-pool-2a81a07a-ptmq
 trainer-b64ef136-953d-4b57-b4e1-604aabff-ps-huex-0-x983w       1/1       Running     0          1m        10.20.2.9    gke-pipelines-default-pool-2a81a07a-26k2
 trainer-b64ef136-953d-4b57-b4e1-604aabff-worker-huex-0-ki35n   1/1       Running     0          1m        10.20.2.10   gke-pipelines-default-pool-2a81a07a-26k2
@@ -250,7 +217,8 @@ This workflow shows how you might use TFMA to investigate relative accuracies of
 Run the second example [as described here](samples/kubeflow-tf/README.md#example-workflow-2).
 
 <figure>
-<a href="https://storage.googleapis.com/amy-jo/images/kf-argo/argo_workflow2.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf-argo/argo_workflow2.png" width="90%"/></a>
+<a href="https://storage.googleapis.com/amy-jo/images/kf-pls/wkflw2_graph_ds.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf-pls/wkflw2_graph_ds.png" width="90%"/></a>
+
 <figcaption><br/><i>Comparing models trained on datasets that cover differing time intervals</i></figcaption>
 </figure>
 
@@ -272,19 +240,19 @@ See [above](#use-your-models-for-prediction-with-cloud-ml-engine-online-predicti
 
 The code is organized into two subdirectories.
 
-- [`components`](components) holds the implementation of the various Argo steps used in the workflows. These steps are container-based, so for each such step, we need to provide both the source code used in the container, and the specification of how to build the container.
+- [`components`](components) holds the implementation of the various Pipeline steps used in the workflows. These steps are container-based, so for each such step, we need to provide both the source code used in the container, and the specification of how to build the container.
 
-- [`samples`](samples) holds the Argo workflow definitions.
-The definitions use prebuilt containers so that the examples are easy to run, but if you want to do any customization, you can build your own component containers and use those instead.
+- [`samples`](samples) holds the Pipeline definitions.
+They use prebuilt containers so that the examples are easy to run, but if you want to do any customization, you can build your own component containers and use those instead.
 
 ## Cleanup
 
 When you're done, __delete your GKE cluster so that you don't incur extra charges__. An easy way to do this is via the
 [Cloud Console](https://console.cloud.google.com/kubernetes).
 
-If you're not ready to take down the whole GKE cluster, you might want to do some finer-grained cleanup, as follows:
+If you're not ready to take down the whole GKE cluster, you might want to do some finer-grained cleanup:
 
-### Delete the completed pods for a workflow
+<!-- ### Delete the completed pods for a workflow
 
 The completed Argo pods aren't deleted by default -- this allows easier debugging, since you can view their logs via
 `kubectl logs <podname> main`.
@@ -292,7 +260,7 @@ To delete the completed Kubernetes pods for a given Argo workflow, run the follo
 
 ```sh
 argo delete <WORKFLOW_NAME>
-```
+``` -->
 
 ### Take down the TF-serving endpoints
 
