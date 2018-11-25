@@ -14,8 +14,6 @@
 
 
 import kfp.dsl as dsl
-import datetime
-
 
 @dsl.pipeline(
   name='Workflow 1',
@@ -69,7 +67,6 @@ def workflow1(
           "--ts2", ts2,
           "--stage", "train",
           "--preprocessing_module", preprocessing_module1]
-      # file_outputs = {'transformed': '/output.txt'}
       )
   tfteval2 = dsl.ContainerOp(
       name = 'tft-eval2',
@@ -168,7 +165,7 @@ def workflow1(
       name = 'cmleop2',
       image = 'gcr.io/google-samples/ml-pipeline-cmle-op',
       arguments = ["--gcs-path", '%s/%s/tf2/serving_model_dir/export/chicago-taxi' % (working_dir, '{{workflow.name}}'),
-          "--version-name", '{{workflow.name}}',
+          "--version-name", '{{workflow.name}}_2',
           "--project", project]
       )
 

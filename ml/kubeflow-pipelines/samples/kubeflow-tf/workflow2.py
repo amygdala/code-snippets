@@ -167,7 +167,7 @@ def workflow2(
       name = 'cmleop2',
       image = 'gcr.io/google-samples/ml-pipeline-cmle-op',
       arguments = ["--gcs-path", '%s/%s/tf2/serving_model_dir/export/chicago-taxi' % (working_dir, '{{workflow.name}}'),
-          "--version-name", '{{workflow.name}}',
+          "--version-name", '{{workflow.name}}_2',
           "--project", project]
       )
 
