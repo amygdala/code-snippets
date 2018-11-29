@@ -20,7 +20,7 @@ import kfp.dsl as dsl
   description='Demonstrate TFT-based feature processing, TFMA, TFJob, CMLE OP, and TF-Serving'
 )
 def gh_summ(
-  train_steps: dsl.PipelineParam=dsl.PipelineParam(name='train-steps', value=2020000),
+  train_steps: dsl.PipelineParam=dsl.PipelineParam(name='train-steps', value=2019300),
   project: dsl.PipelineParam=dsl.PipelineParam(name='project', value='YOUR_PROJECT_HERE'),
   github_token: dsl.PipelineParam=dsl.PipelineParam(name='github-token', value='YOUR_GITHUB_TOKEN_HERE'),
   working_dir: dsl.PipelineParam=dsl.PipelineParam(name='working-dir', value='YOUR_GCS_DIR_HERE'),

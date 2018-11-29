@@ -26,6 +26,7 @@ RUN pip install tensor2tensor
 RUN pip install tensorflow-serving-api
 RUN pip install gunicorn
 RUN pip install pyyaml==3.12 six==1.11.0
+RUN pip install pandas
 
 RUN wget -nv https://dl.google.com/dl/cloudsdk/release/google-cloud-sdk.zip && \
     unzip -qq google-cloud-sdk.zip -d /tools && \
@@ -44,6 +45,5 @@ ENV PATH $PATH:/tools/node/bin:/tools/google-cloud-sdk/bin
 
 WORKDIR /ml/app
 
-# ENTRYPOINT ["python", "/ml/flask_app.py"]
 CMD gunicorn -w 4 -b :8080 main:app
 

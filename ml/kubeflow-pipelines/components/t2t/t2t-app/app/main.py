@@ -22,10 +22,12 @@ import random
 import requests
 import sys
 
+import pandas as pd
+
 from flask import Flask
 from flask import jsonify
 from flask import render_template
-from flask import request
+from flask import g, request
 from flask import url_for
 import logging
 from googleapiclient import discovery
@@ -48,17 +50,18 @@ app = Flask(__name__)
 model_name = os.getenv('MODEL_NAME', 'ghsumm')
 problem_name = os.getenv('PROBLEM_NAME', 'poetry_line_problem')
 t2t_usr_dir = os.getenv('T2T_USR_DIR', 'ghsumm/trainer')
-hparams_name = os.getenv('HPARAMS', 'transformer_base')
+hparams_name = os.getenv('HPARAMS', 'transformer_prepend')
 data_dir = os.getenv('DATADIR', 'gs://aju-dev-demos-pipelines/temp/t2t_data_all')
-github_token = os.getenv('GH_TOKEN', '0741b978e862912272ec9e82cc446e243373b773')
+github_token = os.getenv('GH_TOKEN', 'xxx')
 
 server = os.getenv('TFSERVING_HOST', 'ghsumm.kubeflow')
 print("using server: %s" % server)
 servable_name = os.getenv('TF_SERVABLE_NAME', 'ghsumm')
 print("using model servable name: %s" % servable_name)
 
-SAMPLE_DATA_URL = ('https://storage.googleapis.com/kubeflow-examples/'
-                   'github-issue-summarization-data/github_issues_sample.csv')
+# SAMPLE_DATA_URL = ('https://storage.googleapis.com/kubeflow-examples/'
+#                    'github-issue-summarization-data/github_issues_sample.csv')
+SAMPLE_ISSUES = './github_issues_sample.csv'
 
 # SERVER_URL = 'http://130.211.206.140:8500/v1/models/ghsumm:predict'
 SERVER_URL = 'http://' + server + ':8500/v1/models/' + servable_name + ':predict'
@@ -66,11 +69,18 @@ SERVER_URL = 'http://' + server + ':8500/v1/models/' + servable_name + ':predict
 def get_issue_body(issue_url):
   issue_url = re.sub('.*github.com/', 'https://api.github.com/repos/',
                      issue_url)
-  print("issue url: %s" % issue_url)
-  return requests.get(
+  tf.logging.info("issue url: %s", issue_url)
+  tf.logging.info("using GH token: %s" , github_token)
+  response = requests.get(
     issue_url, headers={
       'Authorization': 'token {}'.format(github_token)
-    }).json()['body']
+    }).json()
+  tf.logging.info("response from url fetch: %s", response)
+  return response['body']
+  # return requests.get(
+    # issue_url, headers={
+      # 'Authorization': 'token {}'.format(github_token)
+    # }).json()['body']
 
 
 @app.route('/')
@@ -86,12 +96,16 @@ def random_github_issue():
   github_issues = getattr(g, '_github_issues', None)
   if github_issues is None:
     github_issues = g._github_issues = pd.read_csv(
-      SAMPLE_DATA_URL).body.tolist()
-  return jsonify({
-    'body':
-    github_issues[random.randint(0,
+      SAMPLE_ISSUES).body.tolist()
+  random_issue = github_issues[random.randint(0,
                                  len(github_issues) - 1)]
-  })
+  tf.logging.info("random issue text: %s", random_issue)
+  return jsonify({'body': random_issue})
+  # return jsonify({
+  #   'body':
+  #   github_issues[random.randint(0,
+  #                                len(github_issues) - 1)]
+  # })
 
 
 @app.route("/summary", methods=['POST'])
@@ -114,7 +128,7 @@ def summary():
     if issue_url:
       print("fetching issue from URL...")
       issue_text = get_issue_body(issue_url)
-    print("issue_text: %s" % issue_text)
+    # print("issue_text: %s" % issue_text)
     outputs = serving_utils.predict([issue_text], problem, request_fn)
     outputs, = outputs
     output, score = outputs
@@ -160,7 +174,7 @@ def init():
   # global input_encoder, output_decoder, fname, problem
   global problem
   tf.logging.set_verbosity(tf.logging.INFO)
-  tf.logging.info("Trying to import ghsumm/trainer from {}".format(t2t_usr_dir))
+  tf.logging.info("importing ghsumm/trainer from {}".format(t2t_usr_dir))
   usr_dir.import_usr_dir(t2t_usr_dir)
   print(t2t_usr_dir)
   problem = registry.problem(problem_name)

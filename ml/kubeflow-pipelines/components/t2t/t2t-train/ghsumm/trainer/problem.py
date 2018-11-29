@@ -44,7 +44,7 @@ class PoetryLineProblem(text_problems.Text2TextProblem):
       ireader = csv.reader((line.replace('\0', '') for line in csvfile), delimiter=','
        # quotechar='|'
        )
-      NUM_ROWS = 1500000
+      NUM_ROWS = 6000000
       i = 0
       for row in ireader:
         if i >= NUM_ROWS:
@@ -69,7 +69,7 @@ class PoetryLineProblem(text_problems.Text2TextProblem):
     #     prev_line = curr_line
 
 
-# # Smaller than the typical translate model, and with more regularization
+# Smaller than the typical translate model, and with more regularization
 # @registry.register_hparams
 # def transformer_poetry():
 #   hparams = transformer.transformer_base()
