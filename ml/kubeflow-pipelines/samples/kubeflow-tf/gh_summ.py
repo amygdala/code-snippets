@@ -25,8 +25,6 @@ def gh_summ(
   github_token: dsl.PipelineParam=dsl.PipelineParam(name='github-token', value='YOUR_GITHUB_TOKEN_HERE'),
   working_dir: dsl.PipelineParam=dsl.PipelineParam(name='working-dir', value='YOUR_GCS_DIR_HERE'),
   checkpoint_dir: dsl.PipelineParam=dsl.PipelineParam(name='checkpoint-dir', value='gs://aju-dev-demos-pipelines/temp/model_output_tbase.bak2019000'),
-  # TODO: generalize web app setup s.t. the service name can be parameterized
-  # model_name: dsl.PipelineParam=dsl.PipelineParam(name='model-name', value='ghsumm'),
   data_dir: dsl.PipelineParam=dsl.PipelineParam(name='data-dir', value='gs://aju-dev-demos-pipelines/temp/t2t_data_all')):
 
 
@@ -57,6 +55,8 @@ def gh_summ(
 
       )
   webapp.after(serve)
+  webapp.set_gpu_limit(1)
+
 
 if __name__ == '__main__':
   import kfp.compiler as compiler

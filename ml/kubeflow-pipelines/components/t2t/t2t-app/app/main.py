@@ -75,12 +75,8 @@ def get_issue_body(issue_url):
     issue_url, headers={
       'Authorization': 'token {}'.format(github_token)
     }).json()
-  tf.logging.info("response from url fetch: %s", response)
+  tf.logging.info("----response from url fetch: %s", response)
   return response['body']
-  # return requests.get(
-    # issue_url, headers={
-      # 'Authorization': 'token {}'.format(github_token)
-    # }).json()['body']
 
 
 @app.route('/')
@@ -99,13 +95,8 @@ def random_github_issue():
       SAMPLE_ISSUES).body.tolist()
   random_issue = github_issues[random.randint(0,
                                  len(github_issues) - 1)]
-  tf.logging.info("random issue text: %s", random_issue)
+  tf.logging.info("----random issue text: %s", random_issue)
   return jsonify({'body': random_issue})
-  # return jsonify({
-  #   'body':
-  #   github_issues[random.randint(0,
-  #                                len(github_issues) - 1)]
-  # })
 
 
 @app.route("/summary", methods=['POST'])
@@ -128,46 +119,15 @@ def summary():
     if issue_url:
       print("fetching issue from URL...")
       issue_text = get_issue_body(issue_url)
-    # print("issue_text: %s" % issue_text)
+    tf.logging.info("issue_text: %s", issue_text)
     outputs = serving_utils.predict([issue_text], problem, request_fn)
     outputs, = outputs
     output, score = outputs
-    print("output:")
-    print(output)
+    tf.logging.info("output: %s", output)
 
-    # headers = {'content-type': 'application/json'}
-    # json_data = {"data": {"ndarray": [[issue_text]]}}
-    # response = requests.post(
-    #   url=args.model_url, headers=headers, data=json.dumps(json_data))
-    # response_json = json.loads(response.text)
-    # issue_summary = response_json["data"]["ndarray"][0][0]
     return jsonify({'summary': output, 'body': issue_text})
 
   return ('', 204)
-
-# @app.route('/api/predict', methods=['POST'])
-# def predict():
-#   global problem
-#   data = json.loads(request.data.decode())
-#   if problem is None:
-#     init()
-#   # request_fn = serving_utils.make_grpc_request_fn(
-#   #     servable_name=servable_name,
-#   #     server=server,
-#   #     timeout_secs=10)
-#   request_fn = make_tfserving_rest_request_fn(
-#       servable_name=servable_name,
-#       server=server)
-#   print("input:")
-#   print(data['first_line'])
-#   outputs = serving_utils.predict([data['first_line']], problem, request_fn)
-#   outputs, = outputs
-#   output, score = outputs
-#   print("output:")
-#   print(output)
-
-#   return jsonify({'result': output})
-
 
 problem = None
 def init():
@@ -198,12 +158,8 @@ def make_tfserving_rest_request_fn(servable_name, server):
     }
 
     input_data_str = json.dumps(input_data)
-    # print("post input data str:")
-    # print(input_data_str)
     response = requests.post(SERVER_URL, json=input_data)
     predictions = response.json()['predictions']
-    print('tf serving REST API predictions:')
-    print(predictions)
     return predictions
 
   return _make_tfserving_rest_request_fn
