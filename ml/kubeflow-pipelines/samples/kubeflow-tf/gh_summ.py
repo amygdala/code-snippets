@@ -24,13 +24,13 @@ def gh_summ(
   project: dsl.PipelineParam=dsl.PipelineParam(name='project', value='YOUR_PROJECT_HERE'),
   github_token: dsl.PipelineParam=dsl.PipelineParam(name='github-token', value='YOUR_GITHUB_TOKEN_HERE'),
   working_dir: dsl.PipelineParam=dsl.PipelineParam(name='working-dir', value='YOUR_GCS_DIR_HERE'),
-  checkpoint_dir: dsl.PipelineParam=dsl.PipelineParam(name='checkpoint-dir', value='gs://aju-dev-demos-pipelines/temp/model_output_tbase.bak2019000'),
-  data_dir: dsl.PipelineParam=dsl.PipelineParam(name='data-dir', value='gs://aju-dev-demos-pipelines/temp/t2t_data_all')):
+  checkpoint_dir: dsl.PipelineParam=dsl.PipelineParam(name='checkpoint-dir', value='gs://aju-dev-demos-codelabs/kubecon/model_output_tbase.bak2019000'),
+  data_dir: dsl.PipelineParam=dsl.PipelineParam(name='data-dir', value='gs://aju-dev-demos-codelabs/kubecon/t2t_data_all')):
 
 
   train = dsl.ContainerOp(
       name = 'train',
-      image = 'gcr.io/aju-dev-demos/ml-pipeline-t2ttrain',
+      image = 'gcr.io/google-samples/ml-pipeline-t2ttrain',
       arguments = [ "--data-dir", data_dir,
           "--checkpoint-dir", checkpoint_dir,
           "--model-dir", '%s/%s/model_output' % (working_dir, '{{workflow.name}}'),
@@ -39,7 +39,7 @@ def gh_summ(
 
   serve = dsl.ContainerOp(
       name = 'serve',
-      image = 'gcr.io/aju-dev-demos/ml-pipeline-kubeflow-tfserve',
+      image = 'gcr.io/google-samples/ml-pipeline-kubeflow-tfserve',
       arguments = ["--model_name", 'ghsumm-%s' % ('{{workflow.name}}',),
           "--model_path", '%s/%s/model_output/export' % (working_dir, '{{workflow.name}}')
           ]
@@ -49,13 +49,12 @@ def gh_summ(
 
   webapp = dsl.ContainerOp(
       name = 'webapp',
-      image = 'gcr.io/aju-dev-demos/ml-pipeline-webapp-launcher',
+      image = 'gcr.io/google-samples/ml-pipeline-webapp-launcher',
       arguments = ["--model_name", 'ghsumm-%s' % ('{{workflow.name}}',),
           "--github_token", github_token]
 
       )
   webapp.after(serve)
-  webapp.set_gpu_limit(1)
 
 
 if __name__ == '__main__':

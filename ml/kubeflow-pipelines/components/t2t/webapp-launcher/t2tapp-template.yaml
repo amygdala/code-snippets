@@ -7,10 +7,10 @@ metadata:
       apiVersion: ambassador/v0
       kind:  Mapping
       name: webapp-MODEL_NAME
-      prefix: webapp/MODEL_NAME/
+      prefix: /webapp/MODEL_NAME/
       rewrite: /
       method: POST
-      service: MODEL_NAME.KUBEFLOW_NAMESPACE:8889
+      service: MODEL_NAME-webapp.KUBEFLOW_NAMESPACE:8889
   name: MODEL_NAME-webapp
   labels:
     app: ghsumm
@@ -41,6 +41,9 @@ spec:
       containers:
       - name: MODEL_NAME-webapp
         image: gcr.io/aju-dev-demos/ml-pipeline-t2tapp
+        resources:
+          limits:
+            nvidia.com/gpu: 1
         imagePullPolicy: Always
         env:
         - name: TFSERVING_HOST
