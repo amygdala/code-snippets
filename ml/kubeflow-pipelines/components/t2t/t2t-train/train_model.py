@@ -57,15 +57,12 @@ def main(argv=None):
   with open('/mlpipeline-ui-metadata.json', 'w') as f:
     json.dump(metadata, f)
 
-  problem = 'poetry_line_problem'
-  # data_dir = 'gs://aju-dev-demos-pipelines/temp/t2t_data_all/'
+  problem = 'gh_problem'
   data_dir = args.data_dir
   print("data dir: %s" % data_dir)
   # copy the model starting point
-  # model_startpoint = 'gs://aju-dev-demos-pipelines/temp/model_output_tbase.bak921000'
   model_startpoint = args.checkpoint_dir
   print("model_startpoint: %s" % model_startpoint)
-  # model_dir = 'gs://aju-dev-demos-pipelines/t2t_tests/model_output_tbase3'  # this will be under the working dir
   model_dir = args.model_dir
   print("model_dir: %s" % model_dir)
   model_copy_command = ['gsutil', '-m', 'cp', '-r', model_startpoint, model_dir
@@ -77,7 +74,6 @@ def main(argv=None):
   print('training steps (total): %s' % args.train_steps)
 
   # Then run the training for N steps from there.
-  # aju temp: unhardwire number of gpus
   model_train_command = ['t2t-trainer', '--data_dir', data_dir, '--t2t_usr_dir', '/ml/ghsumm/trainer', '--problem', problem,
      '--model', 'transformer',  '--hparams_set', 'transformer_prepend',  '--output_dir', model_dir, '--job-dir', model_dir,
      '--train_steps', args.train_steps, '--eval_throttle_seconds', '240',

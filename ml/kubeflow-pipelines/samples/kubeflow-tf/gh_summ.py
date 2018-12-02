@@ -25,7 +25,7 @@ def gh_summ(
   github_token: dsl.PipelineParam=dsl.PipelineParam(name='github-token', value='YOUR_GITHUB_TOKEN_HERE'),
   working_dir: dsl.PipelineParam=dsl.PipelineParam(name='working-dir', value='YOUR_GCS_DIR_HERE'),
   checkpoint_dir: dsl.PipelineParam=dsl.PipelineParam(name='checkpoint-dir', value='gs://aju-dev-demos-codelabs/kubecon/model_output_tbase.bak2019000'),
-  data_dir: dsl.PipelineParam=dsl.PipelineParam(name='data-dir', value='gs://aju-dev-demos-codelabs/kubecon/t2t_data_all')):
+  data_dir: dsl.PipelineParam=dsl.PipelineParam(name='data-dir', value='gs://aju-dev-demos-codelabs/kubecon/t2t_data_gh_all/')):
 
 
   train = dsl.ContainerOp(

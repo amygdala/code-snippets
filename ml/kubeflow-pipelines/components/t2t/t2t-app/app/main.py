@@ -48,7 +48,7 @@ api = discovery.build('ml', 'v1', credentials=credentials)
 app = Flask(__name__)
 
 model_name = os.getenv('MODEL_NAME', 'ghsumm')
-problem_name = os.getenv('PROBLEM_NAME', 'poetry_line_problem')
+problem_name = os.getenv('PROBLEM_NAME', 'gh_problem')
 t2t_usr_dir = os.getenv('T2T_USR_DIR', 'ghsumm/trainer')
 hparams_name = os.getenv('HPARAMS', 'transformer_prepend')
 data_dir = os.getenv('DATADIR', 'gs://aju-dev-demos-pipelines/temp/t2t_data_all')

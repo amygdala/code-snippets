@@ -6,13 +6,13 @@ REQUIRED_PACKAGES = [
 ]
 
 setup(
-    name='poetry',
+    name='ghsumm',
     version='0.1',
     author = 'Google',
     author_email = 'training-feedback@cloud.google.com',
     install_requires=REQUIRED_PACKAGES,
     packages=find_packages(),
     include_package_data=True,
-    description='Poetry Line Problem',
+    description='Github Problem',
     requires=[]
 )

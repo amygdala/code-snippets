@@ -11,7 +11,7 @@ from tensor2tensor.data_generators import generator_utils
 
 
 @registry.register_problem
-class PoetryLineProblem(text_problems.Text2TextProblem):
+class GhProblem(text_problems.Text2TextProblem):
   """... predict GH issue title from body..."""
 
   @property
@@ -55,38 +55,8 @@ class PoetryLineProblem(text_problems.Text2TextProblem):
         }
         i += 1
 
-    # with open('data/poetry/raw.txt', 'r') as rawfp:
-    #   prev_line = ''
-    #   for curr_line in rawfp:
-    #     curr_line = curr_line.strip()
-    #     # poems break at empty lines, so this ensures we train only
-    #     # on lines of the same poem
-    #     if len(prev_line) > 0 and len(curr_line) > 0:
-    #         yield {
-    #             "inputs": prev_line,
-    #             "targets": curr_line
-    #         }
-    #     prev_line = curr_line
 
 
-# Smaller than the typical translate model, and with more regularization
-# @registry.register_hparams
-# def transformer_poetry():
-#   hparams = transformer.transformer_base()
-#   hparams.num_hidden_layers = 2
-#   hparams.hidden_size = 128
-#   hparams.filter_size = 512
-#   hparams.num_heads = 4
-#   hparams.attention_dropout = 0.6
-#   hparams.layer_prepostprocess_dropout = 0.6
-#   hparams.learning_rate = 0.05
-#   return hparams
 
-# # hyperparameter tuning ranges
-# @registry.register_ranged_hparams
-# def transformer_poetry_range(rhp):
-#   rhp.set_float("learning_rate", 0.05, 0.25, scale=rhp.LOG_SCALE)
-#   rhp.set_int("num_hidden_layers", 2, 4)
-#   rhp.set_discrete("hidden_size", [128, 256, 512])
-#   rhp.set_float("attention_dropout", 0.4, 0.7)
+
 
