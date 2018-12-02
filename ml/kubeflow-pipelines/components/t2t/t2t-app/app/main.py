@@ -160,6 +160,7 @@ def make_tfserving_rest_request_fn(servable_name, server):
     input_data_str = json.dumps(input_data)
     response = requests.post(SERVER_URL, json=input_data)
     predictions = response.json()['predictions']
+    tf.logging.info("Predictions: %s", predictions)
     return predictions
 
   return _make_tfserving_rest_request_fn
