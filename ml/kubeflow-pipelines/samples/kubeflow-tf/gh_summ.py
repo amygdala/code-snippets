@@ -45,7 +45,7 @@ def gh_summ(
           ]
       )
   serve.after(train)
-  train.set_gpu_limit(8)
+  train.set_gpu_limit(4)
 
   webapp = dsl.ContainerOp(
       name = 'webapp',
