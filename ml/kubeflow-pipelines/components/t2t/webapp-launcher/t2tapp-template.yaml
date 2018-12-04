@@ -52,6 +52,8 @@ spec:
           value: MODEL_NAME
         - name: GH_TOKEN
           value: GITHUB_TOKEN
+        - name: DATADIR
+          value: DATA_DIR
         ports:
         - name: http-server
           containerPort: 8080

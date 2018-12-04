@@ -51,7 +51,7 @@ model_name = os.getenv('MODEL_NAME', 'ghsumm')
 problem_name = os.getenv('PROBLEM_NAME', 'gh_problem')
 t2t_usr_dir = os.getenv('T2T_USR_DIR', 'ghsumm/trainer')
 hparams_name = os.getenv('HPARAMS', 'transformer_prepend')
-data_dir = os.getenv('DATADIR', 'gs://aju-dev-demos-pipelines/temp/t2t_data_all')
+data_dir = os.getenv('DATADIR', 'gs://aju-dev-demos-codelabs/kubecon/t2t_data_gh_all/')
 github_token = os.getenv('GH_TOKEN', 'xxx')
 
 server = os.getenv('TFSERVING_HOST', 'ghsumm.kubeflow')
