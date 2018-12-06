@@ -78,7 +78,8 @@ def main(argv=None):
     with open( target_file, "w" ) as target:
       data = f.read()
       changed = data.replace('MODEL_NAME',args.model_name)
-      changed1 = changed.replace('KUBEFLOW_NAMESPACE',KUBEFLOW_NAMESPACE).replace(
+      changed1 = changed.replace(
+        'KUBEFLOW_NAMESPACE',KUBEFLOW_NAMESPACE).replace(
         'GITHUB_TOKEN',args.github_token).replace(
         'DATA_DIR', 'gs://aju-dev-demos-codelabs/kubecon/t2t_data_gh_all/')
       target.write(changed1)

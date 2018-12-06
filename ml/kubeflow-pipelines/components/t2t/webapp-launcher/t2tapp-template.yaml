@@ -6,19 +6,18 @@ metadata:
       ---
       apiVersion: ambassador/v0
       kind:  Mapping
-      name: webapp-MODEL_NAME
-      prefix: /webapp/MODEL_NAME/
+      name: webapp
+      prefix: /webapp/
       rewrite: /
-      method: POST
-      service: MODEL_NAME-webapp.KUBEFLOW_NAMESPACE:8889
+      service: MODEL_NAME-webapp.KUBEFLOW_NAMESPACE:80
   name: MODEL_NAME-webapp
   labels:
     app: ghsumm
     role: frontend
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   ports:
-  - port: 8889
+  - port: 80
     targetPort: "http-server"
   selector:
     app: ghsumm
@@ -56,4 +55,4 @@ spec:
           value: DATA_DIR
         ports:
         - name: http-server
-          containerPort: 8080
+          containerPort: 80
