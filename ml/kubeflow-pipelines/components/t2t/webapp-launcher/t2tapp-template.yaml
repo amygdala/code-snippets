@@ -9,9 +9,8 @@ metadata:
       name: webapp-MODEL_NAME
       prefix: /webapp/MODEL_NAME/
       rewrite: /
-      method: POST
-      service: MODEL_NAME-webapp.KUBEFLOW_NAMESPACE:8889
-  name: MODEL_NAME-webapp
+      service: MODEL_NAME-webappsvc.KUBEFLOW_NAMESPACE:8889
+  name: MODEL_NAME-webappsvc
   labels:
     app: ghsumm
     role: frontend
