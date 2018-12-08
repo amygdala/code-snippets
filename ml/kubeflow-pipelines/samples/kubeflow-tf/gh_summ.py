@@ -25,6 +25,7 @@ def gh_summ(
   github_token: dsl.PipelineParam=dsl.PipelineParam(name='github-token', value='YOUR_GITHUB_TOKEN_HERE'),
   working_dir: dsl.PipelineParam=dsl.PipelineParam(name='working-dir', value='YOUR_GCS_DIR_HERE'),
   checkpoint_dir: dsl.PipelineParam=dsl.PipelineParam(name='checkpoint-dir', value='gs://aju-dev-demos-codelabs/kubecon/model_output_tbase.bak2019000'),
+  deploy_webapp: dsl.PipelineParam=dsl.PipelineParam(name='deploy-webapp', value='true'),
   data_dir: dsl.PipelineParam=dsl.PipelineParam(name='data-dir', value='gs://aju-dev-demos-codelabs/kubecon/t2t_data_gh_all/')):
 
 
@@ -34,7 +35,9 @@ def gh_summ(
       arguments = [ "--data-dir", data_dir,
           "--checkpoint-dir", checkpoint_dir,
           "--model-dir", '%s/%s/model_output' % (working_dir, '{{workflow.name}}'),
-          "--train-steps", train_steps]
+          "--train-steps", train_steps, "--deploy-webapp" , deploy_webapp],
+      file_outputs={'output': '/tmp/output'}
+
       )
 
   serve = dsl.ContainerOp(
@@ -47,14 +50,15 @@ def gh_summ(
   serve.after(train)
   train.set_gpu_limit(4)
 
-  webapp = dsl.ContainerOp(
-      name = 'webapp',
-      image = 'gcr.io/google-samples/ml-pipeline-webapp-launcher',
-      arguments = ["--model_name", 'ghsumm-%s' % ('{{workflow.name}}',),
-          "--github_token", github_token]
+  with dsl.Condition(train.output=='true'):
+    webapp = dsl.ContainerOp(
+        name = 'webapp',
+        image = 'gcr.io/google-samples/ml-pipeline-webapp-launcher',
+        arguments = ["--model_name", 'ghsumm-%s' % ('{{workflow.name}}',),
+            "--github_token", github_token]
 
-      )
-  webapp.after(serve)
+        )
+    webapp.after(serve)
 
 
 if __name__ == '__main__':

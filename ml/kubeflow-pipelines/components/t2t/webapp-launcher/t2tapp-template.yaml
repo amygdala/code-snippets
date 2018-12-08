@@ -7,17 +7,18 @@ metadata:
       apiVersion: ambassador/v0
       kind:  Mapping
       name: webapp-MODEL_NAME
-      prefix: /webapp/MODEL_NAME/
+      prefix: /webapp/
       rewrite: /
-      service: MODEL_NAME-webappsvc.KUBEFLOW_NAMESPACE:8889
+      timeout_ms: 300000
+      service: MODEL_NAME-webappsvc.KUBEFLOW_NAMESPACE:80
   name: MODEL_NAME-webappsvc
   labels:
     app: ghsumm
     role: frontend
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   ports:
-  - port: 8889
+  - port: 80
     targetPort: "http-server"
   selector:
     app: ghsumm

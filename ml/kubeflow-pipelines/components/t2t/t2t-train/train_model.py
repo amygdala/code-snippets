@@ -44,6 +44,10 @@ def main(argv=None):
       '--train-steps',
       help='...',
       required=True)
+  parser.add_argument(
+      '--deploy-webapp',
+      help='...',
+      required=True)
 
   args = parser.parse_args()
 
@@ -91,7 +95,9 @@ def main(argv=None):
   result3 = subprocess.call(model_export_command)
   print(result3)
 
-
+  print("deploy-webapp arg: %s" % args.deploy_webapp)
+  with open('/tmp/output', 'w') as f:
+    f.write(args.deploy_webapp)
 
 if __name__== "__main__":
   main()
