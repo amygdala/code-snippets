@@ -17,7 +17,7 @@ import kfp.dsl as dsl
 
 @dsl.pipeline(
   name='Github issue summarization',
-  description='Demonstrate TFT-based feature processing, TFMA, TFJob, CMLE OP, and TF-Serving'
+  description='Demonstrate Tensor2Tensor-based training and TF-Serving'
 )
 def gh_summ(
   train_steps: dsl.PipelineParam=dsl.PipelineParam(name='train-steps', value=2019300),
