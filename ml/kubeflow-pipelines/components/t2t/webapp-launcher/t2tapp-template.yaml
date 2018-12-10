@@ -9,7 +9,7 @@ metadata:
       name: webapp-MODEL_NAME
       prefix: /webapp/
       rewrite: /
-      timeout_ms: 300000
+      timeout_ms: 1200000
       service: MODEL_NAME-webappsvc.KUBEFLOW_NAMESPACE:80
   name: MODEL_NAME-webappsvc
   labels:
@@ -41,9 +41,9 @@ spec:
       containers:
       - name: MODEL_NAME-webapp
         image: gcr.io/google-samples/ml-pipeline-t2tapp
-        resources:
-          limits:
-            nvidia.com/gpu: 1
+        # resources:
+        #   limits:
+        #     nvidia.com/gpu: 1
         imagePullPolicy: Always
         env:
         - name: TFSERVING_HOST
