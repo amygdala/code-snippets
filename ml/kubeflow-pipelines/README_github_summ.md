@@ -1,22 +1,9 @@
----
-id: cloud-kubeflow-pipelines-gis
-status: [published]
-summary: In this codelab, you will set up a Kubeflow cluster using GKE, build and run ML workflows using Kubeflow Pipelines, and define and run pipelines from within a JupyterHub notebook.
-author: amyu, michellecasbon
-categories: Cloud,TensorFlow,Machine Learning
-tags: kiosk,web
-feedback link: https://github.com/kubeflow/examples/issues/new?title=[codelab-pipelines-gis-feedback]:&labels=area/example/issue_summarization/codelab
-
-
----
 
 # Kubeflow Pipelines - GitHub Issue Summarization
 
-[Codelab Feedback](https://github.com/kubeflow/examples/issues/new?title=[codelab-pipelines-gis-feedback]:&labels=area/example/issue_summarization/codelab)
-
+**(Draft)**
 
 ## Introduction
-Duration: 5
 
 
 ### __What does a Kubeflow deployment look like?__
@@ -36,7 +23,7 @@ Looking for more? Check out the  [Kubeflow Examples repo](https://github.com/kub
 
 ### __What you'll build__
 
-In this codelab, you will build a web app that summarizes GitHub issues using Kubeflow Pipelines to train and serve a model. It is based on the walkthrough provided in the  [Kubeflow Examples repo](https://github.com/kubeflow/examples/tree/master/github_issue_summarization). Upon completion, your infrastructure will contain:
+In this codelab, you will build a web app that summarizes GitHub issues using Kubeflow Pipelines to train and serve a model. Upon completion, your infrastructure will contain:
 
 * A Kubernetes Engine cluster with default Kubeflow installation
 * A pipeline that performs distributed training of a Tensor2Tensor model on GPUs
