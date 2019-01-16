@@ -3,7 +3,7 @@
 
 [Kubeflow](https://www.kubeflow.org/) is an OSS project to support a machine learning stack on Kubernetes, to make deployments of ML workflows on Kubernetes simple, portable and scalable.
 
-[**Kubeflow Pipelines**](https://github.com/kubeflow/pipelines) is a new component of Kubeflow that makes it easy to compose, deploy and manage end-to-end machine learning workflows. The Kubeflow Pipelines documentation is [here]().
+[**Kubeflow Pipelines**](https://github.com/kubeflow/pipelines) is a new component of Kubeflow that makes it easy to compose, deploy and manage end-to-end machine learning workflows. The Kubeflow Pipelines documentation is [here](https://www.kubeflow.org/docs/guides/pipelines/).
 
 This directory tree contains code for two different groups of Kubeflow Pipelines examples. 
 
