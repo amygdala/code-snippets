@@ -14,6 +14,8 @@
 
 
 import kfp.dsl as dsl
+import kfp.gcp as gcp
+
 
 @dsl.pipeline(
   name='Workflow 1',
@@ -53,7 +55,7 @@ def workflow1(
           "--stage", "eval",
           "--preprocessing-module", preprocessing_module1]
       # file_outputs = {'transformed': '/output.txt'}
-      )
+      ).apply(gcp.use_gcp_secret('user-gcp-sa'))
   tfttrain = dsl.ContainerOp(
       name = 'tft-train',
       image = 'gcr.io/google-samples/ml-pipeline-dataflow-tftbq-taxi',
@@ -67,7 +69,7 @@ def workflow1(
           "--ts2", ts2,
           "--stage", "train",
           "--preprocessing_module", preprocessing_module1]
-      )
+      ).apply(gcp.use_gcp_secret('user-gcp-sa'))
   tfteval2 = dsl.ContainerOp(
       name = 'tft-eval2',
       image = 'gcr.io/google-samples/ml-pipeline-dataflow-tftbq-taxi',
@@ -81,7 +83,7 @@ def workflow1(
           "--ts2", ts2,
           "--stage", "eval",
           "--preprocessing_module", preprocessing_module2]
-      )
+      ).apply(gcp.use_gcp_secret('user-gcp-sa'))
   tfttrain2 = dsl.ContainerOp(
       name = 'tft-train2',
       image = 'gcr.io/google-samples/ml-pipeline-dataflow-tftbq-taxi',
@@ -95,7 +97,7 @@ def workflow1(
           "--ts2", ts2,
           "--stage", "train",
           "--preprocessing_module", preprocessing_module2]
-      )
+      ).apply(gcp.use_gcp_secret('user-gcp-sa'))
 
   train = dsl.ContainerOp(
       name = 'train',
@@ -111,7 +113,7 @@ def workflow1(
           "--train-steps", train_steps,
           "--workers", workers,
           "--pss", pss]
-      )
+      ).apply(gcp.use_gcp_secret('user-gcp-sa'))
   train.after(tfteval)
   train.after(tfttrain)
 
@@ -129,7 +131,7 @@ def workflow1(
           "--train-steps", train_steps,
           "--workers", 1,
           "--pss", 1]
-      )
+      ).apply(gcp.use_gcp_secret('user-gcp-sa'))
   train2.after(tfteval2)
   train2.after(tfttrain2)
 
@@ -142,7 +144,7 @@ def workflow1(
           "--mode", tfma_mode,
           "--setup_file", tfma_setup_file,
           "--project", project]
-      )
+      ).apply(gcp.use_gcp_secret('user-gcp-sa'))
   analyze2 = dsl.ContainerOp(
       name = 'analyze2',
       image = 'gcr.io/google-samples/ml-pipeline-dataflow-tfma-taxi',
@@ -152,7 +154,7 @@ def workflow1(
           "--mode", tfma_mode,
           "--setup_file", tfma_setup_file,
           "--project", project]
-      )
+      ).apply(gcp.use_gcp_secret('user-gcp-sa'))
 
   cmleop = dsl.ContainerOp(
       name = 'cmleop',
@@ -160,27 +162,27 @@ def workflow1(
       arguments = ["--gcs-path", '%s/%s/tf/serving_model_dir/export/chicago-taxi' % (working_dir, '{{workflow.name}}'),
           "--version-name", '{{workflow.name}}',
           "--project", project]
-      )
+      ).apply(gcp.use_gcp_secret('user-gcp-sa'))
   cmleop2 = dsl.ContainerOp(
       name = 'cmleop2',
       image = 'gcr.io/google-samples/ml-pipeline-cmle-op',
       arguments = ["--gcs-path", '%s/%s/tf2/serving_model_dir/export/chicago-taxi' % (working_dir, '{{workflow.name}}'),
           "--version-name", '{{workflow.name}}_2',
           "--project", project]
-      )
+      ).apply(gcp.use_gcp_secret('user-gcp-sa'))
 
   tfserving = dsl.ContainerOp(
       name = 'tfserving',
       image = 'gcr.io/google-samples/ml-pipeline-kubeflow-tfserve-taxi',
       arguments = ["--model_name", '{{workflow.name}}',
           "--model_path", '%s/%s/tf/serving_model_dir/export/chicago-taxi' % (working_dir, '{{workflow.name}}')]
-      )
+      ).apply(gcp.use_gcp_secret('user-gcp-sa'))
   tfserving2 = dsl.ContainerOp(
       name = 'tfserving2',
       image = 'gcr.io/google-samples/ml-pipeline-kubeflow-tfserve-taxi',
       arguments = ["--model_name", '{{workflow.name}}-2',
           "--model_path", '%s/%s/tf2/serving_model_dir/export/chicago-taxi' % (working_dir, '{{workflow.name}}')]
-      )
+      ).apply(gcp.use_gcp_secret('user-gcp-sa'))
 
   analyze.after(train)
   analyze2.after(train2)
