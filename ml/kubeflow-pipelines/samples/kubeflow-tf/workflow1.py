@@ -113,7 +113,7 @@ def workflow1(
           "--train-steps", train_steps,
           "--workers", workers,
           "--pss", pss]
-      ).apply(gcp.use_gcp_secret('user-gcp-sa'))
+      )
   train.after(tfteval)
   train.after(tfttrain)
 
@@ -131,7 +131,7 @@ def workflow1(
           "--train-steps", train_steps,
           "--workers", 1,
           "--pss", 1]
-      ).apply(gcp.use_gcp_secret('user-gcp-sa'))
+      )
   train2.after(tfteval2)
   train2.after(tfttrain2)
 
@@ -176,13 +176,13 @@ def workflow1(
       image = 'gcr.io/google-samples/ml-pipeline-kubeflow-tfserve-taxi',
       arguments = ["--model_name", '{{workflow.name}}',
           "--model_path", '%s/%s/tf/serving_model_dir/export/chicago-taxi' % (working_dir, '{{workflow.name}}')]
-      ).apply(gcp.use_gcp_secret('user-gcp-sa'))
+      )
   tfserving2 = dsl.ContainerOp(
       name = 'tfserving2',
       image = 'gcr.io/google-samples/ml-pipeline-kubeflow-tfserve-taxi',
       arguments = ["--model_name", '{{workflow.name}}-2',
           "--model_path", '%s/%s/tf2/serving_model_dir/export/chicago-taxi' % (working_dir, '{{workflow.name}}')]
-      ).apply(gcp.use_gcp_secret('user-gcp-sa'))
+      )
 
   analyze.after(train)
   analyze2.after(train2)

@@ -1,12 +1,10 @@
 
 # Kubeflow Pipelines examples
 
-
 - [Installation and setup](#installation-and-setup)
   - [Create a GCP project and enable the necessary APIs](#create-a-gcp-project-and-enable-the-necessary-apis)
   - [Install the gcloud sdk (or use the Cloud Shell)](#install-the-gcloud-sdk-or-use-the-cloud-shell)
-  - [Set up a Kubernetes Engine (GKE) cluster](#set-up-a-kubernetes-engine-gke-cluster)
-  - [Install Kubeflow with Kubeflow Pipelines on the GKE cluster](#install-kubeflow-with-kubeflow-pipelines-on-the-gke-cluster)
+  - [Create a Kubernetes Engine (GKE) cluster with Kubeflow installed](#create-a-kubernetes-engine-gke-cluster-with-kubeflow-installed)
   - [Create a Google Cloud Storage (GCS) bucket](#create-a-google-cloud-storage-gcs-bucket)
 - [Running the examples](#running-the-examples)
   - [Example workflow 1](#example-workflow-1)
@@ -35,8 +33,7 @@ and to [TensorFlow Serving](https://github.com/tensorflow/serving) via Kubeflow.
 
 ## Installation and setup
 
-The examples require a Google Cloud Platform (GCP) account and project, and a Google Kubernetes Engine (GKE) cluster running Kubeflow and Argo.
-(It's not necessary that Kubeflow be run on GKE, but it would require some additional credentials setup to run these examples elsewhere).
+The examples require a Google Cloud Platform (GCP) account and project.
 
 You'll also either need [gcloud](https://cloud.google.com/sdk/) installed on your laptop; or alternately you can run gcloud in the [Cloud Shell](https://cloud.google.com/shell/docs/) via the GCP [Cloud Console](https://console.cloud.google.com).
 
@@ -54,43 +51,15 @@ Install the GCP [gcloud command-line sdk](https://cloud.google.com/sdk/install) 
 
 Or, if you don't want to install `gcloud` locally, you can bring up the [Cloud Shell](https://cloud.google.com/shell/docs/quickstart) from the Cloud Console and run `kubectl` and `gcloud` from there.  When you start the cloud shell, confirm from the initial output that it's set to use the GCP project in which your GKE cluster is running.
 
-### Set up a Kubernetes Engine (GKE) cluster
 
-Visit the [Cloud Console](https://console.cloud.google.com/kubernetes) for your project and create a GKE cluster.
-So that you don't have any Kubernetes pods stuck in "Pending" for lack of resources while you run the examples, consider giving it 4 8-core nodes. You may need to [increase your Compute Engine API CPUs quota](https://console.cloud.google.com/iam-admin/quotas) before you do this.
-(See the 'Cleanup' section below so that you don't get further charged for the cluster after you're done experimenting).
+### Create a Kubernetes Engine (GKE) cluster with Kubeflow installed
 
-<a href="https://storage.googleapis.com/amy-jo/images/kf-pls/cluster_create1.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf-pls/cluster_create1.png" width="600"/></a>
+Install Kubeflow as described [here](https://www.kubeflow.org/docs/started/getting-started-gke/).
+**Kubeflow version 0.3.5 is required for these examples.**
 
-Click The '__Advanced edit__' button, and under **Access scopes**, click 'Allow full access to all Cloud APIs'. (You can also enable autoscaling in this panel if you want).
+It is probably the most straightforward to use the [launcher UI](https://www.kubeflow.org/docs/started/getting-started-gke/#deploy-kubeflow-on-gke-using-the-ui) for installation, and to check "Skip IAP" for quicker setup
+(you will then need to port-forward to connect to the Kubeflow dashboard, as described below).
 
-<figure>
-<a href="https://storage.googleapis.com/amy-jo/images/kf-pls/cluster_create2.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf-pls/cluster_create2.png" /></a>
-<figcaption><br/><i>Set up your GKE cluster to allow full access to all Cloud APIs.</i></figcaption>
-</figure>
-
-<p></p>
-
-After your GKE cluster is up and running, click the "Connect" button
-[to the right of the cluster](https://console.cloud.google.com/kubernetes) in the Console, to set your `kubectl` context to the new cluster.  The gcloud command will look like the following, replacing `<your cluster zone>`, `<your cluster name>`,
-and `<your project>` with the correct zone, cluster name, and project name.
-
-```sh
-gcloud container clusters get-credentials <your cluster name> --zone <your cluster zone> --project
-```
-
-Then run the following two commands, replacing `<your gcp account email>` with the email associated with your GCP project.
-
-```sh
-kubectl create clusterrolebinding default-admin --clusterrole=cluster-admin --user=<your gcp account email>
-kubectl create clusterrolebinding sa-admin --clusterrole=cluster-admin --serviceaccount=kubeflow:pipeline-runner
-```
-(You may need to be a project *owner* to run these).
-
-
-### Install Kubeflow with Kubeflow Pipelines on the GKE cluster
-
-Now you're ready to install Kubeflow with Kubeflow Pipelines.  Follow the instructions [here](https://github.com/kubeflow/pipelines/wiki/Deploy-the-Kubeflow-Pipelines-Service#deploy-kubeflow-pipelines) to use the *bootstrapper* to deploy.
 
 ### Create a Google Cloud Storage (GCS) bucket
 
@@ -176,7 +145,7 @@ You can view the deployed versions of the `taxifare` model in the Cloud Console:
 [https://console.cloud.google.com/mlengine/models](https://console.cloud.google.com/mlengine/models).
 
 Make a prediction using one of the deployed model versions as follows.
-In the [`components/kubeflow/tf-serving`](components/kubeflow/tf-serving) directory, run the following client script, replacing `<MODEL_VERSION_NAME>` with one of your deployed versions. (Note that this script assumes that you have gcloud configured to point to the correct project.  If it is not, first run `gcloud config set project <YOUR_PROJECT_NAME>`).
+In the [`components/kubeflow/tf-serving`](components/kubeflow/tf-serving) directory, run the following client script, replacing `<MODEL_VERSION_NAME>` with one of your deployed versions. (Note that this script assumes that you have gcloud configured to point to the correct project.  If it is not, first run `gcloud config set project <YOUR_PROJECT_NAME>`). You'll need to use Python 2.7 and have `tensorflow_serving-api` installed to run the script.
 
 ```sh
 python chicago_taxi_client.py \
@@ -189,26 +158,29 @@ python chicago_taxi_client.py \
 
 This workflow deploys your learned models not only to Cloud ML Engine, but also to [TensorFlow Serving](https://github.com/tensorflow/serving), which is part  of the Kubeflow installation.
 
-To make it easy to demo, the TF-serving deployments use a Kubernetes service of type `LoadBalancer`, which creates an endpoint with an external IP. (For a production system, you'd probably want to use something like [Cloud Identity-Aware Proxy](https://cloud.google.com/iap/) instead).
-
 View the TF-serving endpoint services by:
 
 ```sh
-kubectl get services
+kubectl get services -n kubeflow
 ```
 
-Look for the services with prefix `preproc-train-deploy2-analyze`, and note their names and external IP addresses.
+Look for the services with prefix `workflow-1`, and note their names. You should see two.
 
-Then, run the client script as follows, replacing the following with your external IP address and service name. You'll need to have `tensorflow_serving` installed to do this.
+Port-forward to one of the services as follows:
+
+```
+kubectl port-forward --namespace kubeflow svc/<SERVICE NAME> 9000:9000
+```
+
+Then, run the client script as follows, replacing the following with your service name. You'll need to use Python 2.7 and have `tensorflow_serving-api` and `tensorflow-transform` installed to run the script.
+
 
 ```sh
 python chicago_taxi_client.py \
   --num_examples=1 \
   --examples_file='../taxi_model/data/eval/data.csv' \
-  --server=<EXTERNAL IP>:9000 --model_name=<SERVICE NAME>
+  --server=localhost:9000 --model_name=<SERVICE NAME>
 ```
-
-When you're done experimenting, you'll probably want to take down the tf-serving endpoints.  See the "Cleanup" section below.
 
 ### Example workflow 2
 
