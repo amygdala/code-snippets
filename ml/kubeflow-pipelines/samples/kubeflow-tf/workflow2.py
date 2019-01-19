@@ -14,6 +14,8 @@
 
 
 import kfp.dsl as dsl
+import kfp.gcp as gcp
+
 import datetime
 
 
@@ -56,7 +58,7 @@ def workflow2(
           "--ts2", ts2_1,
           "--stage", "eval",
           "--preprocessing_module", preprocessing_module]
-      )
+      ).apply(gcp.use_gcp_secret('user-gcp-sa'))
   tfttrain = dsl.ContainerOp(
       name = 'tft-train',
       image = 'gcr.io/google-samples/ml-pipeline-dataflow-tftbq-taxi',
@@ -70,7 +72,7 @@ def workflow2(
           "--ts2", ts2_1,
           "--stage", "train",
           "--preprocessing_module", preprocessing_module]
-      )
+      ).apply(gcp.use_gcp_secret('user-gcp-sa'))
   tfteval2 = dsl.ContainerOp(
       name = 'tft-eval2',
       image = 'gcr.io/google-samples/ml-pipeline-dataflow-tftbq-taxi',
@@ -84,7 +86,7 @@ def workflow2(
           "--ts2", ts2_2,
           "--stage", "eval",
           "--preprocessing_module", preprocessing_module]
-      )
+      ).apply(gcp.use_gcp_secret('user-gcp-sa'))
   tfttrain2 = dsl.ContainerOp(
       name = 'tft-train2',
       image = 'gcr.io/google-samples/ml-pipeline-dataflow-tftbq-taxi',
@@ -98,7 +100,7 @@ def workflow2(
           "--ts2", ts2_2,
           "--stage", "train",
           "--preprocessing_module", preprocessing_module]
-      )
+      ).apply(gcp.use_gcp_secret('user-gcp-sa'))
 
   train = dsl.ContainerOp(
       name = 'train',
@@ -145,7 +147,7 @@ def workflow2(
           "--mode", tfma_mode,
           "--setup_file", tfma_setup_file,
           "--project", project]
-      )
+      ).apply(gcp.use_gcp_secret('user-gcp-sa'))
   analyze2 = dsl.ContainerOp(
       name = 'analyze2',
       image = 'gcr.io/google-samples/ml-pipeline-dataflow-tfma-taxi',
@@ -155,21 +157,21 @@ def workflow2(
           "--mode", tfma_mode,
           "--setup_file", tfma_setup_file,
           "--project", project]
-      )
+      ).apply(gcp.use_gcp_secret('user-gcp-sa'))
   cmleop = dsl.ContainerOp(
       name = 'cmleop',
       image = 'gcr.io/google-samples/ml-pipeline-cmle-op',
       arguments = ["--gcs-path", '%s/%s/tf/serving_model_dir/export/chicago-taxi' % (working_dir, '{{workflow.name}}'),
           "--version-name", '{{workflow.name}}',
           "--project", project]
-      )
+      ).apply(gcp.use_gcp_secret('user-gcp-sa'))
   cmleop2 = dsl.ContainerOp(
       name = 'cmleop2',
       image = 'gcr.io/google-samples/ml-pipeline-cmle-op',
       arguments = ["--gcs-path", '%s/%s/tf2/serving_model_dir/export/chicago-taxi' % (working_dir, '{{workflow.name}}'),
           "--version-name", '{{workflow.name}}_2',
           "--project", project]
-      )
+      ).apply(gcp.use_gcp_secret('user-gcp-sa'))
 
 
   analyze.after(train)
