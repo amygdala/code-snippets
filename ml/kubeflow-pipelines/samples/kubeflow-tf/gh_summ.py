@@ -14,6 +14,8 @@
 
 
 import kfp.dsl as dsl
+import kfp.gcp as gcp
+
 
 @dsl.pipeline(
   name='Github issue summarization',
@@ -38,7 +40,7 @@ def gh_summ(
           "--train-steps", train_steps, "--deploy-webapp" , deploy_webapp],
       file_outputs={'output': '/tmp/output'}
 
-      )
+      ).apply(gcp.use_gcp_secret('user-gcp-sa'))
 
   serve = dsl.ContainerOp(
       name = 'serve',
