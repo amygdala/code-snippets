@@ -8,7 +8,7 @@
 
 [Kubeflow](https://www.kubeflow.org/) is an OSS project to support a machine learning stack on Kubernetes, to make deployments of ML workflows on Kubernetes simple, portable and scalable.
 
-[**Kubeflow Pipelines**](https://github.com/kubeflow/pipelines) is a  component of Kubeflow that makes it easy to compose, deploy and manage end-to-end machine learning workflows. The Kubeflow Pipelines documentation is [here]().
+[**Kubeflow Pipelines**](https://github.com/kubeflow/pipelines) is a  component of Kubeflow that makes it easy to compose, deploy and manage end-to-end machine learning workflows. The Kubeflow Pipelines documentation is [here](https://www.kubeflow.org/docs/pipelines/).
 
 This codelab will walk you through creating your own Kubeflow deployment, and running a KubeFlow Pipelines workflow for model training and serving -- both from the Pipelines UI, and from a Jupyter Notebook.
 
@@ -68,8 +68,9 @@ Then click the "Activate Cloud Shell" icon in the top right of the console to st
 
 <walkthrough-devshell-activate-button></walkthrough-devshell-activate-button>
 
+![cloud shell button](https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/fc32d2fa27e821c4.png)
 
-<a href="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/fc32d2fa27e821c4.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/fc32d2fa27e821c4.png" width="30%"/></a>
+<!-- <a href="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/fc32d2fa27e821c4.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/fc32d2fa27e821c4.png" width="30%"/></a> -->
 
 ### Set your GitHub token
 
@@ -87,8 +88,9 @@ export GITHUB_TOKEN=<token>
 
 To find your project ID, visit the GCP Console's Home panel. If the screen is empty, click on Yes at the prompt to create a dashboard.
 
+![gcp project id](https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/fa2a4037585b38d6.png)
 
-<a href="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/fa2a4037585b38d6.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/fa2a4037585b38d6.png" width="40%"/></a>
+<!-- <a href="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/fa2a4037585b38d6.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/fa2a4037585b38d6.png" width="40%"/></a> -->
 
 In the Cloud Shell terminal, run these commands to set the cluster name and project ID. For the zone, pick a zone where `nvidia-tesla-k80`s are available.
 
@@ -130,7 +132,9 @@ We'll use this SDK a bit later in the lab.
 
 In the GCP console, you can pin the __Kubernetes Engine__ and __Storage__ dashboards for easier access.
 
-<a href="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/2a50622902d75f6a.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/2a50622902d75f6a.png" width="20%"/></a>
+![pin dashboards](https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/2a50622902d75f6a.png)
+
+<!-- <a href="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/2a50622902d75f6a.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/2a50622902d75f6a.png" width="20%"/></a> -->
 
 
 ## Create a Kubeflow cluster
@@ -140,8 +144,9 @@ In the GCP console, you can pin the __Kubernetes Engine__ and __Storage__ dashbo
 Create a managed Kubernetes cluster on Kubernetes Engine by visiting the
 [Kubeflow Click-to-Deploy](https://deploy.kubeflow.cloud/) site in your browser and signing in with your GCP account.
 
+![click-to-deploy ui](https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/5dbc46bc61dbd94f.png)
 
-<a href="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/5dbc46bc61dbd94f.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/5dbc46bc61dbd94f.png" width="60%"/></a>
+<!-- <a href="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/5dbc46bc61dbd94f.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/5dbc46bc61dbd94f.png" width="60%"/></a> -->
 
 Fill in the following values in the resulting form:
 
@@ -151,9 +156,10 @@ Fill in the following values in the resulting form:
 * __Kubeflow Version__: v0.4.1
 * Check the __Skip IAP__ box
 
+![create a deployment](https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/c73a14a93c78ce5.png)
 
-<a href="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/c73a14a93c78ce5.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/c73a14a93c78ce5.png" width="40%"/></a>
-
+<!-- <a href="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/c73a14a93c78ce5.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/c73a14a93c78ce5.png" width="40%"/></a>
+ -->
 ### Set up kubectl to use your new cluster's credentials
 
 When the cluster has been instantiated, connect your environment to the Kubernetes Engine cluster by running the following command in your Cloud Shell:
@@ -201,23 +207,27 @@ kubectl apply -f https://raw.githubusercontent.com/GoogleCloudPlatform/container
 
 Once the cluster setup is complete, port-forward to view the Kubeflow central dashboard.  Click the "Cloud Shell" button in the launcher:
 
+![port-forward to the Kubeflow dashboard](https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/73d081ccecbab307.png)
 
-<a href="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/73d081ccecbab307.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/73d081ccecbab307.png" width="40%"/></a>
+<!-- <a href="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/73d081ccecbab307.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/73d081ccecbab307.png" width="40%"/></a> -->
 
 This will open a tab showing your new cluster's services details. Click the __Port Forwarding__ button towards the bottom of the page, then click the __Run in Cloud Shell__ button in the resulting popup window.
 
+![ambassador service details](https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/81a2891d64a6e621.png)
 
-<a href="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/81a2891d64a6e621.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/81a2891d64a6e621.png" width="90%"/></a>
+<!-- <a href="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/81a2891d64a6e621.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/81a2891d64a6e621.png" width="90%"/></a> -->
 
 A Cloud Shell window will start up, with the command to port-forward pre-populated at the prompt.  Hit ‘return' to actually run the command in the Cloud Shell, then click the __Open in web preview__ button that will appear in the services page.
 
+![open in web preview](https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/fd3923eae05d4eff.png)
 
-<a href="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/fd3923eae05d4eff.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/fd3923eae05d4eff.png" width="50%"/></a>
+<!-- <a href="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/fd3923eae05d4eff.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/fd3923eae05d4eff.png" width="50%"/></a> -->
 
 This will launch the Kubeflow dashboard in a new browser tab.
 
+![Kubeflow dashboard](https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/19dbaa6018106d2a.png)
 
-<a href="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/19dbaa6018106d2a.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/19dbaa6018106d2a.png" width="90%"/></a>
+<!-- <a href="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/19dbaa6018106d2a.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/19dbaa6018106d2a.png" width="90%"/></a> -->
 
 
 ## Run a pipeline from the Pipelines dashboard
@@ -257,20 +267,23 @@ From the Kubeflow dashboard, click the __Pipeline Dashboard__ link to navigate t
 
 Give the pipeline a name (e.g. `gh_summ`).
 
+![upload a pipeline](https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/d884e72326017ce5.png)
 
-<a href="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/d884e72326017ce5.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/d884e72326017ce5.png" width="90%"/></a>
+<!-- <a href="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/d884e72326017ce5.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/d884e72326017ce5.png" width="90%"/></a> -->
 
 ### Run the pipeline
 
 Click on the uploaded pipeline in the list —this lets you view the pipeline's static graph— then click on __Start an experiment__ to create a new __Experiment__ using the pipeline.
 
+![start an experiment](https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/e6df677f6234b898.png)
 
-<a href="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/e6df677f6234b898.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/e6df677f6234b898.png" width="60%"/></a>
+<!-- <a href="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/e6df677f6234b898.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/e6df677f6234b898.png" width="60%"/></a> -->
 
 Give the Experiment a name (e.g. the same name as the pipeline, `gh_summ`), then click __Next__ to create it.
 
+![name the experiment](https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/9bb7fc0f06f6c6bf.png)
 
-<a href="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/9bb7fc0f06f6c6bf.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/9bb7fc0f06f6c6bf.png" width="60%"/></a>
+<!-- <a href="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/9bb7fc0f06f6c6bf.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/9bb7fc0f06f6c6bf.png" width="60%"/></a> -->
 
 An Experiment is composed of multiple __Runs__. In Cloud Shell, execute these commands to gather the values to enter into the UI as parameters for the first __Run__:
 
@@ -286,8 +299,9 @@ Give the Run a name (e.g. `gh_summ-1`) and fill in three parameter fields:
 * `github-token`
 * `working-dir`
 
+![start a run](https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/fda08d43b53cfdc8.png)
 
-<a href="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/fda08d43b53cfdc8.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/fda08d43b53cfdc8.png" width="60%"/></a>
+<!-- <a href="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/fda08d43b53cfdc8.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/fda08d43b53cfdc8.png" width="60%"/></a> -->
 
 After filling in the fields, click **Create**.
 
@@ -295,8 +309,9 @@ After filling in the fields, click **Create**.
 
 Once the pipeline run is launched, you can click on an individual step in the run to get more information about it, including viewing its *pod* logs.
 
+![view step information](https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/ea5e2396ca27e100.png)
 
-<a href="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/ea5e2396ca27e100.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/ea5e2396ca27e100.png" width="90%"/></a>
+<!-- <a href="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/ea5e2396ca27e100.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/ea5e2396ca27e100.png" width="90%"/></a> -->
 
 ### View the pipeline definition
 
@@ -306,8 +321,9 @@ While the pipeline is running, take a  [closer look](https://github.com/amygdala
 
 The first step in the pipeline performs training and generates a model. Once this step is complete, view __Artifacts__ and click the blue Start TensorBoard button, then once it's ready, click __Open Tensorboard__.
 
+![open tensorboard](https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/d55eb03c4d04f64d.png)
 
-<a href="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/d55eb03c4d04f64d.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/d55eb03c4d04f64d.png" width="90%"/></a>
+<!-- <a href="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/d55eb03c4d04f64d.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/d55eb03c4d04f64d.png" width="90%"/></a> -->
 
 ### View the web app and make some predictions
 
@@ -315,8 +331,9 @@ The last step in the pipeline deploys a web app, which provides a UI for queryin
 
 You should see something like this:
 
+![prediction web app](https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/e3722fd7cfbf0508.png)
 
-<a href="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/e3722fd7cfbf0508.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/e3722fd7cfbf0508.png" width="80%"/></a>
+<!-- <a href="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/e3722fd7cfbf0508.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/e3722fd7cfbf0508.png" width="80%"/></a> -->
 
 Click the __Populate Random Issue__ button to retrieve a block of text. Click on __Generate TItle__ to call the trained model and display a prediction.
 
@@ -344,7 +361,9 @@ The first time you visit JupyterHub, you'll first be asked to log in. You can us
 (remember what it was).
 Then you will be prompted to spawn an instance. Select the TensorFlow 1.12 CPU image from the pulldown menu as shown below. Then click the __Spawn__ button, which generates a new *pod* in your cluster.
 
-<a href="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/e39288bb48582572.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/e39288bb48582572.png" width="60%"/></a>
+![creating a JupyterHub instance](https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/e39288bb48582572.png)
+
+<!-- <a href="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/e39288bb48582572.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/e39288bb48582572.png" width="60%"/></a> -->
 
 **Note**: JupyterHub will take 3-5 minutes to become available. You can view the status of the container on the Kubernetes Engine -> Workloads section of the GCP Console.
 
@@ -352,8 +371,9 @@ Then you will be prompted to spawn an instance. Select the TensorFlow 1.12 CPU i
 
 Once JupyterHub becomes available, open a terminal.
 
+![open a Jupyter terminal](https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/7a9738d871be5765.png)
 
-<a href="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/7a9738d871be5765.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/7a9738d871be5765.png" width="60%"/></a>
+<!-- <a href="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/7a9738d871be5765.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/7a9738d871be5765.png" width="60%"/></a> -->
 
 In the Terminal window, run:
 
