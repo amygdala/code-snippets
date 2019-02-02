@@ -64,9 +64,7 @@ collect all the related resources for a single application in one place. For thi
 
 Visit the [GCP Console](https://console.cloud.google.com/) in the browser and log in with your project credentials.
 
-Then click the "Activate Cloud Shell" icon in the top right of the console to start up a  [Cloud Shell](https://cloud.google.com/shell/docs/).
-
-<walkthrough-devshell-activate-button></walkthrough-devshell-activate-button>
+Then, click the "Activate Cloud Shell" icon in the top right of the console to start up a  [Cloud Shell](https://cloud.google.com/shell/docs/) (if one is not already opened for you). <walkthrough-cloud-shell-icon></walkthrough-cloud-shell-icon>
 
 ![cloud shell button](https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/fc32d2fa27e821c4.png)
 
@@ -118,9 +116,6 @@ Alternatively, you can create a bucket [via the GCP Console](https://console.clo
 ### Install the Kubeflow Pipelines SDK
 
 
-**Note**: Python 3.5 or higher is required. If you're running in a Conda Python 3 environment, you'll use `pip` instead of
-`pip3`.
-
 Run the following command to install the Kubeflow Pipelines SDK:
 
 ```bash
@@ -128,9 +123,12 @@ pip3 install https://storage.googleapis.com/ml-pipeline/release/0.1.7/kfp.tar.gz
 ```
 We'll use this SDK a bit later in the lab.
 
+> **Note**: Python 3.5 or higher is required. If you're running in a Conda Python 3 environment, you'll use `pip` instead of
+`pip3`.
+
 ### Optional: Pin useful dashboards
 
-In the GCP console, you can pin the __Kubernetes Engine__ and __Storage__ dashboards for easier access.
+In the GCP console, you can pin the __Kubernetes Engine__ and __Storage__ dashboards for easier access. <walkthrough-pin-section-icon></walkthrough-pin-section-icon>
 
 ![pin dashboards](https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/2a50622902d75f6a.png)
 
@@ -256,14 +254,16 @@ python3 gh_summ.py
 
 You will see the file `gh_summ.py.tar.gz` appear as a result.
 
-**Note**: If you get an error, make sure you have installed the Pipelines SDK and are using Python 3. If you're running in a Conda Python 3 environment, you'll use `python` instead of `python3`
+> **Note**: If you get an error, make sure you have installed the Pipelines SDK and are using Python 3. If you're running in a Conda Python 3 environment, you'll use `python` instead of `python3`
 
 
 ### Upload the compiled pipeline
 
 From the Kubeflow dashboard, click the __Pipeline Dashboard__ link to navigate to the Kubeflow Pipelines web UI. Click on __Upload pipeline__, and select __Import by URL__. Paste in the following URL, which points to the same pipeline that you just compiled.
 
-[https://github.com/amygdala/code-snippets/raw/master/ml/kubeflow-pipelines/samples/kubeflow-tf/gh_summ.py.tar.gz](https://github.com/amygdala/code-snippets/raw/master/ml/kubeflow-pipelines/samples/kubeflow-tf/gh_summ.py.tar.gz)
+```
+https://github.com/amygdala/code-snippets/raw/master/ml/kubeflow-pipelines/samples/kubeflow-tf/gh_summ.py.tar.gz
+```
 
 Give the pipeline a name (e.g. `gh_summ`).
 
@@ -305,7 +305,7 @@ Give the Run a name (e.g. `gh_summ-1`) and fill in three parameter fields:
 
 After filling in the fields, click **Create**.
 
-**Note**: The pipeline will take approximately 15 minutes to complete.
+> **Note**: The pipeline will take approximately 15 minutes to complete.
 
 Once the pipeline run is launched, you can click on an individual step in the run to get more information about it, including viewing its *pod* logs.
 
@@ -338,7 +338,7 @@ You should see something like this:
 Click the __Populate Random Issue__ button to retrieve a block of text. Click on __Generate TItle__ to call the trained model and display a prediction.
 
 
-**Note**: It can take a few seconds to display a summary— for this lab we're not using GPUs for the TensorFlow Serving instance.
+> **Note**: It can take a few seconds to display a summary— for this lab we're not using GPUs for the TensorFlow Serving instance.
 
 <!-- ### If you have trouble setting up a GPU node pool or running the training pipeline
 
@@ -365,7 +365,7 @@ Then you will be prompted to spawn an instance. Select the TensorFlow 1.12 CPU i
 
 <!-- <a href="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/e39288bb48582572.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf_pipelines_codelab_imgs/e39288bb48582572.png" width="60%"/></a> -->
 
-**Note**: JupyterHub will take 3-5 minutes to become available. You can view the status of the container on the Kubernetes Engine -> Workloads section of the GCP Console.
+> **Note**: JupyterHub will take 3-5 minutes to become available. You can view the status of the container on the Kubernetes Engine -> Workloads section of the GCP Console.
 
 ### Download a notebook
 
@@ -397,10 +397,12 @@ Follow the instructions in the notebook for the remainder of the lab.
 ### Destroy the cluster
 
 
-**Note**: Cluster deletion can take a few minutes to complete
+> **Note**: Cluster deletion can take a few minutes to complete
 
 
-To remove all resources created by Click-to-Deploy, navigate to  [Deployment Manager](http://console.cloud.google.com/dm/deployments) in the GCP Console and delete the `$DEPLOYMENT_NAME` deployment.
+To remove all resources created by the Click-to-Deploy launcher, navigate to
+[Deployment Manager](http://console.cloud.google.com/dm/deployments) in the GCP Console and
+delete the `$DEPLOYMENT_NAME` deployment.
 
 ### Remove the GitHub token
 
