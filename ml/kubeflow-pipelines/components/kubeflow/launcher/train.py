@@ -139,8 +139,6 @@ def main(argv=None):
                       help='Time in minutes to wait for the TFJob to complete')
   args = parser.parse_args()
 
-  # KUBEFLOW_NAMESPACE = 'default'
-
   logging.getLogger().setLevel(logging.INFO)
   args_dict = vars(args)
   if args.cluster and args.zone:
@@ -155,9 +153,9 @@ def main(argv=None):
     zone = requests.get(metadata_server + "zone",
                         headers = metadata_flavor).text.split('/')[-1]
 
-  logging.info('Getting credentials for GKE cluster %s.' % cluster)
-  subprocess.call(['gcloud', 'container', 'clusters', 'get-credentials', cluster,
-                   '--zone', zone])
+  # logging.info('Getting credentials for GKE cluster %s.' % cluster)
+  # subprocess.call(['gcloud', 'container', 'clusters', 'get-credentials', cluster,
+                   # '--zone', zone])
 
   # Create metadata.json file for visualization.
   tb_dir = args_dict.pop('working_dir') # don't pass this arg to the training module

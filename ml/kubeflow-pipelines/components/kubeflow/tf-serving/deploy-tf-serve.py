@@ -46,7 +46,6 @@ def main(argv=None):
   parser.add_argument('--zone', type=str, help='zone of the kubeflow cluster.')
   args = parser.parse_args()
 
-  # KUBEFLOW_NAMESPACE = 'default'
   KUBEFLOW_NAMESPACE = 'kubeflow'
 
   # Make sure model dir exists before proceeding
@@ -81,9 +80,9 @@ def main(argv=None):
     zone = requests.get(metadata_server + "zone",
                         headers = metadata_flavor).text.split('/')[-1]
 
-  logging.info('Getting credentials for GKE cluster %s.' % cluster)
-  subprocess.call(['gcloud', 'container', 'clusters', 'get-credentials', cluster,
-                   '--zone', zone])
+  # logging.info('Getting credentials for GKE cluster %s.' % cluster)
+  # subprocess.call(['gcloud', 'container', 'clusters', 'get-credentials', cluster,
+                   # '--zone', zone])
 
   args_list = ['--%s=%s' % (k.replace('_', '-'),v)
                for k,v in six.iteritems(args_dict) if v is not None]
