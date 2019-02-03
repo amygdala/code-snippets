@@ -55,7 +55,7 @@ Or, if you don't want to install `gcloud` locally, you can bring up the [Cloud S
 ### Create a Kubernetes Engine (GKE) cluster with Kubeflow installed
 
 Install Kubeflow as described [here](https://www.kubeflow.org/docs/started/getting-started-gke/).
-**Kubeflow version 0.3.5 is required for these examples.**
+**Kubeflow version >=0.4 is required for these examples**, as they use the TFJob v1beta1 API.
 
 It is probably the most straightforward to use the [launcher UI](https://www.kubeflow.org/docs/started/getting-started-gke/#deploy-kubeflow-on-gke-using-the-ui) for installation, and to check "Skip IAP" for quicker setup
 (you will then need to port-forward to connect to the Kubeflow dashboard, as described below).

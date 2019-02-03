@@ -45,10 +45,10 @@ def _generate_train_yaml(src_filename, tfjob_ns, workers, pss, args_list):
     content['spec']['tfReplicaSpecs']['PS']['template']['spec']['containers'][0]['command'].extend(args_list)
     content['spec']['tfReplicaSpecs']['Worker']['replicas'] = workers
     content['spec']['tfReplicaSpecs']['Worker']['template']['spec']['containers'][0]['command'].extend(args_list)
-    content['spec']['tfReplicaSpecs']['MASTER']['template']['spec']['containers'][0]['command'].extend(args_list)
+    content['spec']['tfReplicaSpecs']['Master']['template']['spec']['containers'][0]['command'].extend(args_list)
   else:
     # If no workers and pss set, default is 1.
-    master_spec = content['spec']['tfReplicaSpecs']['MASTER']
+    master_spec = content['spec']['tfReplicaSpecs']['Master']
     worker_spec = content['spec']['tfReplicaSpecs']['Worker']
     ps_spec = content['spec']['tfReplicaSpecs']['PS']
     master_spec['template']['spec']['containers'][0]['command'].extend(args_list)
@@ -127,19 +127,17 @@ def main(argv=None):
                            'cluster is used.')
   parser.add_argument('--zone', type=str, help='zone of the kubeflow cluster.')
   parser.add_argument('--kfversion', type=str,
-                      default='v1alpha2',
+                      default='v1beta1',
                       help='The version of the deployed kubeflow. ' +
-                           'If not set, the default version is v1alpha2')
+                           'If not set, the default version is v1beta1')
   parser.add_argument('--tfjob-ns', type=str,
                       default='kubeflow',
                       help='The namespace where the tfjob is submitted' +
                            'If not set, the namespace is kubeflow')
   parser.add_argument('--tfjob-timeout-minutes', type=int,
-                      default=10,
+                      default=20,
                       help='Time in minutes to wait for the TFJob to complete')
   args = parser.parse_args()
-
-  # KUBEFLOW_NAMESPACE = 'default'
 
   logging.getLogger().setLevel(logging.INFO)
   args_dict = vars(args)
@@ -155,9 +153,9 @@ def main(argv=None):
     zone = requests.get(metadata_server + "zone",
                         headers = metadata_flavor).text.split('/')[-1]
 
-  logging.info('Getting credentials for GKE cluster %s.' % cluster)
-  subprocess.call(['gcloud', 'container', 'clusters', 'get-credentials', cluster,
-                   '--zone', zone])
+  # logging.info('Getting credentials for GKE cluster %s.' % cluster)
+  # subprocess.call(['gcloud', 'container', 'clusters', 'get-credentials', cluster,
+                   # '--zone', zone])
 
   # Create metadata.json file for visualization.
   tb_dir = args_dict.pop('working_dir') # don't pass this arg to the training module
@@ -188,36 +186,36 @@ def main(argv=None):
   create_response = tf_job_client.create_tf_job(api_client, content_yaml, version=kf_version)
   job_name = create_response['metadata']['name']
 
-
   wait_response = tf_job_client.wait_for_job(
       api_client, tfjob_ns, job_name, kf_version,
       timeout=datetime.timedelta(minutes=tfjob_timeout_minutes))
   succ = True
-  #TODO: update this failure checking after tf-operator has the condition checking function.
-  if 'Worker' in wait_response['status']['tfReplicaStatuses']:
-    if 'Failed' in wait_response['status']['tfReplicaStatuses']['Worker']:
+
+  # TODO: update this failure checking after tf-operator has the condition checking function.
+  if 'Worker' in wait_response['status']['replicaStatuses']:
+    if 'Failed' in wait_response['status']['replicaStatuses']['Worker']:
       logging.error('Training failed since workers failed.')
       succ = False
-  if 'PS' in wait_response['status']['tfReplicaStatuses']:
-    if 'Failed' in wait_response['status']['tfReplicaStatuses']['PS']:
+  if 'PS' in wait_response['status']['replicaStatuses']:
+    if 'Failed' in wait_response['status']['replicaStatuses']['PS']:
       logging.error('Training failed since PSs failed.')
       succ = False
-  if 'MASTER' in wait_response['status']['tfReplicaStatuses']:
-    if 'Failed' in wait_response['status']['tfReplicaStatuses']['MASTER']:
-      logging.error('Training failed since MASTER failed.')
+  if 'Master' in wait_response['status']['replicaStatuses']:
+    if 'Failed' in wait_response['status']['replicaStatuses']['Master']:
+      logging.error('Training failed since Master failed.')
       succ = False
 
-  #TODO: remove this after kubeflow fixes the wait_for_job issue
-  # because the wait_for_job returns when the worker finishes but the master might not be complete yet.
-  if 'MASTER' in wait_response['status']['tfReplicaStatuses'] and 'active' in wait_response['status']['tfReplicaStatuses']['MASTER']:
-    master_active = True
-    while master_active:
-      # Wait for master to finish
-      time.sleep(2)
-      wait_response = tf_job_client.wait_for_job(api_client, tfjob_ns, job_name, kf_version,
-                                             timeout=datetime.timedelta(minutes=tfjob_timeout_minutes))
-      if 'active' not in wait_response['status']['tfReplicaStatuses']['MASTER']:
-        master_active = False
+  # #TODO: remove this after kubeflow fixes the wait_for_job issue
+  # # because the wait_for_job returns when the worker finishes but the master might not be complete yet.
+  # if 'Master' in wait_response['status']['replicaStatuses'] and 'active' in wait_response['status']['replicaStatuses']['Master']:
+  #   master_active = True
+  #   while master_active:
+  #     # Wait for master to finish
+  #     time.sleep(2)
+  #     wait_response = tf_job_client.wait_for_job(api_client, tfjob_ns, job_name, kf_version,
+  #                                            timeout=datetime.timedelta(minutes=tfjob_timeout_minutes))
+  #     if 'active' not in wait_response['status']['tfReplicaStatuses']['Master']:
+  #       master_active = False
 
   if succ:
     logging.info('Training success.')
