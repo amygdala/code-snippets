@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-apiVersion: kubeflow.org/v1alpha2
+apiVersion: kubeflow.org/v1beta1
 kind: TFJob
 metadata:
   generateName: tfjob
@@ -65,7 +65,7 @@ spec:
           - name: sa
             secret:
               secretName: user-gcp-sa
-    MASTER:
+    Master:
           replicas: 1
           restartPolicy: OnFailure
           template:
