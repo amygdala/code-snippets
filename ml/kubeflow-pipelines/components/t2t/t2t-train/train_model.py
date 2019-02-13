@@ -16,18 +16,11 @@
 
 import argparse
 import json
-import os
 import subprocess
-import time
 
-from tensorflow.python.lib.io import file_io
 
-def main(argv=None):
+def main():
   parser = argparse.ArgumentParser(description='ML Trainer')
-  # parser.add_argument(
-  #     '--project',
-  #     help='The GCS project to use',
-  #     required=True)
   parser.add_argument(
       '--model-dir',
       help='...',
@@ -78,10 +71,12 @@ def main(argv=None):
   print('training steps (total): %s' % args.train_steps)
 
   # Then run the training for N steps from there.
-  model_train_command = ['t2t-trainer', '--data_dir', data_dir, '--t2t_usr_dir', '/ml/ghsumm/trainer', '--problem', problem,
-     '--model', 'transformer',  '--hparams_set', 'transformer_prepend',  '--output_dir', model_dir, '--job-dir', model_dir,
+  model_train_command = ['t2t-trainer', '--data_dir', data_dir,
+     '--t2t_usr_dir', '/ml/ghsumm/trainer',
+     '--problem', problem,
+     '--model', 'transformer', '--hparams_set', 'transformer_prepend', '--output_dir', model_dir,
+     '--job-dir', model_dir,
      '--train_steps', args.train_steps, '--eval_throttle_seconds', '240',
-     # '--worker_gpu', '8'
      ]
   print(model_train_command)
   result2 = subprocess.call(model_train_command)
@@ -89,7 +84,9 @@ def main(argv=None):
 
   # then export the model...
 
-  model_export_command = ['t2t-exporter', '--model', 'transformer', '--hparams_set', 'transformer_prepend','--problem', problem,
+  model_export_command = ['t2t-exporter', '--model', 'transformer',
+      '--hparams_set', 'transformer_prepend',
+      '--problem', problem,
       '--t2t_usr_dir', '/ml/ghsumm/trainer', '--data_dir', data_dir, '--output_dir', model_dir]
   print(model_export_command)
   result3 = subprocess.call(model_export_command)
@@ -99,6 +96,5 @@ def main(argv=None):
   with open('/tmp/output', 'w') as f:
     f.write(args.deploy_webapp)
 
-if __name__== "__main__":
+if __name__ == "__main__":
   main()
-

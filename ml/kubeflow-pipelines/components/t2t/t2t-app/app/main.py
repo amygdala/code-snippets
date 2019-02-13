@@ -15,31 +15,27 @@
 # limitations under the License.
 
 import base64
-import json
+import logging
 import os
-import re
 import random
+import re
 import requests
-import sys
 
+import tensorflow as tf
 import pandas as pd
 
 from flask import Flask
 from flask import jsonify
 from flask import render_template
 from flask import g, request
-from flask import url_for
-import logging
 from googleapiclient import discovery
 from oauth2client.client import GoogleCredentials
 
 # similar to T2T's query.py
 # https://github.com/tensorflow/tensor2tensor/blob/master/tensor2tensor/serving/query.py
 from tensor2tensor import problems as problems_lib  # pylint: disable=unused-import
-from tensor2tensor.data_generators import text_encoder
 from tensor2tensor.utils import registry
 from tensor2tensor.utils import usr_dir
-import tensorflow as tf
 from tensor2tensor.serving import serving_utils
 
 credentials = GoogleCredentials.get_application_default()
@@ -54,23 +50,20 @@ hparams_name = os.getenv('HPARAMS', 'transformer_prepend')
 data_dir = os.getenv('DATADIR', 'gs://aju-dev-demos-codelabs/kubecon/t2t_data_gh_all/')
 github_token = os.getenv('GH_TOKEN', 'xxx')
 
-server = os.getenv('TFSERVING_HOST', 'ghsumm.kubeflow')
-print("using server: %s" % server)
-servable_name = os.getenv('TF_SERVABLE_NAME', 'ghsumm')
-print("using model servable name: %s" % servable_name)
+SERVER = os.getenv('TFSERVING_HOST', 'ghsumm.kubeflow')
+print("using server: %s" % SERVER)
+SERVABLE_NAME = os.getenv('TF_SERVABLE_NAME', 'ghsumm')
+print("using model servable name: %s" % SERVABLE_NAME)
 
-# SAMPLE_DATA_URL = ('https://storage.googleapis.com/kubeflow-examples/'
-#                    'github-issue-summarization-data/github_issues_sample.csv')
 SAMPLE_ISSUES = './github_issues_sample.csv'
 
-# SERVER_URL = 'http://130.211.206.140:8500/v1/models/ghsumm:predict'
-SERVER_URL = 'http://' + server + ':8500/v1/models/' + servable_name + ':predict'
+SERVER_URL = 'http://' + SERVER + ':8500/v1/models/' + SERVABLE_NAME + ':predict'
 
 def get_issue_body(issue_url):
   issue_url = re.sub('.*github.com/', 'https://api.github.com/repos/',
                      issue_url)
   tf.logging.info("issue url: %s", issue_url)
-  tf.logging.info("using GH token: %s" , github_token)
+  # tf.logging.info("using GH token: %s", github_token)
   response = requests.get(
     issue_url, headers={
       'Authorization': 'token {}'.format(github_token)
@@ -82,10 +75,6 @@ def get_issue_body(issue_url):
 @app.route('/')
 def index():
   return render_template('index.html')
-
-# @app.route('/form')
-# def input_form():
-#   return render_template('index.html')
 
 @app.route("/random_github_issue", methods=['GET'])
 def random_github_issue():
@@ -109,9 +98,7 @@ def summary():
   global problem
   if problem is None:
     init()
-  request_fn = make_tfserving_rest_request_fn(
-      servable_name=servable_name,
-      server=server)
+  request_fn = make_tfserving_rest_request_fn()
 
   if request.method == 'POST':
     issue_text = request.form["issue_text"]
@@ -122,7 +109,7 @@ def summary():
     tf.logging.info("issue_text: %s", issue_text)
     outputs = serving_utils.predict([issue_text], problem, request_fn)
     outputs, = outputs
-    output, score = outputs
+    output, score = outputs  #pylint: disable=unused-variable
     tf.logging.info("output: %s", output)
 
     return jsonify({'summary': output, 'body': issue_text})
@@ -141,7 +128,7 @@ def init():
   hparams = tf.contrib.training.HParams(data_dir=os.path.expanduser(data_dir))
   problem.get_hparams(hparams)
 
-def make_tfserving_rest_request_fn(servable_name, server):
+def make_tfserving_rest_request_fn():
   """Wraps function to make CloudML Engine requests with runtime args."""
 
   def _make_tfserving_rest_request_fn(examples):
@@ -157,7 +144,6 @@ def make_tfserving_rest_request_fn(servable_name, server):
         } for ex in examples]
     }
 
-    input_data_str = json.dumps(input_data)
     response = requests.post(SERVER_URL, json=input_data)
     predictions = response.json()['predictions']
     tf.logging.info("Predictions: %s", predictions)
@@ -167,11 +153,11 @@ def make_tfserving_rest_request_fn(servable_name, server):
 
 @app.errorhandler(500)
 def server_error(e):
-    logging.exception('An error occurred during a request.')
-    return """
-    An internal error occurred: <pre>{}</pre>
-    See logs for full stacktrace.
-    """.format(e), 500
+  logging.exception('An error occurred during a request.')
+  return """
+  An internal error occurred: <pre>{}</pre>
+  See logs for full stacktrace.
+  """.format(e), 500
 
 if __name__ == '__main__':
-    app.run(port=8080, debug=True)
+  app.run(port=8080, debug=True)

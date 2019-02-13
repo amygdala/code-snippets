@@ -14,20 +14,13 @@
 
 
 import argparse
-import datetime
-import json
 import os
-import time
 import logging
-import requests
 import subprocess
-import six
-from tensorflow.python.lib.io import file_io
-import time
-import yaml
+import requests
 
 
-def main(argv=None):
+def main():
   parser = argparse.ArgumentParser(description='Serving webapp')
   parser.add_argument(
       '--model_name',
@@ -51,35 +44,34 @@ def main(argv=None):
 
   logging.getLogger().setLevel(logging.INFO)
   args_dict = vars(args)
+
   if args.cluster and args.zone:
-    cluster = args_dict.pop('cluster')
-    zone = args_dict.pop('zone')
+    cluster = args_dict.pop('cluster')  #pylint: disable=unused-variable
+    zone = args_dict.pop('zone')  #pylint: disable=unused-variable
   else:
     # Get cluster name and zone from metadata
     metadata_server = "http://metadata/computeMetadata/v1/instance/"
     metadata_flavor = {'Metadata-Flavor' : 'Google'}
     cluster = requests.get(metadata_server + "attributes/cluster-name",
-                           headers = metadata_flavor).text
+                           headers=metadata_flavor).text
     zone = requests.get(metadata_server + "zone",
-                        headers = metadata_flavor).text.split('/')[-1]
+                        headers=metadata_flavor).text.split('/')[-1]
 
-  logging.info('Getting credentials for GKE cluster %s.' % cluster)
-  subprocess.call(['gcloud', 'container', 'clusters', 'get-credentials', cluster,
-                   '--zone', zone])
+  # logging.info('Getting credentials for GKE cluster %s.' % cluster)
+  # subprocess.call(['gcloud', 'container', 'clusters', 'get-credentials', cluster,
+  #                  '--zone', zone])
 
-  args_list = ['--%s=%s' % (k.replace('_', '-'),v)
-               for k,v in six.iteritems(args_dict) if v is not None]
   logging.info('Generating training template.')
 
   template_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), 't2tapp-template.yaml')
   target_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), 't2tapp.yaml')
 
   with open(template_file, 'r') as f:
-    with open( target_file, "w" ) as target:
+    with open(target_file, "w") as target:
       data = f.read()
-      changed = data.replace('MODEL_NAME',args.model_name)
-      changed1 = changed.replace('KUBEFLOW_NAMESPACE',KUBEFLOW_NAMESPACE).replace(
-        'GITHUB_TOKEN',args.github_token).replace(
+      changed = data.replace('MODEL_NAME', args.model_name)
+      changed1 = changed.replace('KUBEFLOW_NAMESPACE', KUBEFLOW_NAMESPACE).replace(
+        'GITHUB_TOKEN', args.github_token).replace(
         'DATA_DIR', 'gs://aju-dev-demos-codelabs/kubecon/t2t_data_gh_all/')
       target.write(changed1)
 
@@ -88,5 +80,5 @@ def main(argv=None):
   subprocess.call(['kubectl', 'create', '-f', '/ml/t2tapp.yaml'])
 
 
-if __name__== "__main__":
+if __name__ == "__main__":
   main()
