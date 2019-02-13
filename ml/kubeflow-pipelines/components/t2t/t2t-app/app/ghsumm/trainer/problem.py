@@ -1,13 +1,8 @@
 import csv
 
-import os
-import tensorflow as tf
 from tensor2tensor.utils import registry
-from tensor2tensor.models import transformer
 from tensor2tensor.data_generators import problem
-from tensor2tensor.data_generators import text_encoder
 from tensor2tensor.data_generators import text_problems
-from tensor2tensor.data_generators import generator_utils
 
 
 @registry.register_problem
@@ -39,7 +34,7 @@ class GhProblem(text_problems.Text2TextProblem):
         "shards": 10,
     }]
 
-  def generate_samples(self, data_dir, tmp_dir, dataset_split):
+  def generate_samples(self, data_dir, tmp_dir, dataset_split):  #pylint: disable=unused-argument
     with open('gh_data/github_issues.csv') as csvfile:
       ireader = csv.reader((line.replace('\0', '') for line in csvfile), delimiter=','
        # quotechar='|'
@@ -54,6 +49,3 @@ class GhProblem(text_problems.Text2TextProblem):
             "targets": row[1]  # issue title
         }
         i += 1
-
-
-

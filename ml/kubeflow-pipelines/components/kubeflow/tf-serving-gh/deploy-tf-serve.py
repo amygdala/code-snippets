@@ -14,20 +14,16 @@
 
 
 import argparse
-import datetime
-import json
 import os
 import time
 import logging
-import requests
 import subprocess
-import six
+import requests
+
 from tensorflow.python.lib.io import file_io
-import time
-import yaml
 
 
-def main(argv=None):
+def main():
   parser = argparse.ArgumentParser(description='ML Trainer')
   parser.add_argument(
       '--model_name',
@@ -46,7 +42,6 @@ def main(argv=None):
   parser.add_argument('--zone', type=str, help='zone of the kubeflow cluster.')
   args = parser.parse_args()
 
-  # KUBEFLOW_NAMESPACE = 'default'
   KUBEFLOW_NAMESPACE = 'kubeflow'
 
   # Make sure model dir exists before proceeding
@@ -57,46 +52,45 @@ def main(argv=None):
       model_dir = os.path.join(args.model_path, file_io.list_directory(args.model_path)[-1])
       print("model subdir: %s" % model_dir)
       break
-    except Exception as e:
+    except Exception as e:  #pylint: disable=broad-except
       print(e)
       print("Sleeping %s seconds to sync with GCS..." % sleeptime)
       time.sleep(sleeptime)
       retries += 1
       sleeptime *= 2
-  if retries >=20:
+  if retries >= 20:
     print("could not get model subdir from %s, exiting" % args.model_path)
     exit(1)
 
   logging.getLogger().setLevel(logging.INFO)
   args_dict = vars(args)
   if args.cluster and args.zone:
-    cluster = args_dict.pop('cluster')
-    zone = args_dict.pop('zone')
+    cluster = args_dict.pop('cluster')  #pylint: disable=unused-variable
+    zone = args_dict.pop('zone')  #pylint: disable=unused-variable
   else:
     # Get cluster name and zone from metadata
     metadata_server = "http://metadata/computeMetadata/v1/instance/"
     metadata_flavor = {'Metadata-Flavor' : 'Google'}
     cluster = requests.get(metadata_server + "attributes/cluster-name",
-                           headers = metadata_flavor).text
+                           headers=metadata_flavor).text
     zone = requests.get(metadata_server + "zone",
-                        headers = metadata_flavor).text.split('/')[-1]
+                        headers=metadata_flavor).text.split('/')[-1]
 
-  logging.info('Getting credentials for GKE cluster %s.' % cluster)
-  subprocess.call(['gcloud', 'container', 'clusters', 'get-credentials', cluster,
-                   '--zone', zone])
+  # logging.info('Getting credentials for GKE cluster %s.' % cluster)
+  # subprocess.call(['gcloud', 'container', 'clusters', 'get-credentials', cluster,
+  #                  '--zone', zone])
 
-  args_list = ['--%s=%s' % (k.replace('_', '-'),v)
-               for k,v in six.iteritems(args_dict) if v is not None]
   logging.info('Generating training template.')
 
-  template_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'tf-serve-template.yaml')
+  template_file = os.path.join(
+      os.path.dirname(os.path.realpath(__file__)), 'tf-serve-template.yaml')
   target_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'tf-serve.yaml')
 
   with open(template_file, 'r') as f:
-    with open( target_file, "w" ) as target:
+    with open(target_file, "w") as target:
       data = f.read()
-      changed = data.replace('MODEL_NAME',args.model_name)
-      changed1 = changed.replace('KUBEFLOW_NAMESPACE',KUBEFLOW_NAMESPACE)
+      changed = data.replace('MODEL_NAME', args.model_name)
+      changed1 = changed.replace('KUBEFLOW_NAMESPACE', KUBEFLOW_NAMESPACE)
       changed2 = changed1.replace('MODEL_PATH', args.model_path)
       target.write(changed2)
 
@@ -105,5 +99,5 @@ def main(argv=None):
   subprocess.call(['kubectl', 'create', '-f', '/ml/tf-serve.yaml'])
 
 
-if __name__== "__main__":
+if __name__ == "__main__":
   main()
