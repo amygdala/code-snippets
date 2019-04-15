@@ -1,7 +1,8 @@
 
 # Cloud Run example: 'Twilio-vision'
 
-This directory contains a simple Cloud Run example that lets you text images to a Twilio phone number (once set up), and get back information about how the Cloud Vision API labeled the image.
+This directory contains a simple [Cloud Run](https://cloud.google.com/run/docs/) example that lets you text images to a [Twilio](https://www.twilio.com) phone number (once set up), and get back information about how the
+[Cloud Vision API](https://cloud.google.com/vision/docs/) labeled the image.
 
 <a href="https://storage.googleapis.com/amy-jo/images/doofball_doghouse.jpg" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/doofball_doghouse.jpg" width=300/></a>
 
@@ -81,3 +82,4 @@ Then, configure your Twilio phone number to use that TwiML app for Messaging.
 Text an image to the Twilio number.  You should receive a response with some information about the image from the Cloud Vision API.
 
 <a href="https://storage.googleapis.com/amy-jo/images/doofball_doghouse.jpg" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/doofball_doghouse.jpg" width=300/></a>
+
