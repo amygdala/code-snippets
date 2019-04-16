@@ -36,7 +36,6 @@ Install docker, then run the following `gcloud` commands to add the gcloud Docke
 
 ```sh
 gcloud auth configure-docker
-gcloud components install docker-credential-gcr
 ```
 
 Then, run the following from this directory (the one that contains the `Dockerfile`) to build and push your container. Replace the following with your GCP project ID.
@@ -60,8 +59,11 @@ Once you've built the container image, deploy the app as follows (edit to use yo
 `MESSAGE_BLURB` string with whatever you prefer — this string will be returned as part of the app response, along with information from the Cloud Vision API.
 
 ```sh
-gcloud config set run/region us-central1
-gcloud beta run deploy --image gcr.io/<your_project>/twilio-vision:v1 --update-env-vars MESSAGE_BLURB="Courtesy of the Google Cloud Vision API..."
+gcloud beta run deploy \
+    --image gcr.io/<your_project>/twilio-vision:v1 \
+    --region us-central1 \
+    --allow-unauthenticated \
+    --set-env-vars MESSAGE_BLURB="Courtesy of the Google Cloud Vision API..."
 ```
 
 Make note of the endpoint the app is running on. You'll need it for the next step.
