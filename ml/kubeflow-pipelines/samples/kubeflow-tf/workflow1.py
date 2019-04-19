@@ -49,7 +49,7 @@ def workflow1(
           "--project", project,
           "--mode", preprocess_mode,
           "--setup_file", tft_setup_file,
-          "--max-rows", 5000,
+          "--max-rows", '5000',
           "--ts1", ts1,
           "--ts2", ts2,
           "--stage", "eval",
@@ -78,7 +78,7 @@ def workflow1(
           "--project", project,
           "--mode", preprocess_mode,
           "--setup_file", tft_setup_file,
-          "--max_rows", 5000,
+          "--max_rows", '5000',
           "--ts1", ts1,
           "--ts2", ts2,
           "--stage", "eval",
@@ -129,8 +129,8 @@ def workflow1(
           "--train-files-prefix", outfile_prefix_train,
           "--eval-files-prefix", outfile_prefix_eval,
           "--train-steps", train_steps,
-          "--workers", 1,
-          "--pss", 1]
+          "--workers", '1',
+          "--pss", '1']
       )
   train2.after(tfteval2)
   train2.after(tfttrain2)
