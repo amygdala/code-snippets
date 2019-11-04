@@ -30,7 +30,6 @@ import numpy as np
 DEVELOP_MODE = False
 NBUCKETS = 5 # for embeddings
 NUM_EXAMPLES = 1000*1000 * 20 # assume 20 million examples
-TRAIN_BATCH_SIZE = 64
 DNN_HIDDEN_UNITS = '128,64,32'
 
 CSV_COLUMNS  = ('duration,end_station_id,bike_id,ts,day_of_week,start_station_id' +
@@ -40,6 +39,10 @@ LABEL_COLUMN = 'duration'
 DEFAULTS     = [[0.0],['na'],['na'],[0.0],['na'],['na'],
                [0.0],[0.0],[0.0],[0.0],
                [0.0],['na'],[0.0],[0.0],[0.0],[0.0], [0.0]]
+
+STRATEGY = tf.distribute.MirroredStrategy()
+TRAIN_BATCH_SIZE = 64 * STRATEGY.num_replicas_in_sync
+
 
 def load_dataset(pattern, batch_size=1):
   return tf.data.experimental.make_csv_dataset(pattern, batch_size, CSV_COLUMNS, DEFAULTS)
@@ -51,11 +54,12 @@ def features_and_labels(features):
 
 def read_dataset(pattern, batch_size, mode=tf.estimator.ModeKeys.TRAIN, truncate=None):
   dataset = load_dataset(pattern, batch_size)
-  dataset = dataset.map(features_and_labels)
+  dataset = dataset.map(features_and_labels, num_parallel_calls=tf.data.experimental.AUTOTUNE)
   if mode == tf.estimator.ModeKeys.TRAIN:
-    dataset = dataset.shuffle(batch_size*10)
-    dataset = dataset.repeat()
-  dataset = dataset.prefetch(1)
+    dataset = dataset.repeat().shuffle(batch_size*10)
+    # dataset = dataset.repeat()
+  dataset = dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
+  # dataset = dataset.prefetch(1)
   if truncate is not None:
     dataset = dataset.take(truncate)
   return dataset
@@ -80,12 +84,10 @@ def wide_and_deep_classifier(inputs, linear_feature_columns, dnn_feature_columns
     return model
 
 
-def create_model(learning_rate):
+def create_model(learning_rate, load_checkpoint):
 
   # duration,end_station_id,bike_id,ts,day_of_week,start_station_id,start_latitude,start_longitude,end_latitude,end_longitude,
   # euclidean,loc_cross,prcp,max,min,temp,dewp
-
-  logging.info('using learning rate {}'.format(learning_rate))
 
   real = {
       colname : tf.feature_column.numeric_column(colname)
@@ -129,12 +131,24 @@ def create_model(learning_rate):
       print(sparse.keys())
       print(real.keys())
 
-  model = wide_and_deep_classifier(
-      inputs,
-      linear_feature_columns = sparse.values(),
-      dnn_feature_columns = real.values(),
-      dnn_hidden_units = DNN_HIDDEN_UNITS,
-      learning_rate=learning_rate)
+  model = None
+  # strategy = tf.distribute.MirroredStrategy()
+  print('num replicas...')
+  print(STRATEGY.num_replicas_in_sync)
+
+  with STRATEGY.scope():
+    if load_checkpoint:
+      learning_rate = 0.0000001
+    logging.info("using learning rate {}".format(learning_rate))
+    model = wide_and_deep_classifier(
+        inputs,
+        linear_feature_columns = sparse.values(),
+        dnn_feature_columns = real.values(),
+        dnn_hidden_units = DNN_HIDDEN_UNITS,
+        learning_rate=learning_rate)
+    if load_checkpoint:
+      logging.info("loading model weights from {}".format(load_checkpoint))
+      model.load_weights(load_checkpoint)
 
   model.summary()
   return model
@@ -159,15 +173,13 @@ def main():
       '--load-checkpoint',
       )
 
-
   args = parser.parse_args()
   logging.info("Tensorflow version " + tf.__version__)
 
   TRAIN_DATA_PATTERN = args.data_dir + "train*"
   EVAL_DATA_PATTERN = args.data_dir + "test*"
-  OUTPUT_DIR='{}/bwmodel2/trained_model'.format(args.workdir)
+  OUTPUT_DIR='{}/bwmodel/trained_model'.format(args.workdir)
   logging.info('Writing trained model to {}'.format(OUTPUT_DIR))
-
   learning_rate = 0.001
 
   if DEVELOP_MODE:
@@ -182,20 +194,15 @@ def main():
     print(list(one_item)) # should print one batch of 2 items
 
   train_batch_size = TRAIN_BATCH_SIZE
-  eval_batch_size = 1000
+  eval_batch_size = 10
   steps_per_epoch = NUM_EXAMPLES // train_batch_size
 
   train_dataset = read_dataset(TRAIN_DATA_PATTERN, train_batch_size)
   eval_dataset = read_dataset(EVAL_DATA_PATTERN, eval_batch_size, tf.estimator.ModeKeys.EVAL,
-      eval_batch_size*10)
+     eval_batch_size * 100 * STRATEGY.num_replicas_in_sync
+  )
 
-  if args.load_checkpoint:
-    learning_rate = 0.0000001
-
-  model = create_model(learning_rate)
-  if args.load_checkpoint:
-    logging.info('Loading weights from {}'.format(args.load_checkpoint))
-    model.load_weights(args.load_checkpoint)
+  model = create_model(learning_rate, args.load_checkpoint)
 
   checkpoint_path = '{}/checkpoints/bikes_weather.cpt'.format(OUTPUT_DIR)
   logging.info("checkpoint path: %s", checkpoint_path)
@@ -208,6 +215,7 @@ def main():
   logging.info("training model....")
   history = model.fit(train_dataset,
                       validation_data=eval_dataset,
+                      validation_steps=eval_batch_size,
                       epochs=args.epochs,
                       steps_per_epoch=steps_per_epoch,
                       callbacks=[cp_callback  # , tb_callback
