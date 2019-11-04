@@ -20,12 +20,13 @@
 
 
 
-import tensorflow as tf
 import argparse
 import logging
 import os, json, math, time, shutil
 import numpy as np
 
+import pathlib2
+import tensorflow as tf
 
 DEVELOP_MODE = False
 NBUCKETS = 5 # for embeddings
@@ -172,6 +173,9 @@ def main():
   parser.add_argument(
       '--load-checkpoint',
       )
+  parser.add_argument(
+      '--train-output-path',
+      )
 
   args = parser.parse_args()
   logging.info("Tensorflow version " + tf.__version__)
@@ -230,12 +234,21 @@ def main():
   try:
     logging.info("exporting model....")
     tf.saved_model.save(model, export_dir)
-  except Exception as e:
+    logging.info("train_output_path: %s", args.train_output_path)
+    pathlib2.Path(args.train_output_path).parent.mkdir(parents=True)
+    export_path = '{}/export/bikesw'.format(OUTPUT_DIR)
+    logging.info('export path: {}'.format(export_path))
+    pathlib2.Path(args.train_output_path).write_text(export_path)
+  except Exception as e:  # retry once if error
     logging.warning(e)
     logging.info("retrying...")
     time.sleep(10)
     logging.info("again ... exporting model....")
     tf.saved_model.save(model, export_dir)
+    logging.info("train_output_path: %s", args.train_output_path)
+    pathlib2.Path(args.train_output_path).parent.mkdir(parents=True)
+    export_path = '{}/export/bikesw'.format(OUTPUT_DIR)
+    pathlib2.Path(args.train_output_path).write_text(export_path)
 
 
 if __name__ == "__main__":

@@ -14,6 +14,10 @@
 
 FROM tensorflow/tensorflow:2.0.0-gpu-py3
 
+RUN pip install --upgrade pip
+RUN pip install pathlib2
+
+
 ADD build /ml
 
 ENTRYPOINT ["python", "/ml/bikes_weather.py"]
