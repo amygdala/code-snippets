@@ -23,6 +23,9 @@ inputs:
   - name: epochs
     type: Integer
     default: 1
+  - name: steps_per_epoch
+    type: Integer
+    default: -1
   - name: data_dir
     type: GCSPath
   - name: workdir
@@ -38,6 +41,7 @@ implementation:
     args: [
       --data-dir, {inputValue: data_dir},
       --epochs, {inputValue: epochs},
+      --steps-per-epoch, {inputValue: steps_per_epoch},
       --workdir, {inputValue: workdir},
       --train-output-path, {outputPath: train_output_path}
     ]

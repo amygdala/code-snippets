@@ -42,6 +42,7 @@ def bikes_weather(  #pylint: disable=unused-argument
   working_dir: GCSPath = 'gs://YOUR_GCS_DIR_HERE',
   data_dir: GCSPath = 'gs://aju-dev-demos-codelabs/bikes_weather/',
   epochs: 'Integer' = 1,
+  steps_per_epoch: 'Integer' = -1 ,  # if -1, don't override normal calcs based on dataset size
   load_checkpoint: String = ''
   ):
 
@@ -49,7 +50,7 @@ def bikes_weather(  #pylint: disable=unused-argument
   train = train_op(
     data_dir=data_dir,
     workdir='%s/%s' % (working_dir, dsl.RUN_ID_PLACEHOLDER),
-    epochs=epochs,
+    epochs=epochs, steps_per_epoch=steps_per_epoch,
     load_checkpoint=load_checkpoint
     ).apply(gcp.use_gcp_secret('user-gcp-sa'))
 

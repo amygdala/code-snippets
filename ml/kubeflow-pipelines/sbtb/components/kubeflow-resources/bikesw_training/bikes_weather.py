@@ -163,6 +163,9 @@ def main():
       '--epochs', type=int,
       default=1)
   parser.add_argument(
+      '--steps-per-epoch', type=int,
+      default=-1)  # if set to -1, don't override the normal calcs for this
+  parser.add_argument(
       '--workdir',
       required=True)
   parser.add_argument(
@@ -199,7 +202,11 @@ def main():
 
   train_batch_size = TRAIN_BATCH_SIZE
   eval_batch_size = 10
-  steps_per_epoch = NUM_EXAMPLES // train_batch_size
+  if args.steps_per_epoch == -1:  # calc based on dataset size
+    steps_per_epoch = NUM_EXAMPLES // train_batch_size
+  else:
+    steps_per_epoch = args.steps_per_epoch
+  logging.info('using {} steps per epoch'.format(steps_per_epoch))
 
   train_dataset = read_dataset(TRAIN_DATA_PATTERN, train_batch_size)
   eval_dataset = read_dataset(EVAL_DATA_PATTERN, eval_batch_size, tf.estimator.ModeKeys.EVAL,
