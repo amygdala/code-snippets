@@ -25,14 +25,14 @@ spec:
     port: 8500
     targetPort: 8500
   selector:
-    app: MODEL_NAME
+    app: SERVICE_NAME
   type: LoadBalancer
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   labels:
-    app: MODEL_NAME
+    app: SERVICE_NAME
   name: SERVICE_NAME
   namespace: KUBEFLOW_NAMESPACE
 spec:
@@ -40,7 +40,7 @@ spec:
   template:
     metadata:
       labels:
-        app: MODEL_NAME
+        app: SERVICE_NAME
         version: v1
     spec:
       volumes:

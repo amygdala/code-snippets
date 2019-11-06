@@ -38,7 +38,6 @@ serve_op = comp.load_component_from_url(
   description='Model bike rental duration given weather'
 )
 def bikes_weather(  #pylint: disable=unused-argument
-  export_dir: GCSPath = 'gs://aju-vtests2-pipelines/bwmodel/trained_model/export/bikesw',
   working_dir: GCSPath = 'gs://YOUR_GCS_DIR_HERE',
   data_dir: GCSPath = 'gs://aju-dev-demos-codelabs/bikes_weather/',
   epochs: 'Integer' = 1,

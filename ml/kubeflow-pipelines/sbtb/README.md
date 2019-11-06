@@ -1,9 +1,9 @@
 
-# "Bikes & Weather" training + serving pipeline
+# Kubeflow Pipeline: "Bikes & Weather" training + serving
 
 ## Introduction
 
-This Kubeflow pipeline trains a TF2 model on a dataset of bike rental information.
+This Kubeflow pipeline trains a TensorFlow 2 model (specifically, a Keras model) on a dataset of bike rental information.
 It predicts duration of bike rental for given trip configuration (starting rental station, end station, day of week, time of start, weather details, etc.)
 
 Then, the model is served on the KF cluster using TF-serving.
@@ -14,6 +14,9 @@ The default dataset used in this example is derived from two public datasets ava
 
 The data, exported to GCS in CSV format, is here: `gs://aju-dev-demos-codelabs/bikes_weather/`. 
 It has no particular sort, and has been arbitrarily divided into 'train' and 'test' files. You can copy these files and split the data differently if you like.
+
+If you use another data source, the csv files must have the same schema as the files in `gs://aju-dev-demos-codelabs/bikes_weather/`, and should similarly have `train` and `test` prefixes.
+
 
 ## Kubeflow Installation
 
@@ -32,18 +35,26 @@ The quick overview:
 - Upload the compiled pipeline to the dashboard of your Kubeflow installation.  The codelab ([https://g.co/codelabs/kfp-gis](https://g.co/codelabs/kfp-gis)) gives more detail.
 - Once uploaded, run the pipeline.  You'll need to provide some parameter(s), depending upon the how you want to run it, as described below.
 
+Note that the training step does require a cluster node with at least one GPU available, and will hang in 'Pending' state until such a node is available.
+
 
 ### Training from scratch
 
 You'll probably require about ~10 training epochs to build a model that's fairly accurate.  That will take a long time.  To do that, set the `epochs` parameter to 10, leave the `steps-per-epoch` parameter as the default `-1` (which indicates that the pipeline will calculate a value based on the dataset size), and leave the `load-checkpoint` field blank.
 
+To train on a different set of csv files in GCS, change the `data-dir` param.
+
 ### Training from a checkpoint
 
 Particularly for demos and workshops, you may want to load an existing checkpoint and train for just a few more steps from that starting point.
 To train from an existing checkpoint, enter the GCS path to the checkpoint in the `load-checkpoint` field.  
-The checkpoint should have the form `gs://path/to/checkpoint/bikes_weather.cpt`.  **Amy TODO: create a public such checkpoint**.
+The checkpoint should have the form `gs://path/to/checkpoints/bikes_weather.cpt`.
+E.g., you can experiment with this one:    
+`gs://aju-dev-demos-codelabs/bw_checkpoints/trained_model2/trained_model/checkpoints/bikes_weather.cpt`
 
-You may additionally want to override the `steps-per-epoch` default, to provide a specific number.
+(Note that the checkpoint needs to match the architecture of the model object for which you're restoring it, so if you make any changes to the model in your own code, the above checkpoint will not load).
+
+If you're training from a checkpoint for demo purposes, you may additionally want to override the `steps-per-epoch` default, which is large, to provide a specific (smaller) number, so that the training step requires only a few minutes. E.g. set `steps-per-epoch` to something like `10000`, and run for one epoch.
 
 ## Accessing the TF-serving service
 
@@ -68,19 +79,21 @@ If you want to send a prediction request for multiple instances, you can edit th
 
 ### Scaling the TF-serving service
 
-One nice feature of running on Kubernetes is that it makes it easy to scale out.  If you want to increase the number of replicas in the tf-serving deployment, this is easy to do. 
+One nice feature of running on Kubernetes is that it makes it easy to scale out.  The default number of replicas for each TF-serving deployment(s) is 1.
+There's one such deployment for each model deployment (each pipeline run).
+
+If you want to increase the number of replicas in a tf-serving deployment, this is easy to do. E.g., you might want to do that if you're hitting a TF-serving service with high qps.
+Find the particular deployment that you want to scale.  Look for deployments with a `bikesw` prefix to find the TF-serving deployments.
 
 ```sh
 kubectl get deployments -n kubeflow
 ```
-...
+Then, increase the number of replicas in the deployment as follows (this example scales up to 3 replicas):
 
 ```sh
-kubectl scale --replicas=1 deployment <deployment_name> -n kubeflow
+kubectl scale --replicas=3 deployment <deployment_name> -n kubeflow
 ```
-...
 
-
-
+If you like, you can set up your GKE node pools to [autoscale](https://cloud.google.com/kubernetes-engine/docs/how-to/cluster-autoscaler), and/or set up [autoprovisioning](https://cloud.google.com/kubernetes-engine/docs/how-to/node-auto-provisioning), so that you don't have to worry about whether your cluster has sufficient resources to scale out the deployments.
 
 

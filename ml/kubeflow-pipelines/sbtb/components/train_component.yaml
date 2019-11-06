@@ -43,6 +43,7 @@ implementation:
       --epochs, {inputValue: epochs},
       --steps-per-epoch, {inputValue: steps_per_epoch},
       --workdir, {inputValue: workdir},
+      --load-checkpoint, {inputValue: load_checkpoint},
       --train-output-path, {outputPath: train_output_path}
     ]
     env:
