@@ -78,8 +78,6 @@ def wide_and_deep_classifier(inputs, linear_feature_columns, dnn_feature_columns
     output = tf.keras.layers.Dense(1, name='dur')(both)
     model = tf.keras.Model(inputs, output)
     optimizer = tf.keras.optimizers.RMSprop(learning_rate)
-    # optimizer = tf.keras.optimizers.RMSprop(0.001)
-    # optimizer = tf.keras.optimizers.RMSprop(0.0000001)  # lower learning rate from checkpoint?
     model.compile(loss='mse', optimizer=optimizer,
                  metrics=['mse', 'mae'])
     return model
@@ -133,7 +131,6 @@ def create_model(learning_rate, load_checkpoint):
       print(real.keys())
 
   model = None
-  # strategy = tf.distribute.MirroredStrategy()
   print('num replicas...')
   print(STRATEGY.num_replicas_in_sync)
 
@@ -201,7 +198,7 @@ def main():
     print(list(one_item)) # should print one batch of 2 items
 
   train_batch_size = TRAIN_BATCH_SIZE
-  eval_batch_size = 10
+  eval_batch_size = 1000
   if args.steps_per_epoch == -1:  # calc based on dataset size
     steps_per_epoch = NUM_EXAMPLES // train_batch_size
   else:
@@ -241,21 +238,23 @@ def main():
   try:
     logging.info("exporting model....")
     tf.saved_model.save(model, export_dir)
-    logging.info("train_output_path: %s", args.train_output_path)
-    pathlib2.Path(args.train_output_path).parent.mkdir(parents=True)
-    export_path = '{}/export/bikesw'.format(OUTPUT_DIR)
-    logging.info('export path: {}'.format(export_path))
-    pathlib2.Path(args.train_output_path).write_text(export_path)
-  except Exception as e:  # retry once if error
+    if args.train_output_path:
+      logging.info("train_output_path: %s", args.train_output_path)
+      pathlib2.Path(args.train_output_path).parent.mkdir(parents=True)
+      export_path = '{}/export/bikesw'.format(OUTPUT_DIR)
+      logging.info('export path: {}'.format(export_path))
+      pathlib2.Path(args.train_output_path).write_text(export_path)
+  except Exception as e:  # hmm. retry once if error
     logging.warning(e)
     logging.info("retrying...")
     time.sleep(10)
     logging.info("again ... exporting model....")
     tf.saved_model.save(model, export_dir)
-    logging.info("train_output_path: %s", args.train_output_path)
-    pathlib2.Path(args.train_output_path).parent.mkdir(parents=True)
-    export_path = '{}/export/bikesw'.format(OUTPUT_DIR)
-    pathlib2.Path(args.train_output_path).write_text(export_path)
+    if args.train_output_path:
+      logging.info("train_output_path: %s", args.train_output_path)
+      pathlib2.Path(args.train_output_path).parent.mkdir(parents=True)
+      export_path = '{}/export/bikesw'.format(OUTPUT_DIR)
+      pathlib2.Path(args.train_output_path).write_text(export_path)
 
 
 if __name__ == "__main__":
