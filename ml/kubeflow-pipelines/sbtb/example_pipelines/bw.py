@@ -26,10 +26,10 @@ DATASET = 'dataset'
 MODEL = 'model'
 
 train_op = comp.load_component_from_url(
-  'https://raw.githubusercontent.com/amygdala/code-snippets/sbtb/ml/kubeflow-pipelines/sbtb/components/train_component.yaml' # pylint: disable=line-too-long
+  'https://raw.githubusercontent.com/amygdala/code-snippets/master/ml/kubeflow-pipelines/sbtb/components/train_component.yaml' # pylint: disable=line-too-long
   )
 serve_op = comp.load_component_from_url(
-  'https://raw.githubusercontent.com/amygdala/code-snippets/sbtb/ml/kubeflow-pipelines/sbtb/components/serve_component.yaml' # pylint: disable=line-too-long
+  'https://raw.githubusercontent.com/amygdala/code-snippets/master/ml/kubeflow-pipelines/sbtb/components/serve_component.yaml' # pylint: disable=line-too-long
   )
 
 
