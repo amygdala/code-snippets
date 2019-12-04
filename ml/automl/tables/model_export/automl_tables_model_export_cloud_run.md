@@ -65,7 +65,7 @@ For this example, enter a training budget of 1 hours, and include all the other 
 
 ### Export the trained model
 
-Once the model is trained, we'll export the result, \<so that…use anywhere….\>.  (Note that you could also [deploy][11] your model to the Cloud AI Platform for online prediction…).
+Once the model is trained, we'll export the result, so that it can be served from any environment in which you can run a container.  (Note that you could also [deploy][11] your model to the Cloud AI Platform for online prediction).
 
 You'll find the export option under **TEST & USE**.  (See the [documentation][12] for detail on the export process).
 You'll need to create a *regional* GCS bucket, in the same region as your model. You also might want to create a sub-folder for the model export in the GCS bucket, so that if you have multiple exports, you can keep track of .  An easy way to create the folder is via the web UI. Here, I've created a `model_export_1` sub-folder.
@@ -78,7 +78,6 @@ Click the "Container" card to export your trained model to be run from a Docker 
 </figure>
 
 Browse to select the GCS folder into which you want to export your model, then click the **EXPORT** button.
-
 
 <figure>
 <a href="https://storage.googleapis.com/amy-jo/images/automl/tables_export/export2-2.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/automl/tables_export/export2-2.png" width="60%"/></a>
@@ -100,11 +99,10 @@ The exported model will be copied to `./bikes_weather`.
 
 **Note**: to run `gsutil`, you will need [`gcloud`][13] installed. You can run these commands from the [Cloud Shell][14] instead of your local machine if you don't want to install the SDK locally.
 
-
 ## Test your exported model locally
 
 Once you've downloaded your model, you can run and test it locally. This provides a good sanity check before deploying to Cloud Run.
-The process is described in the [documentation][15]; we'll briefly recap here.
+The process is described in the [documentation][15]; we'll summarize here.
 
 - change to the `bikes_weather` directory (or whatever you named it). You should see a `model_export` subdirectory, the result of your download.
 - rename the subdirectory as described in the [documentation][16], to remove the timestamp suffix.
@@ -123,7 +121,7 @@ From the directory where you placed `instances.json`, run:
 curl -X POST --data @instances.json http://localhost:8080/predict
 ```
 
-It may take a second or two for the first request to return, but the subsequent requests will be faster.  
+It may take a second or two for the first request to return, but subsequent requests will be faster.  You’ll get back predictions for all of the instances in the `json` file.   
 The actual duration for the third instance is 1200.
 
 ## Create a Google Cloud Run service based on your exported model
@@ -133,16 +131,16 @@ As the last step of prep, we'll create a container image that uses `gcr.io/cloud
 
 ### Build a container to use for Cloud Run
 
-In the same `bikes_weather` directory that holds the `model_export` subdir, create a file called `Dockerfile` that contains the following two lines.  **Edit the second line to use your correct path to the exported model; the same path that you used above when running locally**.
+In the same `bikes_weather` directory that holds the `model_export` subdir, create a file called `Dockerfile` that contains the following two lines.  The template is [here][20] as well; **edit the second line to use your correct path to the exported model, the same path that you used above when running locally**.
 
 ```
 FROM gcr.io/cloud-automl-tables-public/model_server
 
-ADD model-export/tbl/<your_renamed_directory> /models/default/0000001
+ADD model-export/tbl/YOUR_RENAMED_DIRECTORY/models/default/0000001
 ```
 
 Then, build a container from the `Dockerfile`.  In this example we'll call it `bw-serve`.
-You can do this as follows (**replace `[PROJECT_ID]` with the id of your project**). 
+You can do this as follows (**replace `[PROJECT_ID]` with the id of your project**):
 
 ```
 docker build . -t gcr.io/[PROJECT_ID]/bw-serve
@@ -154,9 +152,9 @@ Then push it to the Google Container Registry (again replacing `[PROJECT_ID]` wi
 docker push gcr.io/[PROJECT_ID]/bw-serve
 ```
 
-(If you get an error, you may need to configure Docker to use gcloud to [authenticate requests to Container Registry][20].)
+(If you get an error, you may need to configure Docker to use gcloud to [authenticate requests to Container Registry][21].)
 
-Alternately, you can use [Cloud Build][21] to build the container instead, as follows:
+Alternately, you can use [Cloud Build][22] to build the container instead, as follows:
 
 ```
 gcloud builds submit --tag gcr.io/[PROJECT_ID]/bw-serve .
@@ -164,8 +162,7 @@ gcloud builds submit --tag gcr.io/[PROJECT_ID]/bw-serve .
 
 ### Create your Cloud Run service
 
-Now we're ready to deploy the container we built to Cloud Run, where we can scalably serve it for predictions.  Visit the [Cloud Run page in the console][22]. (Click the “START USING..” button if necessary).  Then click the **CREATE SERVICE** button.
-
+Now we're ready to deploy the container we built to Cloud Run, where we can scalably serve it for predictions.  Visit the [Cloud Run page in the console][23]. (Click the “START USING..” button if necessary).  Then click the **CREATE SERVICE** button.
 
 <figure>
 <a href="https://storage.googleapis.com/amy-jo/images/automl/cloud_run1%202.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/automl/cloud_run1%202.png" width="40%"/></a>
@@ -195,11 +192,25 @@ https://<your-service-url>/predict
 
 (If you set up your Cloud Run service endpoint so that it does not require authentication, you don’t need to include the authorization header in your `curl` request).
 
-## What’s next
+## What’s next?
 
-In this post, ….
+In this post, we walked through how to export a custom AutoML Tables trained model, and build a container image that lets you serve it from any environment.  Then we showed how you can deploy that image to Cloud Run for scalable serving.
 
-\<…next things to explore….\>
+Once you’ve built a model-serving container image, it’s easy to deploy it to other environments as well.  For example, if you have installed [Knative serving][24] on a [Kubernetes][25] cluster, you can create a Knative *service* like this, using the same container image (again replacing `[PROJECT_ID]` with your project):
+
+```yaml
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: bikes-weather
+spec:
+  template:
+    spec:
+      containers:
+        - image: gcr.io/[PROJECT_ID]/bw-serve
+```
+
+You may also be interested in exploring the updated [AutoML Tables client libraries][26], which make it easy for you to [train and use Tables programmatically][27], or reading about how to create a _contextual bandit_ model pipeline [using AutoML Tables, without needing a specialist for tuning or feature engineering][28].
 
 [1]:	https://cloud.google.com/automl-tables/docs/
 [2]:	https://cloud.google.com/automl-tables/docs/model-export
@@ -207,19 +218,25 @@ In this post, ….
 [4]:	https://cloud.google.com/automl-tables/docs/
 [5]:	https://console.cloud.google.com/automl-tables/datasets
 [6]:	https://googleapis.dev/python/automl/latest/gapic/v1beta1/tables.html
-[7]:	xxx
-[8]:	xxx
+[7]:	https://console.cloud.google.com/bigquery?p=bigquery-public-data&d=london_bicycles&page=dataset
+[8]:	https://console.cloud.google.com/bigquery?p=bigquery-public-data&d=noaa_gsod&page=dataset
 [9]:	https://console.cloud.google.com/automl-tables/datasets
-[10]:	xxx
-[11]:	xxx
+[10]:	https://cloud.google.com/automl-tables/docs/problem-types
+[11]:	https://cloud.google.com/automl-tables/docs/predict
 [12]:	https://cloud.google.com/automl-tables/docs/model-export
-[13]:	xxx
-[14]:	xxx
-[15]:	xxx
-[16]:	xxx
-[17]:	xxx
-[18]:	xxx
-[19]:	xxx
-[20]:	https://cloud.google.com/container-registry/docs/quickstart#add_the_image_to
-[21]:	https://cloud.google.com/cloud-build/docs/quickstart-docker
-[22]:	https://console.cloud.google.com/marketplace/details/google-cloud-platform/cloud-run
+[13]:	https://cloud.google.com/sdk/install
+[14]:	https://cloud.google.com/shell/
+[15]:	https://cloud.google.com/automl-tables/docs/model-export
+[16]:	https://cloud.google.com/automl-tables/docs/model-export#run-server
+[17]:	https://raw.githubusercontent.com/amygdala/code-snippets/master/ml/automl/tables/model_export/instances.json
+[18]:	https://cloud.google.com/run/docs/
+[19]:	https://cloud.google.com/container-registry/
+[20]:	https://raw.githubusercontent.com/amygdala/code-snippets/master/ml/automl/tables/model_export/Dockerfile.template
+[21]:	https://cloud.google.com/container-registry/docs/quickstart#add_the_image_to
+[22]:	https://cloud.google.com/cloud-build/docs/quickstart-docker
+[23]:	https://console.cloud.google.com/marketplace/details/google-cloud-platform/cloud-run
+[24]:	https://github.com/knative/serving
+[25]:	https://kubernetes.io/
+[26]:	https://googleapis.dev/python/automl/latest/gapic/v1beta1/tables.html
+[27]:	https://github.com/GoogleCloudPlatform/python-docs-samples/tree/master/tables/automl/notebooks
+[28]:	https://cloud.google.com/blog/products/ai-machine-learning/how-to-build-better-contextual-bandits-machine-learning-models
