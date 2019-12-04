@@ -162,14 +162,14 @@ gcloud builds submit --tag gcr.io/[PROJECT_ID]/bw-serve .
 
 ### Create your Cloud Run service
 
-Now we're ready to deploy the container we built to Cloud Run, where we can scalably serve it for predictions.  Visit the [Cloud Run page in the console][23]. (Click the "START USING.." button if necessary).  Then click the **CREATE SERVICE** button.
+Now we're ready to deploy the container we built to Cloud Run, where we can scalably serve it for predictions.  Visit the [Cloud Run page in the console][23]. (Click the “START USING..” button if necessary).  Then click the **CREATE SERVICE** button.
 
 <figure>
 <a href="https://storage.googleapis.com/amy-jo/images/automl/cloud_run1%202.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/automl/cloud_run1%202.png" width="40%"/></a>
 <figcaption><br/><i>Creating a Cloud Run Service</i></figcaption>
 </figure>
 
-For the container URL, enter the name of the container that you just built above. Select the "Cloud Run (fully managed)" option.  Create a service name (it can be anything you like). Select the **Require Authentication** option. 
+For the container URL, enter the name of the container that you just built above. Select the “Cloud Run (fully managed)” option.  Create a service name (it can be anything you like). Select the **Require Authentication** option. ** 
 Then, click on **SHOW OPTIONAL REVISION SETTINGS**.  Change the **Memory allocated** option to **2GiB**.
 Leave the rest of the defaults as they are, and click **CREATE**.
 
@@ -240,4 +240,3 @@ You may also be interested in exploring the updated [AutoML Tables client librar
 [26]:	https://googleapis.dev/python/automl/latest/gapic/v1beta1/tables.html
 [27]:	https://github.com/GoogleCloudPlatform/python-docs-samples/tree/master/tables/automl/notebooks
 [28]:	https://cloud.google.com/blog/products/ai-machine-learning/how-to-build-better-contextual-bandits-machine-learning-models
-
