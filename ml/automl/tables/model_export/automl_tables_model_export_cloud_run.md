@@ -126,16 +126,48 @@ The actual duration for the third instance is 1200.
 
 ## View information about your exported model in TensorBoard
 
-<TBD.. point to conversion script etc.>
+You can view your exported custom model in [TensorBoard][19].  This requires a conversion step.
+You will need to have TensorFlow 1.14 or 1.15 installed to run the the conversion script.
+
+Then, download [this script][20], e.g. via `curl -O https://raw.githubusercontent.com/amygdala/code-snippets/master/ml/automl/tables/model_export/convert_oss.py`, to the parent directory of `model_export`.  Create a directory for the output (e.g. `converted_export`), then run the script as follows:
+
+```sh
+mkdir converted_export
+python ./convert_oss.py --saved_model ./model-export/tbl/<your_renamed_directory>/saved_model.pb --output_dir converted_export
+```
+
+Then, point TensorBoard to the converted model graph:
+
+```sh
+tensorboard --logdir=converted_export
+```
+
+You will see a rendering of the model graph, and can pan and zoom to view model sub-graphs in more detail.
+
+<figure>
+<a href="https://storage.googleapis.com/amy-jo/images/automl/tables_export/tb1.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/automl/tables_export/tb1.png" /></a>
+<figcaption><br/><i>You can view an exported custom Tables model in Tensorboard.</i></figcaption>
+</figure>
+
+<figure>
+<a href="https://storage.googleapis.com/amy-jo/images/automl/tables_export/tb2.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/automl/tables_export/tb2.png" /></a>
+<figcaption><br/><i></i></figcaption>
+</figure>
+
+<figure>
+<a href="https://storage.googleapis.com/amy-jo/images/automl/tables_export/tb3.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/automl/tables_export/tb3.png" /></a>
+<figcaption><br/><i>Zooming in to see part of the model graph in more detail.</i></figcaption>
+</figure>
+
 
 ## Create a Google Cloud Run service based on your exported model
 
-At this point, we have a trained model that we've exported and tested locally.  Now we are almost ready to deploy it to [Cloud Run][19].
-As the last step of prep, we'll create a container image that uses `gcr.io/cloud-automl-tables-public/model_server` as a base image and `ADD`s the model directory, and push that image to the [Google Container Registry][20], so that Cloud Run can access it.
+At this point, we have a trained model that we've exported and tested locally.  Now we are almost ready to deploy it to [Cloud Run][21].
+As the last step of prep, we'll create a container image that uses `gcr.io/cloud-automl-tables-public/model_server` as a base image and `ADD`s the model directory, and push that image to the [Google Container Registry][22], so that Cloud Run can access it.
 
 ### Build a container to use for Cloud Run
 
-In the same `bikes_weather` directory that holds the `model_export` subdir, create a file called `Dockerfile` that contains the following two lines.  The template is [here][21] as well; **edit the second line to use your correct path to the exported model, the same path that you used above when running locally**.
+In the same `bikes_weather` directory that holds the `model_export` subdir, create a file called `Dockerfile` that contains the following two lines.  The template is [here][23] as well; **edit the second line to use your correct path to the exported model, the same path that you used above when running locally**.
 
 ```
 FROM gcr.io/cloud-automl-tables-public/model_server
@@ -156,9 +188,9 @@ Then push it to the Google Container Registry (again replacing `[PROJECT_ID]` wi
 docker push gcr.io/[PROJECT_ID]/bw-serve
 ```
 
-(If you get an error, you may need to configure Docker to use gcloud to [authenticate requests to Container Registry][22].)
+(If you get an error, you may need to configure Docker to use gcloud to [authenticate requests to Container Registry][24].)
 
-Alternately, you can use [Cloud Build][23] to build the container instead, as follows:
+Alternately, you can use [Cloud Build][25] to build the container instead, as follows:
 
 ```
 gcloud builds submit --tag gcr.io/[PROJECT_ID]/bw-serve .
@@ -166,7 +198,7 @@ gcloud builds submit --tag gcr.io/[PROJECT_ID]/bw-serve .
 
 ### Create your Cloud Run service
 
-Now we're ready to deploy the container we built to Cloud Run, where we can scalably serve it for predictions.  Visit the [Cloud Run page in the console][24]. (Click the “START USING..” button if necessary).  Then click the **CREATE SERVICE** button.
+Now we're ready to deploy the container we built to Cloud Run, where we can scalably serve it for predictions.  Visit the [Cloud Run page in the console][26]. (Click the “START USING..” button if necessary).  Then click the **CREATE SERVICE** button.
 
 <figure>
 <a href="https://storage.googleapis.com/amy-jo/images/automl/cloud_run1%202.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/automl/cloud_run1%202.png" width="40%"/></a>
@@ -174,7 +206,6 @@ Now we're ready to deploy the container we built to Cloud Run, where we can scal
 </figure>
 
 For the container URL, enter the name of the container that you just built above. Select the “Cloud Run (fully managed)” option.  Create a service name (it can be anything you like). Select the **Require Authentication** option.
-
 Then, click on **SHOW OPTIONAL REVISION SETTINGS**.  Change the **Memory allocated** option to **2GiB**.
 Leave the rest of the defaults as they are, and click **CREATE**.
 
@@ -201,7 +232,7 @@ https://<your-service-url>/predict
 
 In this post, we walked through how to export a custom AutoML Tables trained model, view model information in TensorBoard, and build a container image that lets you serve the model from any environment.  Then we showed how you can deploy that image to Cloud Run for scalable serving.
 
-Once you’ve built a model-serving container image, it’s easy to deploy it to other environments as well.  For example, if you have installed [Knative serving][25] on a [Kubernetes][26] cluster, you can create a Knative *service* like this, using the same container image (again replacing `[PROJECT_ID]` with your project):
+Once you’ve built a model-serving container image, it’s easy to deploy it to other environments as well.  For example, if you have installed [Knative serving][27] on a [Kubernetes][28] cluster, you can create a Knative *service* like this, using the same container image (again replacing `[PROJECT_ID]` with your project):
 
 ```yaml
 apiVersion: serving.knative.dev/v1
@@ -215,11 +246,11 @@ spec:
         - image: gcr.io/[PROJECT_ID]/bw-serve
 ```
 
-(While our example model fits on a 2GiB Cloud Run instance, it’s possible that other of your models may be too large for the managed Cloud Run service, and serving it via Kubernetes/[GKE][27] is a good alternative).
+(While our example model fits on a 2GiB Cloud Run instance, it’s possible that other of your models may be too large for the managed Cloud Run service, and serving it via Kubernetes/[GKE][29] is a good alternative).
 
-If you’re curious about the details of your custom model, you can use Stackdriver Logging to [view information about your AutoML Tables model][28]. Using Logging, you can see the final model hyperparameters as well as the hyperparameters and object values used during model training and tuning.
+If you’re curious about the details of your custom model, you can use Stackdriver Logging to [view information about your AutoML Tables model][30]. Using Logging, you can see the final model hyperparameters as well as the hyperparameters and object values used during model training and tuning.
 
-You may also be interested in exploring the updated [AutoML Tables client libraries][29], which make it easy for you to [train and use Tables programmatically][30], or reading about how to create a _contextual bandit_ model pipeline [using AutoML Tables, without needing a specialist for tuning or feature engineering][31].
+You may also be interested in exploring the updated [AutoML Tables client libraries][31], which make it easy for you to [train and use Tables programmatically][32], or reading about how to create a _contextual bandit_ model pipeline [using AutoML Tables, without needing a specialist for tuning or feature engineering][33].
 
 [1]:	https://cloud.google.com/automl-tables/docs/
 [2]:	https://cloud.google.com/automl-tables/docs/model-export
@@ -239,17 +270,18 @@ You may also be interested in exploring the updated [AutoML Tables client librar
 [16]:	https://cloud.google.com/automl-tables/docs/model-export
 [17]:	https://cloud.google.com/automl-tables/docs/model-export#run-server
 [18]:	https://raw.githubusercontent.com/amygdala/code-snippets/master/ml/automl/tables/model_export/instances.json
-[19]:	https://cloud.google.com/run/docs/
-[20]:	https://cloud.google.com/container-registry/
-[21]:	https://raw.githubusercontent.com/amygdala/code-snippets/master/ml/automl/tables/model_export/Dockerfile.template
-[22]:	https://cloud.google.com/container-registry/docs/quickstart#add_the_image_to
-[23]:	https://cloud.google.com/cloud-build/docs/quickstart-docker
-[24]:	https://console.cloud.google.com/marketplace/details/google-cloud-platform/cloud-run
-[25]:	https://github.com/knative/serving
-[26]:	https://kubernetes.io/
-[27]:	https://cloud.google.com/kubernetes-engine/
-[28]:	https://cloud.google.com/automl-tables/docs/logging
-[29]:	https://googleapis.dev/python/automl/latest/gapic/v1beta1/tables.html
-[30]:	https://github.com/GoogleCloudPlatform/python-docs-samples/tree/master/tables/automl/notebooks
-[31]:	https://cloud.google.com/blog/products/ai-machine-learning/how-to-build-better-contextual-bandits-machine-learning-models
-
+[19]:	https://www.tensorflow.org/tensorboard
+[20]:	https://github.com/amygdala/code-snippets/blob/master/ml/automl/tables/model_export/convert_oss.py
+[21]:	https://cloud.google.com/run/docs/
+[22]:	https://cloud.google.com/container-registry/
+[23]:	https://raw.githubusercontent.com/amygdala/code-snippets/master/ml/automl/tables/model_export/Dockerfile.template
+[24]:	https://cloud.google.com/container-registry/docs/quickstart#add_the_image_to
+[25]:	https://cloud.google.com/cloud-build/docs/quickstart-docker
+[26]:	https://console.cloud.google.com/marketplace/details/google-cloud-platform/cloud-run
+[27]:	https://github.com/knative/serving
+[28]:	https://kubernetes.io/
+[29]:	https://cloud.google.com/kubernetes-engine/
+[30]:	https://cloud.google.com/automl-tables/docs/logging
+[31]:	https://googleapis.dev/python/automl/latest/gapic/v1beta1/tables.html
+[32]:	https://github.com/GoogleCloudPlatform/python-docs-samples/tree/master/tables/automl/notebooks
+[33]:	https://cloud.google.com/blog/products/ai-machine-learning/how-to-build-better-contextual-bandits-machine-learning-models
