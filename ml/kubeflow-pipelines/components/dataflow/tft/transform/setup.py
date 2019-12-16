@@ -20,7 +20,7 @@ if __name__ == '__main__':
                    packages=setuptools.find_packages(),
                    install_requires=[
                        'jupyter==1.0',
-                       'tensorflow==1.11.0',
+                       'tensorflow==1.15.0',
                        'tensorflow-model-analysis==0.9.2',
                        'tensorflow-serving-api==1.9.0',
                        'tensorflow-transform==0.11.0'])
