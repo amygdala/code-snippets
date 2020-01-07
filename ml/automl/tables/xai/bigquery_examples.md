@@ -1,11 +1,12 @@
 
-# Examples of inspecting the "bikes and weather" test dataset in BigQuery
+# Examples of inspecting the "London bikes and weather" test dataset in BigQuery
 
 
 AutoML Tables allows you to [export a model's test dataset to BigQuery](https://cloud.google.com/automl-tables/docs/evaluate#downloading_your_test_dataset_to) after training.  This makes it easy to do some additional poking around in a sample of the dataset— even if it didn't originally reside in BigQuery. This can be helpful, for example, if your model's explanations of predictions suggest some interesting characteristics of the data.
-(See the "Use your trained model to make predictions and see explanations of the results" section of [automl_tables_xai.ipynb](automl_tables_xai.ipynb).
+(See the "Use your trained model to make predictions and see explanations of the results" section of [automl_tables_xai.ipynb](automl_tables_xai.ipynb) for an example of requesting a prediction explanation).
 
-Here are a few examples queries.
+Here are a few example queries for the "bikes and weather" dataset used in
+[automl_tables_xai.ipynb](automl_tables_xai.ipynb).
 In the following, replace `your-project` and `your-dataset` with the appropriate values. (The exported table should be named `evaluated_examples`, but if not, edit that value as well.)
 
 1. Find the average predicted and actual ride durations for the day of the week (in this dataset, 1 & 7 are weekends).

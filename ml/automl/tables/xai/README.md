@@ -1,0 +1,8 @@
+
+# AutoML Tables examples
+
+This directory contains a notebook that shows examples of using the [AutoML Tables](https://cloud.google.com/automl-tables/docs/) client library. For these examples, we’ll use data that is essentially a join of two public datasets stored in [BigQuery](https://cloud.google.com/bigquery/): [London Bike rentals](https://console.cloud.google.com/bigquery?p=bigquery-public-data&d=london_bicycles&page=dataset) and [NOAA weather data](https://console.cloud.google.com/bigquery?p=bigquery-public-data&d=noaa_gsod&page=dataset), with some additional processing to clean up outliers and derive additional GIS and day-of-week fields. 
+
+The [automl_tables_xai.ipynb notebook](automl_tables_xai.ipynb) shows how to create a custom [AutoML Tables](https://cloud.google.com/automl-tables/docs/) model to predict duration of London bike rentals given information about local weather as well as info about the rental trip. It walks through examples of using the Tables client libraries for creating a dataset, training a custom model, deploying the model, and using it to make predictions; and shows how you can programmatically request *local feature importance* explanations.
+
+AutoML Tables allows you to [export a model's test dataset to BigQuery](https://cloud.google.com/automl-tables/docs/evaluate#downloading_your_test_dataset_to) after training. The [bigquery_examples.md](bigquery_examples.md) file shows some examples of how you can use BigQuery to analyze this dataset.
