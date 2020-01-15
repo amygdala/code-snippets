@@ -14,4 +14,4 @@
 
 FROM gcr.io/cloud-automl-tables-public/model_server
 
-ADD model-export/tbl/YOUR_RENAMED_DIRECTORY/models/default/0000001
+ADD model-export/tbl/YOUR_RENAMED_DIRECTORY /models/default/0000001
