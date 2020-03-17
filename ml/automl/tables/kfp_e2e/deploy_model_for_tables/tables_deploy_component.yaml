@@ -1,0 +1,83 @@
+name: Automl deploy tables model
+inputs:
+- name: gcp_project_id
+  type: String
+- name: gcp_region
+  type: String
+- name: model_display_name
+  type: String
+- name: api_endpoint
+  type: String
+  optional: true
+outputs:
+- name: model_display_name
+  type: String
+- name: status
+  type: String
+implementation:
+  container:
+    image: python:3.7
+    command:
+    - python3
+    - -u
+    - -c
+    - "from typing import NamedTuple\n\ndef automl_deploy_tables_model(\n\tgcp_project_id:\
+      \ str,\n\tgcp_region: str,\n\t# dataset_display_name: str,\n  model_display_name:\
+      \ str,\n  api_endpoint: str = None,\n) -> NamedTuple('Outputs', [('model_display_name',\
+      \ str), ('status', str)]):\n  import subprocess\n  import sys\n  subprocess.run([sys.executable,\
+      \ '-m', 'pip', 'install', 'googleapis-common-protos==1.6.0',  '--no-warn-script-location'],\
+      \ env={'PIP_DISABLE_PIP_VERSION_CHECK': '1'}, check=True)\n  subprocess.run([sys.executable,\
+      \ '-m', 'pip', 'install', 'google-cloud-automl==0.9.0', '--quiet', '--no-warn-script-location'],\
+      \ env={'PIP_DISABLE_PIP_VERSION_CHECK': '1'}, check=True)\n\n  import google\n\
+      \  import logging\n  from google.api_core.client_options import ClientOptions\n\
+      \  from google.api_core import exceptions\n  from google.cloud import automl_v1beta1\
+      \ as automl\n  from google.cloud.automl_v1beta1 import enums\n\n  logging.getLogger().setLevel(logging.INFO)\
+      \  # TODO: make level configurable\n  # TODO: we could instead check for region\
+      \ 'eu' and use 'eu-automl.googleapis.com:443'endpoint\n  # in that case, instead\
+      \ of requiring endpoint to be specified.\n  if api_endpoint:\n    client_options\
+      \ = ClientOptions(api_endpoint=api_endpoint)\n    client = automl.TablesClient(project=gcp_project_id,\
+      \ region=gcp_region,\n        client_options=client_options)\n  else:\n    client\
+      \ = automl.TablesClient(project=gcp_project_id, region=gcp_region)\n\n  try:\n\
+      \    model = client.get_model(model_display_name=model_display_name)\n    if\
+      \ model.deployment_state == enums.Model.DeploymentState.DEPLOYED:\n        status\
+      \ = 'deployed'\n        logging.info('Model {} already deployed'.format(model_display_name))\n\
+      \    else:\n      logging.info('Deploying model {}'.format(model_display_name))\n\
+      \      response = client.deploy_model(model_display_name=model_display_name)\n\
+      \      # synchronous wait\n      logging.info(\"Model deployed. {}\".format(response.result()))\n\
+      \      status = 'deployed'\n  except exceptions.NotFound as e:\n    logging.warning(e)\n\
+      \    status = 'not_found'\n  except Exception as e:\n    logging.warning(e)\n\
+      \    status = 'undeployed'\n\n  logging.info('Model status: {}'.format(status))\n\
+      \  return (model_display_name, status)\n\ndef _serialize_str(str_value: str)\
+      \ -> str:\n    if not isinstance(str_value, str):\n        raise TypeError('Value\
+      \ \"{}\" has type \"{}\" instead of str.'.format(str(str_value), str(type(str_value))))\n\
+      \    return str_value\n\nimport argparse\n_parser = argparse.ArgumentParser(prog='Automl\
+      \ deploy tables model', description='')\n_parser.add_argument(\"--gcp-project-id\"\
+      , dest=\"gcp_project_id\", type=str, required=True, default=argparse.SUPPRESS)\n\
+      _parser.add_argument(\"--gcp-region\", dest=\"gcp_region\", type=str, required=True,\
+      \ default=argparse.SUPPRESS)\n_parser.add_argument(\"--model-display-name\"\
+      , dest=\"model_display_name\", type=str, required=True, default=argparse.SUPPRESS)\n\
+      _parser.add_argument(\"--api-endpoint\", dest=\"api_endpoint\", type=str, required=False,\
+      \ default=argparse.SUPPRESS)\n_parser.add_argument(\"----output-paths\", dest=\"\
+      _output_paths\", type=str, nargs=2)\n_parsed_args = vars(_parser.parse_args())\n\
+      _output_files = _parsed_args.pop(\"_output_paths\", [])\n\n_outputs = automl_deploy_tables_model(**_parsed_args)\n\
+      \nif not hasattr(_outputs, '__getitem__') or isinstance(_outputs, str):\n  \
+      \  _outputs = [_outputs]\n\n_output_serializers = [\n    _serialize_str,\n \
+      \   _serialize_str\n]\n\nimport os\nfor idx, output_file in enumerate(_output_files):\n\
+      \    try:\n        os.makedirs(os.path.dirname(output_file))\n    except OSError:\n\
+      \        pass\n    with open(output_file, 'w') as f:\n        f.write(_output_serializers[idx](_outputs[idx]))\n"
+    args:
+    - --gcp-project-id
+    - inputValue: gcp_project_id
+    - --gcp-region
+    - inputValue: gcp_region
+    - --model-display-name
+    - inputValue: model_display_name
+    - if:
+        cond:
+          isPresent: api_endpoint
+        then:
+        - --api-endpoint
+        - inputValue: api_endpoint
+    - '----output-paths'
+    - outputPath: model_display_name
+    - outputPath: status

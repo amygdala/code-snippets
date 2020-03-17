@@ -1,0 +1,155 @@
+name: Automl eval tables model
+inputs:
+- name: gcp_project_id
+  type: String
+- name: gcp_region
+  type: String
+- name: model_display_name
+  type: String
+- name: bucket_name
+  type: String
+- name: gcs_path
+  type: String
+- name: api_endpoint
+  type: String
+  optional: true
+outputs:
+- name: eval_data
+  type: evals
+- name: mlpipeline_ui_metadata
+  type: UI_metadata
+- name: feat_list
+  type: String
+implementation:
+  container:
+    image: python:3.7
+    command:
+    - python3
+    - -u
+    - -c
+    - "class OutputPath:\n    '''When creating component from function, OutputPath\
+      \ should be used as function parameter annotation to tell the system that the\
+      \ function wants to output data by writing it into a file with the given path\
+      \ instead of returning the data from the function.'''\n    def __init__(self,\
+      \ type=None):\n        self.type = type\n\ndef _make_parent_dirs_and_return_path(file_path:\
+      \ str):\n    import os\n    os.makedirs(os.path.dirname(file_path), exist_ok=True)\n\
+      \    return file_path\n\nfrom typing import NamedTuple\n\ndef automl_eval_tables_model(\n\
+      \tgcp_project_id: str,\n\tgcp_region: str,\n  model_display_name: str,\n  bucket_name:\
+      \ str,\n  gcs_path: str,\n  eval_data_path: OutputPath('evals'),\n  mlpipeline_ui_metadata_path:\
+      \ OutputPath('UI_metadata'),\n  api_endpoint: str = None,\n\n) -> NamedTuple('Outputs',\
+      \ [\n    # ('evals_gcs_path', str),\n    ('feat_list', str)]):\n  import subprocess\n\
+      \  import sys\n  subprocess.run([sys.executable, '-m', 'pip', 'install', 'googleapis-common-protos==1.6.0',\n\
+      \     '--no-warn-script-location'], env={'PIP_DISABLE_PIP_VERSION_CHECK': '1'},\
+      \ check=True)\n  subprocess.run([sys.executable, '-m', 'pip', 'install', 'google-cloud-automl==0.9.0',\n\
+      \     '--no-warn-script-location'], env={'PIP_DISABLE_PIP_VERSION_CHECK': '1'},\
+      \ check=True)\n  subprocess.run([sys.executable, '-m', 'pip', 'install',\n \
+      \    'matplotlib', 'pathlib2', 'google-cloud-storage',\n     '--no-warn-script-location'],\
+      \ env={'PIP_DISABLE_PIP_VERSION_CHECK': '1'}, check=True)\n\n  import google\n\
+      \  import json\n  import logging\n  import pickle\n  import pathlib2\n\n  from\
+      \ google.api_core.client_options import ClientOptions\n  from google.api_core\
+      \ import exceptions\n  from google.cloud import automl_v1beta1 as automl\n \
+      \ from google.cloud.automl_v1beta1 import enums\n  from google.cloud import\
+      \ storage\n\n  def upload_blob(bucket_name, source_file_name, destination_blob_name,\n\
+      \      public_url=False):\n    \"\"\"Uploads a file to the bucket.\"\"\"\n\n\
+      \    storage_client = storage.Client()\n    bucket = storage_client.bucket(bucket_name)\n\
+      \    blob = bucket.blob(destination_blob_name)\n\n    blob.upload_from_filename(source_file_name)\n\
+      \n    logging.info(\"File {} uploaded to {}.\".format(\n            source_file_name,\
+      \ destination_blob_name))\n    if public_url:\n      blob.make_public()\n  \
+      \    logging.info(\"Blob {} is publicly accessible at {}\".format(\n       \
+      \       blob.name, blob.public_url))\n    return blob.public_url\n\n  def get_model_details(client,\
+      \ model_display_name):\n    try:\n        model = client.get_model(model_display_name=model_display_name)\n\
+      \    except exceptions.NotFound:\n        logging.info(\"Model %s not found.\"\
+      \ % model_display_name)\n        return (None, None)\n\n    model = client.get_model(model_display_name=model_display_name)\n\
+      \    # Retrieve deployment state.\n    if model.deployment_state == enums.Model.DeploymentState.DEPLOYED:\n\
+      \        deployment_state = \"deployed\"\n    else:\n        deployment_state\
+      \ = \"undeployed\"\n    # get features of top global importance\n    feat_list\
+      \ = [\n        (column.feature_importance, column.column_display_name)\n   \
+      \     for column in model.tables_model_metadata.tables_model_column_info\n \
+      \   ]\n    feat_list.sort(reverse=True)\n    if len(feat_list) < 10:\n     \
+      \   feat_to_show = len(feat_list)\n    else:\n        feat_to_show = 10\n\n\
+      \    # Display the model information.\n    # TODO: skip this?\n    logging.info(\"\
+      Model name: {}\".format(model.name))\n    logging.info(\"Model id: {}\".format(model.name.split(\"\
+      /\")[-1]))\n    logging.info(\"Model display name: {}\".format(model.display_name))\n\
+      \    logging.info(\"Features of top importance:\")\n    for feat in feat_list[:feat_to_show]:\n\
+      \        logging.info(feat)\n    logging.info(\"Model create time:\")\n    logging.info(\"\
+      \\tseconds: {}\".format(model.create_time.seconds))\n    logging.info(\"\\tnanos:\
+      \ {}\".format(model.create_time.nanos))\n    logging.info(\"Model deployment\
+      \ state: {}\".format(deployment_state))\n\n    generate_fi_ui(feat_list)\n \
+      \   return (model, feat_list)\n\n  def generate_fi_ui(feat_list):\n    import\
+      \ matplotlib.pyplot as plt\n\n    image_suffix = '{}/gfi.png'.format(gcs_path)\n\
+      \    res = list(zip(*feat_list))\n    x = list(res[0])\n    y = list(res[1])\n\
+      \    y_pos = list(range(len(y)))\n    plt.barh(y_pos, x, alpha=0.5)\n    plt.yticks(y_pos,\
+      \ y)\n    plt.savefig('/gfi.png')\n    public_url = upload_blob(bucket_name,\
+      \ '/gfi.png', image_suffix, public_url=True)\n    logging.info('using image\
+      \ url {}'.format(public_url))\n\n    html_suffix = '{}/gfi.html'.format(gcs_path)\n\
+      \    with open('/gfi.html', 'w') as f:\n      f.write('<html><head></head><body><h1>Global\
+      \ Feature Importance</h1>\\n<img src=\"{}\" width=\"97%\"/></body></html>'.format(public_url))\n\
+      \    upload_blob(bucket_name, '/gfi.html', html_suffix)\n    html_source = 'gs://{}/{}'.format(bucket_name,\
+      \ html_suffix)\n    logging.info('metadata html source: {}'.format(html_source))\n\
+      \n    metadata = {\n      'outputs' : [\n      {\n        'type': 'web-app',\n\
+      \        'storage': 'gcs',\n        'source': html_source\n      }]}\n    logging.info('using\
+      \ metadata dict {}'.format(json.dumps(metadata)))\n    # with open('/mlpipeline-ui-metadata.json',\
+      \ 'w') as f:\n      # json.dump(metadata, f)\n    logging.info('using metadata\
+      \ ui path: {}'.format(mlpipeline_ui_metadata_path))\n    with open(mlpipeline_ui_metadata_path,\
+      \ 'w') as mlpipeline_ui_metadata_file:\n      mlpipeline_ui_metadata_file.write(json.dumps(metadata))\n\
+      \n  logging.getLogger().setLevel(logging.INFO)  # TODO: make level configurable\n\
+      \  # TODO: we could instead check for region 'eu' and use 'eu-automl.googleapis.com:443'endpoint\n\
+      \  # in that case, instead of requiring endpoint to be specified.\n  if api_endpoint:\n\
+      \    client_options = ClientOptions(api_endpoint=api_endpoint)\n    client =\
+      \ automl.TablesClient(project=gcp_project_id, region=gcp_region,\n        client_options=client_options)\n\
+      \  else:\n    client = automl.TablesClient(project=gcp_project_id, region=gcp_region)\n\
+      \n  (model, feat_list) = get_model_details(client, model_display_name)\n\n \
+      \ evals = list(client.list_model_evaluations(model_display_name=model_display_name))\n\
+      \  with open('temp_oput_regression', \"w\") as f:\n    f.write('Model evals:\\\
+      n{}'.format(evals))\n  pstring = pickle.dumps(evals)\n\n  # write to eval_data_path\n\
+      \  if eval_data_path:\n    logging.info(\"eval_data_path: %s\", eval_data_path)\n\
+      \    try:\n      pathlib2.Path(eval_data_path).parent.mkdir(parents=True)\n\
+      \    except FileExistsError:\n      pass\n    pathlib2.Path(eval_data_path).write_bytes(pstring)\n\
+      \n  feat_list_string = json.dumps(feat_list)\n  # return(gcs_path, feat_list_string)\n\
+      \  return(feat_list_string)\n\ndef _serialize_str(str_value: str) -> str:\n\
+      \    if not isinstance(str_value, str):\n        raise TypeError('Value \"{}\"\
+      \ has type \"{}\" instead of str.'.format(str(str_value), str(type(str_value))))\n\
+      \    return str_value\n\nimport argparse\n_parser = argparse.ArgumentParser(prog='Automl\
+      \ eval tables model', description='')\n_parser.add_argument(\"--gcp-project-id\"\
+      , dest=\"gcp_project_id\", type=str, required=True, default=argparse.SUPPRESS)\n\
+      _parser.add_argument(\"--gcp-region\", dest=\"gcp_region\", type=str, required=True,\
+      \ default=argparse.SUPPRESS)\n_parser.add_argument(\"--model-display-name\"\
+      , dest=\"model_display_name\", type=str, required=True, default=argparse.SUPPRESS)\n\
+      _parser.add_argument(\"--bucket-name\", dest=\"bucket_name\", type=str, required=True,\
+      \ default=argparse.SUPPRESS)\n_parser.add_argument(\"--gcs-path\", dest=\"gcs_path\"\
+      , type=str, required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"\
+      --api-endpoint\", dest=\"api_endpoint\", type=str, required=False, default=argparse.SUPPRESS)\n\
+      _parser.add_argument(\"--eval-data\", dest=\"eval_data_path\", type=_make_parent_dirs_and_return_path,\
+      \ required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"--mlpipeline-ui-metadata\"\
+      , dest=\"mlpipeline_ui_metadata_path\", type=_make_parent_dirs_and_return_path,\
+      \ required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"----output-paths\"\
+      , dest=\"_output_paths\", type=str, nargs=1)\n_parsed_args = vars(_parser.parse_args())\n\
+      _output_files = _parsed_args.pop(\"_output_paths\", [])\n\n_outputs = automl_eval_tables_model(**_parsed_args)\n\
+      \nif not hasattr(_outputs, '__getitem__') or isinstance(_outputs, str):\n  \
+      \  _outputs = [_outputs]\n\n_output_serializers = [\n    _serialize_str,\n\n\
+      ]\n\nimport os\nfor idx, output_file in enumerate(_output_files):\n    try:\n\
+      \        os.makedirs(os.path.dirname(output_file))\n    except OSError:\n  \
+      \      pass\n    with open(output_file, 'w') as f:\n        f.write(_output_serializers[idx](_outputs[idx]))\n"
+    args:
+    - --gcp-project-id
+    - inputValue: gcp_project_id
+    - --gcp-region
+    - inputValue: gcp_region
+    - --model-display-name
+    - inputValue: model_display_name
+    - --bucket-name
+    - inputValue: bucket_name
+    - --gcs-path
+    - inputValue: gcs_path
+    - if:
+        cond:
+          isPresent: api_endpoint
+        then:
+        - --api-endpoint
+        - inputValue: api_endpoint
+    - --eval-data
+    - outputPath: eval_data
+    - --mlpipeline-ui-metadata
+    - outputPath: mlpipeline_ui_metadata
+    - '----output-paths'
+    - outputPath: feat_list

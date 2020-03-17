@@ -1,0 +1,146 @@
+name: Automl create dataset for tables
+description: |
+  automl_create_dataset_for_tables creates an empty Dataset for AutoML tables
+inputs:
+- name: gcp_project_id
+  type: String
+- name: gcp_region
+  type: String
+- name: dataset_display_name
+  type: String
+- name: api_endpoint
+  type: String
+  optional: true
+- name: tables_dataset_metadata
+  type: JsonObject
+  default: '{}'
+  optional: true
+outputs:
+- name: dataset_path
+  type: String
+- name: create_time
+  type: String
+- name: dataset_id
+  type: String
+implementation:
+  container:
+    image: python:3.7
+    command:
+    - python3
+    - -u
+    - -c
+    - |
+      from typing import NamedTuple
+
+      def automl_create_dataset_for_tables(
+        gcp_project_id: str,
+        gcp_region: str,
+        dataset_display_name: str,
+        api_endpoint: str = None,
+        tables_dataset_metadata: dict = {},
+        # retry=None, #=google.api_core.gapic_v1.method.DEFAULT,
+        # timeout: float = None, #=google.api_core.gapic_v1.method.DEFAULT,
+        # metadata: dict = None,
+      ) -> NamedTuple('Outputs', [('dataset_path', str), ('create_time', str), ('dataset_id', str)]):
+        '''automl_create_dataset_for_tables creates an empty Dataset for AutoML tables
+        '''
+        import sys
+        import subprocess
+        subprocess.run([sys.executable, '-m', 'pip', 'install', 'googleapis-common-protos==1.6.0',  '--no-warn-script-location'], env={'PIP_DISABLE_PIP_VERSION_CHECK': '1'}, check=True)
+        subprocess.run([sys.executable, '-m', 'pip', 'install', 'google-cloud-automl==0.9.0', '--quiet', '--no-warn-script-location'], env={'PIP_DISABLE_PIP_VERSION_CHECK': '1'}, check=True)
+
+        import google
+        import logging
+        from google.api_core.client_options import ClientOptions
+        from google.cloud import automl_v1beta1 as automl
+
+        logging.getLogger().setLevel(logging.INFO)  # TODO: make level configurable
+        # TODO: we could instead check for region 'eu' and use 'eu-automl.googleapis.com:443'endpoint
+        # in that case, instead of requiring endpoint to be specified.
+        if api_endpoint:
+          client_options = ClientOptions(api_endpoint=api_endpoint)
+          client = automl.TablesClient(project=gcp_project_id, region=gcp_region,
+              client_options=client_options)
+        else:
+          client = automl.TablesClient(project=gcp_project_id, region=gcp_region)
+
+        try:
+          # Create a dataset with the given display name
+          # TODO: not clear that description, timeout & retry args still supported?..
+          dataset = client.create_dataset(dataset_display_name, metadata=tables_dataset_metadata)
+          # Log info about the created dataset
+          logging.info("Dataset name: {}".format(dataset.name))
+          logging.info("Dataset id: {}".format(dataset.name.split("/")[-1]))
+          logging.info("Dataset display name: {}".format(dataset.display_name))
+          logging.info("Dataset metadata:")
+          logging.info("\t{}".format(dataset.tables_dataset_metadata))
+          logging.info("Dataset example count: {}".format(dataset.example_count))
+          logging.info("Dataset create time:")
+          logging.info("\tseconds: {}".format(dataset.create_time.seconds))
+          logging.info("\tnanos: {}".format(dataset.create_time.nanos))
+          print(str(dataset))
+          dataset_id = dataset.name.rsplit('/', 1)[-1]
+          return (dataset.name, str(dataset.create_time), dataset_id)
+        except google.api_core.exceptions.GoogleAPICallError as e:
+          logging.warn(e)
+          raise e   # TODO: other exception? return values rather than raise exception?
+
+      import json
+      def _serialize_str(str_value: str) -> str:
+          if not isinstance(str_value, str):
+              raise TypeError('Value "{}" has type "{}" instead of str.'.format(str(str_value), str(type(str_value))))
+          return str_value
+
+      import argparse
+      _parser = argparse.ArgumentParser(prog='Automl create dataset for tables', description='automl_create_dataset_for_tables creates an empty Dataset for AutoML tables\n')
+      _parser.add_argument("--gcp-project-id", dest="gcp_project_id", type=str, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("--gcp-region", dest="gcp_region", type=str, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("--dataset-display-name", dest="dataset_display_name", type=str, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("--api-endpoint", dest="api_endpoint", type=str, required=False, default=argparse.SUPPRESS)
+      _parser.add_argument("--tables-dataset-metadata", dest="tables_dataset_metadata", type=json.loads, required=False, default=argparse.SUPPRESS)
+      _parser.add_argument("----output-paths", dest="_output_paths", type=str, nargs=3)
+      _parsed_args = vars(_parser.parse_args())
+      _output_files = _parsed_args.pop("_output_paths", [])
+
+      _outputs = automl_create_dataset_for_tables(**_parsed_args)
+
+      if not hasattr(_outputs, '__getitem__') or isinstance(_outputs, str):
+          _outputs = [_outputs]
+
+      _output_serializers = [
+          _serialize_str,
+          _serialize_str,
+          _serialize_str
+      ]
+
+      import os
+      for idx, output_file in enumerate(_output_files):
+          try:
+              os.makedirs(os.path.dirname(output_file))
+          except OSError:
+              pass
+          with open(output_file, 'w') as f:
+              f.write(_output_serializers[idx](_outputs[idx]))
+    args:
+    - --gcp-project-id
+    - inputValue: gcp_project_id
+    - --gcp-region
+    - inputValue: gcp_region
+    - --dataset-display-name
+    - inputValue: dataset_display_name
+    - if:
+        cond:
+          isPresent: api_endpoint
+        then:
+        - --api-endpoint
+        - inputValue: api_endpoint
+    - if:
+        cond:
+          isPresent: tables_dataset_metadata
+        then:
+        - --tables-dataset-metadata
+        - inputValue: tables_dataset_metadata
+    - '----output-paths'
+    - outputPath: dataset_path
+    - outputPath: create_time
+    - outputPath: dataset_id
