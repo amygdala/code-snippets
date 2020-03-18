@@ -26,6 +26,7 @@ def automl_eval_metrics(
   # gcs_path: str,
   eval_data_path: InputPath('evals'),
   mlpipeline_ui_metadata_path: OutputPath('UI_metadata'),
+  mlpipeline_metrics_path: OutputPath('UI_metrics'),
   api_endpoint: str = None,
   # thresholds: str = '{"au_prc": 0.9}',
   thresholds: str = '{"mean_absolute_error": 450}',
@@ -51,31 +52,6 @@ def automl_eval_metrics(
   from google.cloud.automl_v1beta1 import enums
   from google.cloud import storage
 
-
-  # def get_string_from_gcs(project, bucket_name, gcs_path):
-  #   logging.info('Using bucket {} and path {}'.format(bucket_name, gcs_path))
-  #   storage_client = storage.Client(project=project)
-  #   bucket = storage_client.get_bucket(bucket_name)
-  #   blob = bucket.blob(gcs_path)
-  #   return blob.download_as_string()
-
-  # def upload_blob(bucket_name, source_file_name, destination_blob_name,
-  #     public_url=False):
-  #   """Uploads a file to the bucket."""
-
-  #   storage_client = storage.Client()
-  #   bucket = storage_client.bucket(bucket_name)
-  #   blob = bucket.blob(destination_blob_name)
-
-  #   blob.upload_from_filename(source_file_name)
-
-  #   logging.info("File {} uploaded to {}.".format(
-  #           source_file_name, destination_blob_name))
-  #   if public_url:
-  #     blob.make_public()
-  #     logging.info("Blob {} is publicly accessible at {}".format(
-  #             blob.name, blob.public_url))
-  #   return blob.public_url
 
   logging.getLogger().setLevel(logging.INFO)  # TODO: make level configurable
   # TODO: we could instead check for region 'eu' and use 'eu-automl.googleapis.com:443'endpoint
@@ -170,12 +146,25 @@ def automl_eval_metrics(
             'source': '# Regression metrics:\n\n```{}```\n'.format(eresults),
             'type': 'markdown',
           }]}
+        metrics = {
+          'metrics': [{
+            'name': 'MAE',
+            'numberValue':  eresults['mean_absolute_error'],
+            'format': "RAW",
+          }]
+        }
         # TODO: is it possible to get confusion matrix info via the API, for the binary
         # classifcation case? doesn't seem to be.
         logging.info('using metadata dict {}'.format(json.dumps(metadata)))
         logging.info('using metadata ui path: {}'.format(mlpipeline_ui_metadata_path))
         with open(mlpipeline_ui_metadata_path, 'w') as mlpipeline_ui_metadata_file:
           mlpipeline_ui_metadata_file.write(json.dumps(metadata))
+        logging.info('using metrics path: {}'.format(mlpipeline_metrics_path))
+        with open(mlpipeline_metrics_path, 'w') as mlpipeline_metrics_file:
+          mlpipeline_metrics_file.write(json.dumps(metrics))
+        # temp test this variant as well
+        with open('/mlpipeline-metrics.json', 'w') as f:
+          json.dump(metrics, f)
         logging.info('deploy flag: {}'.format(res))
         return res
 
@@ -190,6 +179,7 @@ def automl_eval_metrics(
                 confidence_threshold, eresults),
             'type': 'markdown',
           }]}
+        # TODO: generate 'metrics' dict
         logging.info('using metadata dict {}'.format(json.dumps(metadata)))
         logging.info('using metadata ui path: {}'.format(mlpipeline_ui_metadata_path))
         with open(mlpipeline_ui_metadata_path, 'w') as mlpipeline_ui_metadata_file:
@@ -212,9 +202,3 @@ if __name__ == '__main__':
 	import kfp
 	kfp.components.func_to_container_op(automl_eval_metrics,
       output_component_file='tables_eval_metrics_component.yaml', base_image='python:3.7')
-
-
-# if __name__ == "__main__":
-#   automl_eval_threshold('aju-vtests2', 'us-central1',
-#       # model_display_name='amy_test3_20191219032001',
-#       gcs_path='automl_evals/testing/somodel_1579284627', bucket_name='aju-pipelines')
