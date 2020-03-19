@@ -122,6 +122,7 @@ def automl_eval_tables_model(
     x = list(res[0])
     y = list(res[1])
     y_pos = list(range(len(y)))
+    plt.figure(figsize=(10, 6))
     plt.barh(y_pos, x, alpha=0.5)
     plt.yticks(y_pos, y)
     plt.savefig('/gfi.png')

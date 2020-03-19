@@ -78,13 +78,14 @@ implementation:
       \   return (model, feat_list)\n\n  def generate_fi_ui(feat_list):\n    import\
       \ matplotlib.pyplot as plt\n\n    image_suffix = '{}/gfi.png'.format(gcs_path)\n\
       \    res = list(zip(*feat_list))\n    x = list(res[0])\n    y = list(res[1])\n\
-      \    y_pos = list(range(len(y)))\n    plt.barh(y_pos, x, alpha=0.5)\n    plt.yticks(y_pos,\
-      \ y)\n    plt.savefig('/gfi.png')\n    public_url = upload_blob(bucket_name,\
-      \ '/gfi.png', image_suffix, public_url=True)\n    logging.info('using image\
-      \ url {}'.format(public_url))\n\n    html_suffix = '{}/gfi.html'.format(gcs_path)\n\
-      \    with open('/gfi.html', 'w') as f:\n      f.write('<html><head></head><body><h1>Global\
-      \ Feature Importance</h1>\\n<img src=\"{}\" width=\"97%\"/></body></html>'.format(public_url))\n\
-      \    upload_blob(bucket_name, '/gfi.html', html_suffix)\n    html_source = 'gs://{}/{}'.format(bucket_name,\
+      \    y_pos = list(range(len(y)))\n    plt.figure(figsize=(10, 6))\n    plt.barh(y_pos,\
+      \ x, alpha=0.5)\n    plt.yticks(y_pos, y)\n    plt.savefig('/gfi.png')\n   \
+      \ public_url = upload_blob(bucket_name, '/gfi.png', image_suffix, public_url=True)\n\
+      \    logging.info('using image url {}'.format(public_url))\n\n    html_suffix\
+      \ = '{}/gfi.html'.format(gcs_path)\n    with open('/gfi.html', 'w') as f:\n\
+      \      f.write('<html><head></head><body><h1>Global Feature Importance</h1>\\\
+      n<img src=\"{}\" width=\"97%\"/></body></html>'.format(public_url))\n    upload_blob(bucket_name,\
+      \ '/gfi.html', html_suffix)\n    html_source = 'gs://{}/{}'.format(bucket_name,\
       \ html_suffix)\n    logging.info('metadata html source: {}'.format(html_source))\n\
       \n    metadata = {\n      'outputs' : [\n      {\n        'type': 'web-app',\n\
       \        'storage': 'gcs',\n        'source': html_source\n      }]}\n    logging.info('using\

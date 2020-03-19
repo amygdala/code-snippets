@@ -16,7 +16,6 @@
 import kfp.dsl as dsl
 import kfp.gcp as gcp
 import kfp.components as comp
-from kfp.dsl.types import GCSPath, String, Dict
 import json
 import time
 
