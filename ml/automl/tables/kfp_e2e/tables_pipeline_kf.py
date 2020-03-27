@@ -68,7 +68,7 @@ def automl_tables(  #pylint: disable=unused-argument
   # ["title", "body", "answer_count", "comment_count", "creation_date", "favorite_count", "owner_user_id", "score", "view_count"]
   include_column_spec_names: str = '',
   exclude_column_spec_names: str = '',
-  bucket_name: str = 'aju-pipelines',
+  bucket_name: str = 'YOUR_BUCKET_NAME',
   # thresholds: str = '{"au_prc": 0.9}',
   thresholds: str = '{"mean_absolute_error": 480}',
   ):
@@ -133,7 +133,6 @@ def automl_tables(  #pylint: disable=unused-argument
     model_display_name=train_model.outputs['model_display_name'],
     thresholds=thresholds,
     eval_data=eval_model.outputs['eval_data'],
-    # gcs_path=eval_model.outputs['evals_gcs_path']
     ).apply(gcp.use_gcp_secret('user-gcp-sa'))
 
   with dsl.Condition(eval_metrics.outputs['deploy'] == True):

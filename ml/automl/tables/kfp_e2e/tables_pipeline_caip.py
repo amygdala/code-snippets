@@ -68,7 +68,7 @@ def automl_tables(  #pylint: disable=unused-argument
   # ["title", "body", "answer_count", "comment_count", "creation_date", "favorite_count", "owner_user_id", "score", "view_count"]
   include_column_spec_names: str = '',
   exclude_column_spec_names: str = '',
-  bucket_name: str = 'aju-pipelines',
+  bucket_name: str = 'YOUR_BUCKET_NAME',
   # thresholds: str = '{"au_prc": 0.9}',
   thresholds: str = '{"mean_absolute_error": 480}',
   ):
@@ -78,7 +78,7 @@ def automl_tables(  #pylint: disable=unused-argument
     gcp_region=gcp_region,
     dataset_display_name=dataset_display_name,
     api_endpoint=api_endpoint,
-    ) #.apply(gcp.use_gcp_secret('user-gcp-sa'))
+    )
 
 
   import_data = import_data_op(
@@ -87,7 +87,7 @@ def automl_tables(  #pylint: disable=unused-argument
     dataset_display_name=dataset_display_name,
     api_endpoint=api_endpoint,
     path=path
-    ) #.apply(gcp.use_gcp_secret('user-gcp-sa'))
+    )
 
   set_schema = set_schema_op(
     gcp_project_id=gcp_project_id,
@@ -98,7 +98,7 @@ def automl_tables(  #pylint: disable=unused-argument
     schema_info=schema_info,
     time_col_name=time_col_name
     # test_train_col_name=test_train_col_name
-    ) #.apply(gcp.use_gcp_secret('user-gcp-sa'))
+    )
 
 
   import_data.after(create_dataset)
@@ -112,7 +112,7 @@ def automl_tables(  #pylint: disable=unused-argument
     model_prefix=model_prefix,
     train_budget_milli_node_hours=train_budget_milli_node_hours,
     optimization_objective=optimization_objective
-    ) #.apply(gcp.use_gcp_secret('user-gcp-sa'))
+    )
 
   train_model.after(set_schema)
 
@@ -123,7 +123,7 @@ def automl_tables(  #pylint: disable=unused-argument
     gcs_path='automl_evals/{}'.format(dsl.RUN_ID_PLACEHOLDER),
     api_endpoint=api_endpoint,
     model_display_name=train_model.outputs['model_display_name']
-    ) #.apply(gcp.use_gcp_secret('user-gcp-sa'))
+    )
 
   eval_metrics = eval_metrics_op(
     gcp_project_id=gcp_project_id,
@@ -133,8 +133,7 @@ def automl_tables(  #pylint: disable=unused-argument
     model_display_name=train_model.outputs['model_display_name'],
     thresholds=thresholds,
     eval_data=eval_model.outputs['eval_data'],
-    # gcs_path=eval_model.outputs['evals_gcs_path']
-    ) #.apply(gcp.use_gcp_secret('user-gcp-sa'))
+    )
 
   with dsl.Condition(eval_metrics.outputs['deploy'] == True):
     deploy_model = deploy_model_op(
@@ -142,7 +141,7 @@ def automl_tables(  #pylint: disable=unused-argument
       gcp_region=gcp_region,
       api_endpoint=api_endpoint,
       model_display_name=train_model.outputs['model_display_name'],
-      ) #.apply(gcp.use_gcp_secret('user-gcp-sa'))
+      )
 
 
 if __name__ == '__main__':
