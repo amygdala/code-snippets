@@ -1,18 +1,7 @@
 name: Automl eval metrics
 inputs:
-- name: gcp_project_id
-  type: String
-- name: gcp_region
-  type: String
-- name: model_display_name
-  type: String
-- name: bucket_name
-  type: String
 - name: eval_data
   type: evals
-- name: api_endpoint
-  type: String
-  optional: true
 - name: thresholds
   type: String
   default: '{"mean_absolute_error": 450}'
@@ -35,156 +24,230 @@ implementation:
     - python3
     - -u
     - -c
-    - "class InputPath:\n    '''When creating component from function, InputPath should\
-      \ be used as function parameter annotation to tell the system to pass the *data\
-      \ file path* to the function instead of passing the actual data.'''\n    def\
-      \ __init__(self, type=None):\n        self.type = type\n\ndef _make_parent_dirs_and_return_path(file_path:\
-      \ str):\n    import os\n    os.makedirs(os.path.dirname(file_path), exist_ok=True)\n\
-      \    return file_path\n\nclass OutputPath:\n    '''When creating component from\
-      \ function, OutputPath should be used as function parameter annotation to tell\
-      \ the system that the function wants to output data by writing it into a file\
-      \ with the given path instead of returning the data from the function.'''\n\
-      \    def __init__(self, type=None):\n        self.type = type\n\nfrom typing\
-      \ import NamedTuple\n\ndef automl_eval_metrics(\n\tgcp_project_id: str,\n\t\
-      gcp_region: str,\n  model_display_name: str,\n  bucket_name: str,\n  # gcs_path:\
-      \ str,\n  eval_data_path: InputPath('evals'),\n  mlpipeline_ui_metadata_path:\
-      \ OutputPath('UI_metadata'),\n  mlpipeline_metrics_path: OutputPath('UI_metrics'),\n\
-      \  api_endpoint: str = None,\n  # thresholds: str = '{\"au_prc\": 0.9}',\n \
-      \ thresholds: str = '{\"mean_absolute_error\": 450}',\n  confidence_threshold:\
-      \ float = 0.5  # for classification\n\n) -> NamedTuple('Outputs', [('deploy',\
-      \ bool)]):\n  import subprocess\n  import sys\n  subprocess.run([sys.executable,\
-      \ '-m', 'pip', 'install', 'googleapis-common-protos==1.6.0',\n      '--no-warn-script-location'],\
-      \ env={'PIP_DISABLE_PIP_VERSION_CHECK': '1'}, check=True)\n  subprocess.run([sys.executable,\
-      \ '-m', 'pip', 'install', 'google-cloud-automl==0.9.0',\n     'google-cloud-storage',\n\
-      \     '--no-warn-script-location'], env={'PIP_DISABLE_PIP_VERSION_CHECK': '1'},\
-      \ check=True)\n\n  import google\n  import json\n  import logging\n  import\
-      \ pickle\n  from google.api_core.client_options import ClientOptions\n  from\
-      \ google.api_core import exceptions\n  from google.cloud import automl_v1beta1\
-      \ as automl\n  from google.cloud.automl_v1beta1 import enums\n  from google.cloud\
-      \ import storage\n\n  logging.getLogger().setLevel(logging.INFO)  # TODO: make\
-      \ level configurable\n  # TODO: we could instead check for region 'eu' and use\
-      \ 'eu-automl.googleapis.com:443'endpoint\n  # in that case, instead of requiring\
-      \ endpoint to be specified.\n  if api_endpoint:\n    client_options = ClientOptions(api_endpoint=api_endpoint)\n\
-      \    client = automl.TablesClient(project=gcp_project_id, region=gcp_region,\n\
-      \        client_options=client_options)\n  else:\n    client = automl.TablesClient(project=gcp_project_id,\
-      \ region=gcp_region)\n\n  thresholds_dict = json.loads(thresholds)\n  logging.info('thresholds\
-      \ dict: {}'.format(thresholds_dict))\n\n  def regression_threshold_check(eval_info):\n\
-      \    eresults = {}\n    rmetrics = eval_info[1].regression_evaluation_metrics\n\
-      \    logging.info('got regression eval {}'.format(eval_info[1]))\n    eresults['root_mean_squared_error']\
-      \ = rmetrics.root_mean_squared_error\n    eresults['mean_absolute_error'] =\
-      \ rmetrics.mean_absolute_error\n    eresults['r_squared'] = rmetrics.r_squared\n\
-      \    eresults['mean_absolute_percentage_error'] = rmetrics.mean_absolute_percentage_error\n\
-      \    eresults['root_mean_squared_log_error'] = rmetrics.root_mean_squared_log_error\n\
-      \    for k,v in thresholds_dict.items():\n      logging.info('k {}, v {}'.format(k,\
-      \ v))\n      if k in ['root_mean_squared_error', 'mean_absolute_error', 'mean_absolute_percentage_error']:\n\
-      \        if eresults[k] > v:\n          logging.info('{} > {}; returning False'.format(\n\
-      \              eresults[k], v))\n          return (False, eresults)\n      elif\
-      \ eresults[k] < v:\n        logging.info('{} < {}; returning False'.format(\n\
-      \            eresults[k], v))\n        return (False, eresults)\n    return\
-      \ (True, eresults)\n\n  def classif_threshold_check(eval_info):\n    eresults\
-      \ = {}\n    example_count = eval_info[0].evaluated_example_count\n    print('Looking\
-      \ for example_count {}'.format(example_count))\n    for e in eval_info[1:]:\
-      \  # we know we don't want the first elt\n      if e.evaluated_example_count\
-      \ == example_count:\n        eresults['au_prc'] = e.classification_evaluation_metrics.au_prc\n\
-      \        eresults['au_roc'] = e.classification_evaluation_metrics.au_roc\n \
-      \       eresults['log_loss'] = e.classification_evaluation_metrics.log_loss\n\
-      \        for i in e.classification_evaluation_metrics.confidence_metrics_entry:\n\
-      \          if i.confidence_threshold >= confidence_threshold:\n            eresults['recall']\
-      \ = i.recall\n            eresults['precision'] = i.precision\n            eresults['f1_score']\
-      \ = i.f1_score\n            break\n        break\n    logging.info('eresults:\
-      \ {}'.format(eresults))\n    for k,v in thresholds_dict.items():\n      logging.info('k\
-      \ {}, v {}'.format(k, v))\n      if k == 'log_loss':\n        if eresults[k]\
-      \ > v:\n          logging.info('{} > {}; returning False'.format(\n        \
-      \      eresults[k], v))\n          return (False, eresults)\n      else:\n \
-      \       if eresults[k] < v:\n          logging.info('{} < {}; returning False'.format(\n\
-      \              eresults[k], v))\n          return (False, eresults)\n    return\
-      \ (True, eresults)\n\n  # testing...\n  with open(eval_data_path, 'rb') as f:\n\
-      \    logging.info('successfully opened eval_data_path {}'.format(eval_data_path))\n\
-      \    try:\n      eval_info = pickle.loads(f.read())\n\n      classif = False\n\
-      \      regression = False\n      # TODO: what's the right way to figure out\
-      \ the model type?\n      if eval_info[1].regression_evaluation_metrics and eval_info[1].regression_evaluation_metrics.root_mean_squared_error:\n\
-      \        regression=True\n        logging.info('found regression metrics {}'.format(eval_info[1].regression_evaluation_metrics))\n\
-      \      elif eval_info[1].classification_evaluation_metrics and eval_info[1].classification_evaluation_metrics.au_prc:\n\
-      \        classif = True\n        logging.info('found classification metrics\
-      \ {}'.format(eval_info[1].classification_evaluation_metrics))\n\n      if regression\
-      \ and thresholds_dict:\n        res, eresults = regression_threshold_check(eval_info)\n\
-      \        # logging.info('eresults: {}'.format(eresults))\n        metadata =\
-      \ {\n          'outputs' : [\n          {\n            'storage': 'inline',\n\
-      \            'source': '# Regression metrics:\\n\\n```{}```\\n'.format(eresults),\n\
-      \            'type': 'markdown',\n          }]}\n        metrics = {\n     \
-      \     'metrics': [{\n            'name': 'MAE',\n            'numberValue':\
-      \  eresults['mean_absolute_error'],\n            'format': \"RAW\",\n      \
-      \    }]\n        }\n        # TODO: is it possible to get confusion matrix info\
-      \ via the API, for the binary\n        # classifcation case? doesn't seem to\
-      \ be.\n        logging.info('using metadata dict {}'.format(json.dumps(metadata)))\n\
-      \        logging.info('using metadata ui path: {}'.format(mlpipeline_ui_metadata_path))\n\
-      \        with open(mlpipeline_ui_metadata_path, 'w') as mlpipeline_ui_metadata_file:\n\
-      \          mlpipeline_ui_metadata_file.write(json.dumps(metadata))\n       \
-      \   logging.info('using metrics path: {}'.format(mlpipeline_metrics_path))\n\
-      \        with open(mlpipeline_metrics_path, 'w') as mlpipeline_metrics_file:\n\
-      \          mlpipeline_metrics_file.write(json.dumps(metrics))\n        # temp\
-      \ test\n        with open('/mlpipeline-metrics.json', 'w') as f:\n         \
-      \ json.dump(metrics, f)\n        logging.info('deploy flag: {}'.format(res))\n\
-      \        return res\n\n      elif classif and thresholds_dict:\n        res,\
-      \ eresults = classif_threshold_check(eval_info)\n        # logging.info('eresults:\
-      \ {}'.format(eresults))\n        metadata = {\n          'outputs' : [\n   \
-      \       {\n            'storage': 'inline',\n            'source': '# classification\
-      \ metrics for confidence threshold {}:\\n\\n```{}```\\n'.format(\n         \
-      \       confidence_threshold, eresults),\n            'type': 'markdown',\n\
-      \          }]}\n        # TODO: generate 'metrics' dict\n        logging.info('using\
-      \ metadata dict {}'.format(json.dumps(metadata)))\n        logging.info('using\
-      \ metadata ui path: {}'.format(mlpipeline_ui_metadata_path))\n        with open(mlpipeline_ui_metadata_path,\
-      \ 'w') as mlpipeline_ui_metadata_file:\n          mlpipeline_ui_metadata_file.write(json.dumps(metadata))\n\
-      \        logging.info('deploy flag: {}'.format(res))\n        return res\n \
-      \     else:\n        return True\n    except Exception as e:\n      logging.warning(e)\n\
-      \      # If can't reconstruct the eval, or don't have thresholds defined,\n\
-      \      # return True as a signal to deploy.\n      # TODO: is this the right\
-      \ default?\n      return True\n\ndef _serialize_bool(bool_value: bool) -> str:\n\
-      \    if isinstance(bool_value, str):\n        return bool_value\n    if not\
-      \ isinstance(bool_value, bool):\n        raise TypeError('Value \"{}\" has type\
-      \ \"{}\" instead of bool.'.format(str(bool_value), str(type(bool_value))))\n\
-      \    return str(bool_value)\n\nimport argparse\n_parser = argparse.ArgumentParser(prog='Automl\
-      \ eval metrics', description='')\n_parser.add_argument(\"--gcp-project-id\"\
-      , dest=\"gcp_project_id\", type=str, required=True, default=argparse.SUPPRESS)\n\
-      _parser.add_argument(\"--gcp-region\", dest=\"gcp_region\", type=str, required=True,\
-      \ default=argparse.SUPPRESS)\n_parser.add_argument(\"--model-display-name\"\
-      , dest=\"model_display_name\", type=str, required=True, default=argparse.SUPPRESS)\n\
-      _parser.add_argument(\"--bucket-name\", dest=\"bucket_name\", type=str, required=True,\
-      \ default=argparse.SUPPRESS)\n_parser.add_argument(\"--eval-data\", dest=\"\
-      eval_data_path\", type=str, required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"\
-      --api-endpoint\", dest=\"api_endpoint\", type=str, required=False, default=argparse.SUPPRESS)\n\
-      _parser.add_argument(\"--thresholds\", dest=\"thresholds\", type=str, required=False,\
-      \ default=argparse.SUPPRESS)\n_parser.add_argument(\"--confidence-threshold\"\
-      , dest=\"confidence_threshold\", type=float, required=False, default=argparse.SUPPRESS)\n\
-      _parser.add_argument(\"--mlpipeline-ui-metadata\", dest=\"mlpipeline_ui_metadata_path\"\
-      , type=_make_parent_dirs_and_return_path, required=True, default=argparse.SUPPRESS)\n\
-      _parser.add_argument(\"--mlpipeline-metrics\", dest=\"mlpipeline_metrics_path\"\
-      , type=_make_parent_dirs_and_return_path, required=True, default=argparse.SUPPRESS)\n\
-      _parser.add_argument(\"----output-paths\", dest=\"_output_paths\", type=str,\
-      \ nargs=1)\n_parsed_args = vars(_parser.parse_args())\n_output_files = _parsed_args.pop(\"\
-      _output_paths\", [])\n\n_outputs = automl_eval_metrics(**_parsed_args)\n\nif\
-      \ not hasattr(_outputs, '__getitem__') or isinstance(_outputs, str):\n    _outputs\
-      \ = [_outputs]\n\n_output_serializers = [\n    _serialize_bool,\n\n]\n\nimport\
-      \ os\nfor idx, output_file in enumerate(_output_files):\n    try:\n        os.makedirs(os.path.dirname(output_file))\n\
-      \    except OSError:\n        pass\n    with open(output_file, 'w') as f:\n\
-      \        f.write(_output_serializers[idx](_outputs[idx]))\n"
+    - |
+      class OutputPath:
+          '''When creating component from function, OutputPath should be used as function parameter annotation to tell the system that the function wants to output data by writing it into a file with the given path instead of returning the data from the function.'''
+          def __init__(self, type=None):
+              self.type = type
+
+      def _make_parent_dirs_and_return_path(file_path: str):
+          import os
+          os.makedirs(os.path.dirname(file_path), exist_ok=True)
+          return file_path
+
+      class InputPath:
+          '''When creating component from function, InputPath should be used as function parameter annotation to tell the system to pass the *data file path* to the function instead of passing the actual data.'''
+          def __init__(self, type=None):
+              self.type = type
+
+      from typing import NamedTuple
+
+      def automl_eval_metrics(
+        # gcp_project_id: str,
+        # gcp_region: str,
+        # model_display_name: str,
+        eval_data_path: InputPath('evals'),
+        mlpipeline_ui_metadata_path: OutputPath('UI_metadata'),
+        mlpipeline_metrics_path: OutputPath('UI_metrics'),
+        # api_endpoint: str = None,
+        # thresholds: str = '{"au_prc": 0.9}',
+        thresholds: str = '{"mean_absolute_error": 450}',
+        confidence_threshold: float = 0.5  # for classification
+
+      ) -> NamedTuple('Outputs', [('deploy', bool)]):
+        import subprocess
+        import sys
+        # we could build a base image that includes these libraries if we don't want to do
+        # the dynamic installation when the step runs.
+        # subprocess.run([sys.executable, '-m', 'pip', 'install', 'googleapis-common-protos==1.6.0',
+        #     '--no-warn-script-location'], env={'PIP_DISABLE_PIP_VERSION_CHECK': '1'}, check=True)
+        # subprocess.run([sys.executable, '-m', 'pip', 'install', 'google-cloud-automl==0.9.0',
+        #    'google-cloud-storage',
+        #    '--no-warn-script-location'], env={'PIP_DISABLE_PIP_VERSION_CHECK': '1'}, check=True)
+
+        # import google
+        import json
+        import logging
+        import pickle
+        # from google.api_core.client_options import ClientOptions
+        # from google.api_core import exceptions
+        # from google.cloud import automl_v1beta1 as automl
+        # from google.cloud import storage
+
+        logging.getLogger().setLevel(logging.INFO)  # TODO: make level configurable
+        # TODO: we could instead check for region 'eu' and use 'eu-automl.googleapis.com:443'endpoint
+        # in that case, instead of requiring endpoint to be specified.
+        # if api_endpoint:
+        #   client_options = ClientOptions(api_endpoint=api_endpoint)
+        #   client = automl.TablesClient(project=gcp_project_id, region=gcp_region,
+        #       client_options=client_options)
+        # else:
+        #   client = automl.TablesClient(project=gcp_project_id, region=gcp_region)
+
+        thresholds_dict = json.loads(thresholds)
+        logging.info('thresholds dict: {}'.format(thresholds_dict))
+
+        def regression_threshold_check(eval_info):
+          eresults = {}
+          rmetrics = eval_info[1].regression_evaluation_metrics
+          logging.info('got regression eval {}'.format(eval_info[1]))
+          eresults['root_mean_squared_error'] = rmetrics.root_mean_squared_error
+          eresults['mean_absolute_error'] = rmetrics.mean_absolute_error
+          eresults['r_squared'] = rmetrics.r_squared
+          eresults['mean_absolute_percentage_error'] = rmetrics.mean_absolute_percentage_error
+          eresults['root_mean_squared_log_error'] = rmetrics.root_mean_squared_log_error
+          for k, v in thresholds_dict.items():
+            logging.info('k {}, v {}'.format(k, v))
+            if k in ['root_mean_squared_error', 'mean_absolute_error', 'mean_absolute_percentage_error']:
+              if eresults[k] > v:
+                logging.info('{} > {}; returning False'.format(
+                    eresults[k], v))
+                return (False, eresults)
+            elif eresults[k] < v:
+              logging.info('{} < {}; returning False'.format(
+                  eresults[k], v))
+              return (False, eresults)
+          return (True, eresults)
+
+        def classif_threshold_check(eval_info):
+          eresults = {}
+          example_count = eval_info[0].evaluated_example_count
+          print('Looking for example_count {}'.format(example_count))
+          for e in eval_info[1:]:  # we know we don't want the first elt
+            if e.evaluated_example_count == example_count:
+              eresults['au_prc'] = e.classification_evaluation_metrics.au_prc
+              eresults['au_roc'] = e.classification_evaluation_metrics.au_roc
+              eresults['log_loss'] = e.classification_evaluation_metrics.log_loss
+              for i in e.classification_evaluation_metrics.confidence_metrics_entry:
+                if i.confidence_threshold >= confidence_threshold:
+                  eresults['recall'] = i.recall
+                  eresults['precision'] = i.precision
+                  eresults['f1_score'] = i.f1_score
+                  break
+              break
+          logging.info('eresults: {}'.format(eresults))
+          for k, v in thresholds_dict.items():
+            logging.info('k {}, v {}'.format(k, v))
+            if k == 'log_loss':
+              if eresults[k] > v:
+                logging.info('{} > {}; returning False'.format(
+                    eresults[k], v))
+                return (False, eresults)
+            else:
+              if eresults[k] < v:
+                logging.info('{} < {}; returning False'.format(
+                    eresults[k], v))
+                return (False, eresults)
+          return (True, eresults)
+
+        with open(eval_data_path, 'rb') as f:
+          logging.info('successfully opened eval_data_path {}'.format(eval_data_path))
+          try:
+            eval_info = pickle.loads(f.read())
+
+            classif = False
+            regression = False
+            # TODO: what's the right way to figure out the model type?
+            if eval_info[1].regression_evaluation_metrics and eval_info[1].regression_evaluation_metrics.root_mean_squared_error:
+              regression=True
+              logging.info('found regression metrics {}'.format(
+                  eval_info[1].regression_evaluation_metrics))
+            elif eval_info[1].classification_evaluation_metrics and eval_info[1].classification_evaluation_metrics.au_prc:
+              classif = True
+              logging.info('found classification metrics {}'.format(
+                  eval_info[1].classification_evaluation_metrics))
+
+            if regression and thresholds_dict:
+              res, eresults = regression_threshold_check(eval_info)
+              # logging.info('eresults: {}'.format(eresults))
+              metadata = {
+                'outputs' : [
+                {
+                  'storage': 'inline',
+                  'source': '# Regression metrics:\n\n```{}```\n'.format(eresults),
+                  'type': 'markdown',
+                }]}
+              metrics = {
+                'metrics': [{
+                  'name': 'MAE',
+                  'numberValue':  eresults['mean_absolute_error'],
+                  'format': "RAW",
+                }]
+              }
+              logging.info('using metadata dict {}'.format(json.dumps(metadata)))
+              logging.info('using metadata ui path: {}'.format(mlpipeline_ui_metadata_path))
+              with open(mlpipeline_ui_metadata_path, 'w') as mlpipeline_ui_metadata_file:
+                mlpipeline_ui_metadata_file.write(json.dumps(metadata))
+              logging.info('using metrics path: {}'.format(mlpipeline_metrics_path))
+              with open(mlpipeline_metrics_path, 'w') as mlpipeline_metrics_file:
+                mlpipeline_metrics_file.write(json.dumps(metrics))
+              logging.info('deploy flag: {}'.format(res))
+              return res
+
+            if classif and thresholds_dict:
+              res, eresults = classif_threshold_check(eval_info)
+              # logging.info('eresults: {}'.format(eresults))
+              metadata = {
+                'outputs' : [
+                {
+                  'storage': 'inline',
+                  'source': '# classification metrics for confidence threshold {}:\n\n```{}```\n'.format(
+                      confidence_threshold, eresults),
+                  'type': 'markdown',
+                }]}
+              logging.info('using metadata dict {}'.format(json.dumps(metadata)))
+              logging.info('using metadata ui path: {}'.format(mlpipeline_ui_metadata_path))
+              with open(mlpipeline_ui_metadata_path, 'w') as mlpipeline_ui_metadata_file:
+                mlpipeline_ui_metadata_file.write(json.dumps(metadata))
+              logging.info('deploy flag: {}'.format(res))
+              return res
+            return True
+          except Exception as e:
+            logging.warning(e)
+            # If can't reconstruct the eval, or don't have thresholds defined,
+            # return True as a signal to deploy.
+            # TODO: is this the right default?
+            return True
+
+      def _serialize_bool(bool_value: bool) -> str:
+          if isinstance(bool_value, str):
+              return bool_value
+          if not isinstance(bool_value, bool):
+              raise TypeError('Value "{}" has type "{}" instead of bool.'.format(str(bool_value), str(type(bool_value))))
+          return str(bool_value)
+
+      import argparse
+      _parser = argparse.ArgumentParser(prog='Automl eval metrics', description='')
+      _parser.add_argument("--eval-data", dest="eval_data_path", type=str, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("--thresholds", dest="thresholds", type=str, required=False, default=argparse.SUPPRESS)
+      _parser.add_argument("--confidence-threshold", dest="confidence_threshold", type=float, required=False, default=argparse.SUPPRESS)
+      _parser.add_argument("--mlpipeline-ui-metadata", dest="mlpipeline_ui_metadata_path", type=_make_parent_dirs_and_return_path, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("--mlpipeline-metrics", dest="mlpipeline_metrics_path", type=_make_parent_dirs_and_return_path, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("----output-paths", dest="_output_paths", type=str, nargs=1)
+      _parsed_args = vars(_parser.parse_args())
+      _output_files = _parsed_args.pop("_output_paths", [])
+
+      _outputs = automl_eval_metrics(**_parsed_args)
+
+      if not hasattr(_outputs, '__getitem__') or isinstance(_outputs, str):
+          _outputs = [_outputs]
+
+      _output_serializers = [
+          _serialize_bool,
+
+      ]
+
+      import os
+      for idx, output_file in enumerate(_output_files):
+          try:
+              os.makedirs(os.path.dirname(output_file))
+          except OSError:
+              pass
+          with open(output_file, 'w') as f:
+              f.write(_output_serializers[idx](_outputs[idx]))
     args:
-    - --gcp-project-id
-    - inputValue: gcp_project_id
-    - --gcp-region
-    - inputValue: gcp_region
-    - --model-display-name
-    - inputValue: model_display_name
-    - --bucket-name
-    - inputValue: bucket_name
     - --eval-data
     - inputPath: eval_data
-    - if:
-        cond:
-          isPresent: api_endpoint
-        then:
-        - --api-endpoint
-        - inputValue: api_endpoint
     - if:
         cond:
           isPresent: thresholds

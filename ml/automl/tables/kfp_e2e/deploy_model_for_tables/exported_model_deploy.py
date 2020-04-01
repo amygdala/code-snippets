@@ -29,15 +29,10 @@ def main():
   parser.add_argument(
       '--namespace',
       default='default')
-
   args = parser.parse_args()
 
   NAMESPACE = 'default'
-
   logging.getLogger().setLevel(logging.INFO)
-  args_dict = vars(args)
-
-
   logging.info('Generating training template.')
 
   template_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'model_serve_template.yaml')
@@ -46,14 +41,12 @@ def main():
   logging.info("using model name: {}, image {}, and namespace: {}".format(
       mname, args.image_name, NAMESPACE))
 
-
   with open(template_file, 'r') as f:
     with open(target_file, "w") as target:
       data = f.read()
       changed = data.replace('MODEL_NAME', mname).replace(
-      		'IMAGE_NAME', args.image_name).replace('NAMESPACE', NAMESPACE)
+          'IMAGE_NAME', args.image_name).replace('NAMESPACE', NAMESPACE)
       target.write(changed)
-
 
   logging.info('deploying...')
   subprocess.call(['kubectl', 'create', '-f', '/ml/model_serve.yaml'])

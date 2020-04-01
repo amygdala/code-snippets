@@ -1,3 +1,6 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+
+
 
 # AutoML Tables: end-to-end workflow on Cloud AI Platform Pipelines
 
@@ -35,7 +38,7 @@ A number of new AutoML Tables features have been released recently. These includ
 This tutorial gives a tour of some of these new features via a [Cloud AI Platform Pipelines][6] example, that shows end-to-end management of an AutoML Tables workflow. 
 
 The example pipeline [creates a _dataset_][7], [imports][8] data into the dataset from a [BigQuery][9] _view_, and [trains][10] a custom model on that data. Then, it fetches [evaluation and metrics][11] information about the trained model, and based on specified criteria about model quality, uses that information to automatically determine whether to [deploy][12] the model for online prediction.   Once the model is deployed, you can make prediction requests, and optionally obtain prediction [explanations][13] as well as the prediction result.
-In addition, the example shows how to scalably **_serve_** your ￼exported trained model￼ from your Cloud AI Platform Pipelines installation for prediction requests.
+In addition, the example shows how to scalably **_serve_** your exported trained model from your Cloud AI Platform Pipelines installation for prediction requests.
 
 You can manage all the parts of this workflow from the [Tables UI][14] as well, or programmatically via a [notebook][15] or script.  But specifying this process as a workflow has some advantages: the workflow becomes reliable and repeatable, and Pipelines makes it easy to monitor the results and schedule recurring runs.
 For example, if your dataset is updated regularly—say once a day— you could schedule a workflow to run daily, each day building a model that trains on an updated dataset.
@@ -263,7 +266,7 @@ This means that you can run a model serving service on your AI Platform Pipeline
 [This blog post][62] walks through the steps to serve the exported model (in this case, using [Cloud Run][63]).  Follow the instructions in the post through the “View information about your exported model in TensorBoard” [section][64].
 Here, we’ll diverge from the rest of the post and create a GKE service instead.  
 
-Make a copy of the [`model_serve_template.yaml`][65] file and name it `model_serve.yaml`.  Edit this new file, **replacing** `MODEL_NAME` with some meaningful name for your model, `IMAGE_NAME` with the name of the container image you built (as described in the [blog post][66], and `NAMESPACE` with the namespace in which you want to run your service (e.g. `default`).
+Make a copy of [`deploy_model_for_tables/model_serve_template.yaml`][65] file and name it `model_serve.yaml`.  Edit this new file, **replacing** `MODEL_NAME` with some meaningful name for your model, `IMAGE_NAME` with the name of the container image you built (as described in the [blog post][66], and `NAMESPACE` with the namespace in which you want to run your service (e.g. `default`).
 
 Then, from the command line, run:
 ```bash
@@ -286,22 +289,34 @@ From the command line, run the following, **replacing** `<your-model-name>` with
 kubectl -n <service-namespace> port-forward svc/<your-model-name>  8080:80
 ```
 
-> **Note**: it would be possible to add this deployment step to the pipeline too.  However, the [Python client library][68] does not yet support the ‘export’ operation.  Once deployment is supported by the client library, this would be a natural addition to the workflow. While not tested, it should also be possible to do the export programmatically via the [REST API][69].
+Then, from the `deploy_model_for_tables` directory, send a prediction request to your service like this:
+```bash
+curl -X POST --data @./instances.json http://localhost:8080/predict
+```
+
+You should see a result like this, with a prediction for each instance in the `instances.json` file:
+```bash
+{"predictions": [860.79833984375, 460.5323486328125, 1211.7664794921875]}
+```
+
+(If you get an error, make sure you’re in the correct directory and see the `instances.json` file listed).
+
+> **Note**: it would be possible to add this deployment step to the pipeline too.  (See [`deploy_model_for_tables/exported_model_deploy.py`][68]).  However, the [Python client library][69] does not yet support the ‘export’ operation.  Once deployment is supported by the client library, this would be a natural addition to the workflow. While not tested, it should also be possible to do the export programmatically via the [REST API][70].
 
 ## A deeper dive into the pipeline code
 
-The updated [Tables Python client library][70] makes it very straightforward to build the Pipelines components that support each stage of the workflow.
+The updated [Tables Python client library][71] makes it very straightforward to build the Pipelines components that support each stage of the workflow.
 Kubeflow Pipeline steps are container-based, so that any action you can support via a Docker container image can become a pipeline step. 
 That doesn’t mean that an end-user necessarily needs to have Docker installed.  For many straightforward cases, building your pipeline steps 
 
 ### Using the ‘lightweight python components’  functionality to build pipeline steps
 
-For most of the components in this example, we’re building them using the [“lightweight python components”][71] functionality as shown in [this example notebook][72], including compilation of the code into a component package.  This feature allows you to create components based on Python functions, building on an appropriate base image, so that you do not need to have docker installed or rebuild a container image each time your code changes.
+For most of the components in this example, we’re building them using the [“lightweight python components”][72] functionality as shown in [this example notebook][73], including compilation of the code into a component package.  This feature allows you to create components based on Python functions, building on an appropriate base image, so that you do not need to have docker installed or rebuild a container image each time your code changes.
 
 Each component’s python file includes a function definition, and then a `func_to_container_op` call, passing the function definition, to generate the component’s `yaml` package file.  As we’ll see below, these component package files make it very straightforward to put these steps together to form a pipeline.
 
 
-The [`deploy_model_for_tables/tables_deploy_component.py`][73] file is representative.   It contains an `automl_deploy_tables_model` function definition.  
+The [`deploy_model_for_tables/tables_deploy_component.py`][74] file is representative.   It contains an `automl_deploy_tables_model` function definition.  
 
 ```
 def automl_deploy_tables_model(
@@ -317,7 +332,7 @@ def automl_deploy_tables_model(
 
 The function defines the component’s inputs and outputs, and this information will be used to support static checking when we compose these components to build the pipeline.
 
-To build the component `yaml` file corresponding to this function, we add the following to the components’ Python script, then can run `python <filename>.py` from the command line to generate it (you must have the Kubeflow Pipelines (KFP) sdk [installed][74]).
+To build the component `yaml` file corresponding to this function, we add the following to the components’ Python script, then can run `python <filename>.py` from the command line to generate it (you must have the Kubeflow Pipelines (KFP) sdk [installed][75]).
 
 ```python
 if __name__ == '__main__':
@@ -331,7 +346,7 @@ Whenever you change the python function definition, just recompile to regenerate
 
 ### Specifying the Tables pipeline
 
-With the components packaged into `yaml` files, it becomes very straightforward to specify a pipeline, such as [`tables_pipeline_caip.py`][75], that uses them.  Here, we’re just using the `load_component_from_file()` method, since the `yaml` files are all local (in the same repo).  However, there is also a `load_component_from_url()` method, which makes it easy to share components. (If your URL points to a file in GitHub, be sure to use raw mode).
+With the components packaged into `yaml` files, it becomes very straightforward to specify a pipeline, such as [`tables_pipeline_caip.py`][76], that uses them.  Here, we’re just using the `load_component_from_file()` method, since the `yaml` files are all local (in the same repo).  However, there is also a `load_component_from_url()` method, which makes it easy to share components. (If your URL points to a file in GitHub, be sure to use raw mode).
 
 ```python
 create_dataset_op = comp.load_component_from_file(
@@ -398,10 +413,10 @@ In this manner it is straightforward to put together a pipeline from your compon
 [19]:	https://cloud.google.com/bigquery/
 [20]:	https://console.cloud.google.com/bigquery?p=bigquery-public-data&d=london_bicycles&page=dataset
 [21]:	https://console.cloud.google.com/bigquery?p=bigquery-public-data&d=noaa_gsod&page=dataset
-[22]:	xxx
+[22]:	https://cloud.google.com/blog/products/ai-machine-learning/explaining-model-predictions-structured-data
 [23]:	https://cloud.google.com/ai-platform/pipelines/docs
-[24]:	xxx
-[25]:	xxx
+[24]:	https://kubeflow.org/
+[25]:	https://www.kubeflow.org/docs/gke/deploy/
 [26]:	https://cloud.google.com/blog/products/ai-machine-learning/introducing-cloud-ai-platform-pipelines
 [27]:	https://console.cloud.google.com/ai-platform/pipelines/clusters
 [28]:	https://console.cloud.google.com
@@ -414,12 +429,12 @@ In this manner it is straightforward to put together a pipeline from your compon
 [35]:	https://www.kubeflow.org/docs/gke/deploy/deploy-cli/
 [36]:	./tables_pipeline_caip.py.tar.gz
 [37]:	./tables_pipeline_caip.py
-[38]:	xxx
+[38]:	https://www.kubeflow.org/docs/pipelines/sdk/install-sdk/
 [39]:	./tables_pipeline_kf.py.tar.gz
 [40]:	./tables_pipeline_kf.py
-[41]:	xxx
+[41]:	https://cloud.google.com/storage
 [42]:	https://cloud.google.com/automl-tables/docs/locations#buckets
-[43]:	xxx
+[43]:	https://cloud.google.com/bigquery
 [44]:	https://cloud.google.com/automl-tables/docs/import#create
 [45]:	https://cloud.google.com/automl-tables/docs/import#import-data
 [46]:	https://cloud.google.com/bigquery
@@ -427,7 +442,7 @@ In this manner it is straightforward to put together a pipeline from your compon
 [48]:	https://cloud.google.com/automl-tables/docs/evaluate
 [49]:	https://cloud.google.com/automl-tables/docs/predict
 [50]:	https://cloud.google.com/bigquery
-[51]:	xxx
+[51]:	https://cloud.google.com/automl-tables/docs/problem-types#regression_problems
 [52]:	https://cloud.google.com/automl-tables/docs/train#opt-obj
 [53]:	https://cloud.google.com/automl-tables/docs/logging
 [54]:	https://console.cloud.google.com/automl-tables
@@ -441,14 +456,15 @@ In this manner it is straightforward to put together a pipeline from your compon
 [62]:	http://amygdala.github.io/automl/ml/2019/12/05/automl_tables_export.html
 [63]:	https://cloud.google.com/run
 [64]:	http://amygdala.github.io/automl/ml/2019/12/05/automl_tables_export.html#view-information-about-your-exported-model-in-tensorboard
-[65]:	xxx
+[65]:	./deploy_model_for_tables/model_serve_template.yaml
 [66]:	http://amygdala.github.io/automl/ml/2019/12/05/automl_tables_export.html
 [67]:	https://console.cloud.google.com/kubernetes/list
-[68]:	https://googleapis.dev/python/automl/latest/gapic/v1beta1/tables.html
-[69]:	https://cloud.google.com/automl/docs/reference/rest/v1/projects.locations.models/export
-[70]:	https://googleapis.dev/python/automl/latest/gapic/v1beta1/tables.html
-[71]:	https://www.kubeflow.org/docs/pipelines/sdk/lightweight-python-components/
-[72]:	https://github.com/kubeflow/pipelines/blob/master/samples/tutorials/mnist/01_Lightweight_Python_Components.ipynb
-[73]:	./deploy_model_for_tables/tables_deploy_component.py
-[74]:	https://www.kubeflow.org/docs/pipelines/sdk/install-sdk/
-[75]:	./tables_pipeline_caip.py
+[68]:	./deploy_model_for_tables/exported_model_deploy.py
+[69]:	https://googleapis.dev/python/automl/latest/gapic/v1beta1/tables.html
+[70]:	https://cloud.google.com/automl/docs/reference/rest/v1/projects.locations.models/export
+[71]:	https://googleapis.dev/python/automl/latest/gapic/v1beta1/tables.html
+[72]:	https://www.kubeflow.org/docs/pipelines/sdk/lightweight-python-components/
+[73]:	https://github.com/kubeflow/pipelines/blob/master/samples/tutorials/mnist/01_Lightweight_Python_Components.ipynb
+[74]:	./deploy_model_for_tables/tables_deploy_component.py
+[75]:	https://www.kubeflow.org/docs/pipelines/sdk/install-sdk/
+[76]:	./tables_pipeline_caip.py

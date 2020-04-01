@@ -126,11 +126,11 @@ def automl_tables(  #pylint: disable=unused-argument
     )
 
   eval_metrics = eval_metrics_op(
-    gcp_project_id=gcp_project_id,
-    gcp_region=gcp_region,
-    bucket_name=bucket_name,
-    api_endpoint=api_endpoint,
-    model_display_name=train_model.outputs['model_display_name'],
+    # gcp_project_id=gcp_project_id,
+    # gcp_region=gcp_region,
+    # bucket_name=bucket_name,
+    # api_endpoint=api_endpoint,
+    # model_display_name=train_model.outputs['model_display_name'],
     thresholds=thresholds,
     eval_data=eval_model.outputs['eval_data'],
     )

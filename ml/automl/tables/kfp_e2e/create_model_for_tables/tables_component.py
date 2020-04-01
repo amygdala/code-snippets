@@ -16,22 +16,26 @@ from typing import NamedTuple
 
 
 def automl_create_model_for_tables(
-	gcp_project_id: str,
-	gcp_region: str,
-	dataset_display_name: str,
+  gcp_project_id: str,
+  gcp_region: str,
+  dataset_display_name: str,
   api_endpoint: str = None,
   model_display_name: str = None,
   model_prefix: str = 'bwmodel',
   optimization_objective: str = None,
   include_column_spec_names: list = None,
   exclude_column_spec_names: list = None,
-	train_budget_milli_node_hours: int = 1000,
+  train_budget_milli_node_hours: int = 1000,
 ) -> NamedTuple('Outputs', [('model_display_name', str), ('model_name', str), ('model_id', str)]):
 
   import subprocess
   import sys
-  subprocess.run([sys.executable, '-m', 'pip', 'install', 'googleapis-common-protos==1.6.0',  '--no-warn-script-location'], env={'PIP_DISABLE_PIP_VERSION_CHECK': '1'}, check=True)
-  subprocess.run([sys.executable, '-m', 'pip', 'install', 'google-cloud-automl==0.9.0', '--quiet', '--no-warn-script-location'], env={'PIP_DISABLE_PIP_VERSION_CHECK': '1'}, check=True)
+  # we could build a base image that includes these libraries if we don't want to do
+  # the dynamic installation when the step runs.
+  subprocess.run([sys.executable, '-m', 'pip', 'install', 'googleapis-common-protos==1.6.0', '--no-warn-script-location'],
+      env={'PIP_DISABLE_PIP_VERSION_CHECK': '1'}, check=True)
+  subprocess.run([sys.executable, '-m', 'pip', 'install', 'google-cloud-automl==0.9.0', '--quiet', '--no-warn-script-location'],
+      env={'PIP_DISABLE_PIP_VERSION_CHECK': '1'}, check=True)
 
   import google
   import logging
@@ -76,12 +80,7 @@ def automl_create_model_for_tables(
 
 
 if __name__ == '__main__':
-	import kfp
-	kfp.components.func_to_container_op(automl_create_model_for_tables, output_component_file='tables_component.yaml',
+  import kfp
+  kfp.components.func_to_container_op(automl_create_model_for_tables,
+      output_component_file='tables_component.yaml',
       base_image='python:3.7')
-
-
-# if __name__ == "__main__":
-#   automl_create_model_for_tables('aju-vtests2', 'us-central1', 'so_digest2_32',
-#       include_column_spec_names=["title", "body", "answer_count", "comment_count", "creation_date", "favorite_count", "owner_user_id", "score", "view_count"]
-#       )

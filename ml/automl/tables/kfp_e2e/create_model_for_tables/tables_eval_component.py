@@ -17,8 +17,8 @@ from kfp.components import InputPath, OutputPath
 
 
 def automl_eval_tables_model(
-	gcp_project_id: str,
-	gcp_region: str,
+  gcp_project_id: str,
+  gcp_region: str,
   model_display_name: str,
   bucket_name: str,
   gcs_path: str,
@@ -27,10 +27,11 @@ def automl_eval_tables_model(
   api_endpoint: str = None,
 
 ) -> NamedTuple('Outputs', [
-    # ('evals_gcs_path', str),
     ('feat_list', str)]):
   import subprocess
   import sys
+  # we could build a base image that includes these libraries if we don't want to do
+  # the dynamic installation when the step runs.
   subprocess.run([sys.executable, '-m', 'pip', 'install', 'googleapis-common-protos==1.6.0',
      '--no-warn-script-location'], env={'PIP_DISABLE_PIP_VERSION_CHECK': '1'}, check=True)
   subprocess.run([sys.executable, '-m', 'pip', 'install', 'google-cloud-automl==0.9.0',
@@ -75,17 +76,17 @@ def automl_eval_tables_model(
 
   def get_model_details(client, model_display_name):
     try:
-        model = client.get_model(model_display_name=model_display_name)
+      model = client.get_model(model_display_name=model_display_name)
     except exceptions.NotFound:
-        logging.info("Model %s not found." % model_display_name)
-        return (None, None)
+      logging.info("Model %s not found." % model_display_name)
+      return (None, None)
 
     model = client.get_model(model_display_name=model_display_name)
     # Retrieve deployment state.
     if model.deployment_state == enums.Model.DeploymentState.DEPLOYED:
-        deployment_state = "deployed"
+      deployment_state = "deployed"
     else:
-        deployment_state = "undeployed"
+      deployment_state = "undeployed"
     # get features of top global importance
     feat_list = [
         (column.feature_importance, column.column_display_name)
@@ -93,18 +94,17 @@ def automl_eval_tables_model(
     ]
     feat_list.sort(reverse=True)
     if len(feat_list) < 10:
-        feat_to_show = len(feat_list)
+      feat_to_show = len(feat_list)
     else:
-        feat_to_show = 10
+      feat_to_show = 10
 
-    # Display the model information.
-    # TODO: skip this?
+    # Log some information about the model
     logging.info("Model name: {}".format(model.name))
     logging.info("Model id: {}".format(model.name.split("/")[-1]))
     logging.info("Model display name: {}".format(model.display_name))
     logging.info("Features of top importance:")
     for feat in feat_list[:feat_to_show]:
-        logging.info(feat)
+      logging.info(feat)
     logging.info("Model create time:")
     logging.info("\tseconds: {}".format(model.create_time.seconds))
     logging.info("\tnanos: {}".format(model.create_time.nanos))
@@ -144,12 +144,9 @@ def automl_eval_tables_model(
         'source': html_source
       }]}
     logging.info('using metadata dict {}'.format(json.dumps(metadata)))
-    # with open('/mlpipeline-ui-metadata.json', 'w') as f:
-      # json.dump(metadata, f)
     logging.info('using metadata ui path: {}'.format(mlpipeline_ui_metadata_path))
     with open(mlpipeline_ui_metadata_path, 'w') as mlpipeline_ui_metadata_file:
       mlpipeline_ui_metadata_file.write(json.dumps(metadata))
-
 
   logging.getLogger().setLevel(logging.INFO)  # TODO: make level configurable
   # TODO: we could instead check for region 'eu' and use 'eu-automl.googleapis.com:443'endpoint
@@ -162,7 +159,6 @@ def automl_eval_tables_model(
     client = automl.TablesClient(project=gcp_project_id, region=gcp_region)
 
   (model, feat_list) = get_model_details(client, model_display_name)
-
 
   evals = list(client.list_model_evaluations(model_display_name=model_display_name))
   with open('temp_oput_regression', "w") as f:
@@ -179,22 +175,10 @@ def automl_eval_tables_model(
     pathlib2.Path(eval_data_path).write_bytes(pstring)
 
   feat_list_string = json.dumps(feat_list)
-  # return(gcs_path, feat_list_string)
-  return(feat_list_string)
+  return feat_list_string
 
 
 if __name__ == '__main__':
-	import kfp
-	kfp.components.func_to_container_op(automl_eval_tables_model,
+  import kfp
+  kfp.components.func_to_container_op(automl_eval_tables_model,
       output_component_file='tables_eval_component.yaml', base_image='python:3.7')
-
-# if __name__ == '__main__':
-
-# #   (eval_hex, features) = automl_eval_tables_model('aju-vtests2', 'us-central1', model_display_name='somodel_1579284627')
-#   (eval_hex, features) = automl_eval_tables_model('aju-vtests2', 'us-central1',
-#       bucket_name='aju-pipelines', model_display_name='bwmodel_1579017140',
-#       # gcs_path='automl_evals/testing/somodel_1579284627',
-#       eval_data_path=None)
-# #   with open('temp_oput', "w") as f:
-# #     f.write(eval_hex)
-

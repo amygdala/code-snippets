@@ -21,16 +21,16 @@ def automl_create_dataset_for_tables(
   dataset_display_name: str,
   api_endpoint: str = None,
   tables_dataset_metadata: dict = {},
-  # retry=None, #=google.api_core.gapic_v1.method.DEFAULT,
-  # timeout: float = None, #=google.api_core.gapic_v1.method.DEFAULT,
-  # metadata: dict = None,
 ) -> NamedTuple('Outputs', [('dataset_path', str), ('create_time', str), ('dataset_id', str)]):
-  '''automl_create_dataset_for_tables creates an empty Dataset for AutoML tables
-  '''
+
   import sys
   import subprocess
-  subprocess.run([sys.executable, '-m', 'pip', 'install', 'googleapis-common-protos==1.6.0',  '--no-warn-script-location'], env={'PIP_DISABLE_PIP_VERSION_CHECK': '1'}, check=True)
-  subprocess.run([sys.executable, '-m', 'pip', 'install', 'google-cloud-automl==0.9.0', '--quiet', '--no-warn-script-location'], env={'PIP_DISABLE_PIP_VERSION_CHECK': '1'}, check=True)
+  subprocess.run([sys.executable, '-m', 'pip', 'install', 'googleapis-common-protos==1.6.0',
+      '--no-warn-script-location'],
+      env={'PIP_DISABLE_PIP_VERSION_CHECK': '1'}, check=True)
+  subprocess.run([sys.executable, '-m', 'pip', 'install', 'google-cloud-automl==0.9.0',
+      '--quiet', '--no-warn-script-location'],
+      env={'PIP_DISABLE_PIP_VERSION_CHECK': '1'}, check=True)
 
   import google
   import logging
@@ -49,7 +49,6 @@ def automl_create_dataset_for_tables(
 
   try:
     # Create a dataset with the given display name
-    # TODO: not clear that description, timeout & retry args still supported?..
     dataset = client.create_dataset(dataset_display_name, metadata=tables_dataset_metadata)
     # Log info about the created dataset
     logging.info("Dataset name: {}".format(dataset.name))
@@ -65,12 +64,9 @@ def automl_create_dataset_for_tables(
     dataset_id = dataset.name.rsplit('/', 1)[-1]
     return (dataset.name, str(dataset.create_time), dataset_id)
   except google.api_core.exceptions.GoogleAPICallError as e:
-    logging.warn(e)
-    raise e   # TODO: other exception? return values rather than raise exception?
+    logging.warning(e)
+    raise e
 
-
-# if __name__ == "__main__":
-#     automl_create_dataset_for_tables('aju-vtests2', 'us-central1', 'component_test2')
 
 if __name__ == '__main__':
   import kfp

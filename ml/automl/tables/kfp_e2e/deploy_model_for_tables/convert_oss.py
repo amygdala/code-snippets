@@ -24,7 +24,8 @@ from tensorflow.python.summary import summary
 FLAGS = flags.FLAGS
 
 flags.DEFINE_string('saved_model', '', 'The location of the saved_model.pb to visualize.')
-flags.DEFINE_string('output_dir', '', 'The location for the Tensorboard log to begin visualization from.')
+flags.DEFINE_string('output_dir', '',
+    'The location for the Tensorboard log to begin visualization from.')
 
 def import_to_tensorboard(saved_model, output_dir):
   """View an imported saved_model.pb as a graph in Tensorboard.

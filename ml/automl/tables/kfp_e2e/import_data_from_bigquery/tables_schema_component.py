@@ -28,8 +28,11 @@ def automl_set_dataset_schema(
 ) -> NamedTuple('Outputs', [('display_name', str)]):
   import sys
   import subprocess
-  subprocess.run([sys.executable, '-m', 'pip', 'install', 'googleapis-common-protos==1.6.0',  '--no-warn-script-location'], env={'PIP_DISABLE_PIP_VERSION_CHECK': '1'}, check=True)
-  subprocess.run([sys.executable, '-m', 'pip', 'install', 'google-cloud-automl==0.9.0', '--quiet', '--no-warn-script-location'], env={'PIP_DISABLE_PIP_VERSION_CHECK': '1'}, check=True)
+  subprocess.run([sys.executable, '-m', 'pip', 'install', 'googleapis-common-protos==1.6.0',
+      '--no-warn-script-location'], env={'PIP_DISABLE_PIP_VERSION_CHECK': '1'}, check=True)
+  subprocess.run([sys.executable, '-m', 'pip', 'install', 'google-cloud-automl==0.9.0',
+      '--quiet', '--no-warn-script-location'],
+      env={'PIP_DISABLE_PIP_VERSION_CHECK': '1'}, check=True)
 
   import json
   import google
@@ -44,17 +47,17 @@ def automl_set_dataset_schema(
                          nullable=None
                          ):
 
-      logging.info("Setting {} to type {} and nullable {}".format(
-          column_spec_display_name, type_code, nullable))
-      response = client.update_column_spec(
-          dataset_display_name=dataset_display_name,
-          column_spec_display_name=column_spec_display_name,
-          type_code=type_code,
-          nullable=nullable
-      )
+    logging.info("Setting {} to type {} and nullable {}".format(
+        column_spec_display_name, type_code, nullable))
+    response = client.update_column_spec(
+        dataset_display_name=dataset_display_name,
+        column_spec_display_name=column_spec_display_name,
+        type_code=type_code,
+        nullable=nullable
+    )
 
-      # synchronous check of operation status.
-      print("Table spec updated. {}".format(response))
+    # synchronous check of operation status.
+    print("Table spec updated. {}".format(response))
 
   def update_dataset(client,
                      dataset_display_name,
@@ -62,18 +65,18 @@ def automl_set_dataset_schema(
                      time_column_spec_name=None,
                      test_train_column_spec_name=None):
 
-      if target_column_spec_name:
-          response = client.set_target_column(
-              dataset_display_name=dataset_display_name,
-              column_spec_display_name=target_column_spec_name
-          )
-          print("Target column updated. {}".format(response))
-      if time_column_spec_name:
-          response = client.set_time_column(
-              dataset_display_name=dataset_display_name,
-              column_spec_display_name=time_column_spec_name
-          )
-          print("Time column updated. {}".format(response))
+    if target_column_spec_name:
+      response = client.set_target_column(
+          dataset_display_name=dataset_display_name,
+          column_spec_display_name=target_column_spec_name
+      )
+      print("Target column updated. {}".format(response))
+    if time_column_spec_name:
+      response = client.set_time_column(
+          dataset_display_name=dataset_display_name,
+          column_spec_display_name=time_column_spec_name
+      )
+      print("Time column updated. {}".format(response))
 
   logging.getLogger().setLevel(logging.INFO)  # TODO: make level configurable
 
@@ -90,27 +93,17 @@ def automl_set_dataset_schema(
   schema_dict = json.loads(schema_info)
   # Update cols for which the desired schema was not inferred.
   if schema_dict:
-    for k,v in schema_dict.items():
+    for k, v in schema_dict.items():
       update_column_spec(client, display_name, k, v[0], nullable=v[1])
 
   # Update the dataset with info about the target col, plus optionally info on how to split on
   # a time col or a test/train col.
   update_dataset(client, display_name,
-                target_column_spec_name=target_col_name,
-                time_column_spec_name=time_col_name,
-                test_train_column_spec_name=test_train_col_name)
+                 target_column_spec_name=target_col_name,
+                 time_column_spec_name=time_col_name,
+                 test_train_column_spec_name=test_train_col_name)
 
-  return (display_name)
-
-
-# if __name__ == "__main__":
-#   import json
-# #   sdict = {"end_station_id": "CATEGORY", "start_station_id":"CATEGORY", "loc_cross": "CATEGORY", "bike_id": "CATEGORY"}
-#   sdict = {"accepted_answer_id": ["CATEGORY", True], "id": ["CATEGORY", True], "last_editor_display_name": ["CATEGORY", True], "last_editor_user_id": ["CATEGORY", True],
-#     "owner_display_name": ["CATEGORY", True], "owner_user_id": ["CATEGORY", True],
-#     "parent_id": ["CATEGORY", True], "post_type_id": ["CATEGORY", True], "tags": ["CATEGORY", True]}
-#   automl_set_dataset_schema('aju-vtests2', 'us-central1', 'so_test1',
-#     't1', json.dumps(sdict))
+  return display_name
 
 
 if __name__ == '__main__':
