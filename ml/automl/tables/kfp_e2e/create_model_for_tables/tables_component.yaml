@@ -1,0 +1,205 @@
+name: Automl create model for tables
+inputs:
+- name: gcp_project_id
+  type: String
+- name: gcp_region
+  type: String
+- name: dataset_display_name
+  type: String
+- name: api_endpoint
+  type: String
+  optional: true
+- name: model_display_name
+  type: String
+  optional: true
+- name: model_prefix
+  type: String
+  default: bwmodel
+  optional: true
+- name: optimization_objective
+  type: String
+  optional: true
+- name: include_column_spec_names
+  type: JsonArray
+  optional: true
+- name: exclude_column_spec_names
+  type: JsonArray
+  optional: true
+- name: train_budget_milli_node_hours
+  type: Integer
+  default: '1000'
+  optional: true
+outputs:
+- name: model_display_name
+  type: String
+- name: model_name
+  type: String
+- name: model_id
+  type: String
+implementation:
+  container:
+    image: python:3.7
+    command:
+    - python3
+    - -u
+    - -c
+    - |
+      from typing import NamedTuple
+
+      def automl_create_model_for_tables(
+        gcp_project_id: str,
+        gcp_region: str,
+        dataset_display_name: str,
+        api_endpoint: str = None,
+        model_display_name: str = None,
+        model_prefix: str = 'bwmodel',
+        optimization_objective: str = None,
+        include_column_spec_names: list = None,
+        exclude_column_spec_names: list = None,
+        train_budget_milli_node_hours: int = 1000,
+      ) -> NamedTuple('Outputs', [('model_display_name', str), ('model_name', str), ('model_id', str)]):
+
+        import subprocess
+        import sys
+        # we could build a base image that includes these libraries if we don't want to do
+        # the dynamic installation when the step runs.
+        subprocess.run([sys.executable, '-m', 'pip', 'install', 'googleapis-common-protos==1.6.0', '--no-warn-script-location'],
+            env={'PIP_DISABLE_PIP_VERSION_CHECK': '1'}, check=True)
+        subprocess.run([sys.executable, '-m', 'pip', 'install', 'google-cloud-automl==0.9.0', '--quiet', '--no-warn-script-location'],
+            env={'PIP_DISABLE_PIP_VERSION_CHECK': '1'}, check=True)
+
+        import google
+        import logging
+        from google.api_core.client_options import ClientOptions
+        from google.cloud import automl_v1beta1 as automl
+        import time
+
+        logging.getLogger().setLevel(logging.INFO)  # TODO: make level configurable
+        # TODO: we could instead check for region 'eu' and use 'eu-automl.googleapis.com:443'endpoint
+        # in that case, instead of requiring endpoint to be specified.
+        if api_endpoint:
+          client_options = ClientOptions(api_endpoint=api_endpoint)
+          client = automl.TablesClient(project=gcp_project_id, region=gcp_region,
+              client_options=client_options)
+        else:
+          client = automl.TablesClient(project=gcp_project_id, region=gcp_region)
+
+        if not model_display_name:
+          model_display_name = '{}_{}'.format(model_prefix, str(int(time.time())))
+
+        logging.info('Training model {}...'.format(model_display_name))
+        response = client.create_model(
+          model_display_name,
+          train_budget_milli_node_hours=train_budget_milli_node_hours,
+          dataset_display_name=dataset_display_name,
+          optimization_objective=optimization_objective,
+          include_column_spec_names=include_column_spec_names,
+          exclude_column_spec_names=exclude_column_spec_names,
+        )
+
+        logging.info("Training operation: {}".format(response.operation))
+        logging.info("Training operation name: {}".format(response.operation.name))
+        logging.info("Training in progress. This operation may take multiple hours to complete.")
+        # block termination of the op until training is finished.
+        result = response.result()
+        logging.info("Training completed: {}".format(result))
+        model_name = result.name
+        model_id = model_name.rsplit('/', 1)[-1]
+        print('model name: {}, model id: {}'.format(model_name, model_id))
+        return (model_display_name, model_name, model_id)
+
+      import json
+      def _serialize_str(str_value: str) -> str:
+          if not isinstance(str_value, str):
+              raise TypeError('Value "{}" has type "{}" instead of str.'.format(str(str_value), str(type(str_value))))
+          return str_value
+
+      import argparse
+      _parser = argparse.ArgumentParser(prog='Automl create model for tables', description='')
+      _parser.add_argument("--gcp-project-id", dest="gcp_project_id", type=str, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("--gcp-region", dest="gcp_region", type=str, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("--dataset-display-name", dest="dataset_display_name", type=str, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("--api-endpoint", dest="api_endpoint", type=str, required=False, default=argparse.SUPPRESS)
+      _parser.add_argument("--model-display-name", dest="model_display_name", type=str, required=False, default=argparse.SUPPRESS)
+      _parser.add_argument("--model-prefix", dest="model_prefix", type=str, required=False, default=argparse.SUPPRESS)
+      _parser.add_argument("--optimization-objective", dest="optimization_objective", type=str, required=False, default=argparse.SUPPRESS)
+      _parser.add_argument("--include-column-spec-names", dest="include_column_spec_names", type=json.loads, required=False, default=argparse.SUPPRESS)
+      _parser.add_argument("--exclude-column-spec-names", dest="exclude_column_spec_names", type=json.loads, required=False, default=argparse.SUPPRESS)
+      _parser.add_argument("--train-budget-milli-node-hours", dest="train_budget_milli_node_hours", type=int, required=False, default=argparse.SUPPRESS)
+      _parser.add_argument("----output-paths", dest="_output_paths", type=str, nargs=3)
+      _parsed_args = vars(_parser.parse_args())
+      _output_files = _parsed_args.pop("_output_paths", [])
+
+      _outputs = automl_create_model_for_tables(**_parsed_args)
+
+      if not hasattr(_outputs, '__getitem__') or isinstance(_outputs, str):
+          _outputs = [_outputs]
+
+      _output_serializers = [
+          _serialize_str,
+          _serialize_str,
+          _serialize_str,
+
+      ]
+
+      import os
+      for idx, output_file in enumerate(_output_files):
+          try:
+              os.makedirs(os.path.dirname(output_file))
+          except OSError:
+              pass
+          with open(output_file, 'w') as f:
+              f.write(_output_serializers[idx](_outputs[idx]))
+    args:
+    - --gcp-project-id
+    - inputValue: gcp_project_id
+    - --gcp-region
+    - inputValue: gcp_region
+    - --dataset-display-name
+    - inputValue: dataset_display_name
+    - if:
+        cond:
+          isPresent: api_endpoint
+        then:
+        - --api-endpoint
+        - inputValue: api_endpoint
+    - if:
+        cond:
+          isPresent: model_display_name
+        then:
+        - --model-display-name
+        - inputValue: model_display_name
+    - if:
+        cond:
+          isPresent: model_prefix
+        then:
+        - --model-prefix
+        - inputValue: model_prefix
+    - if:
+        cond:
+          isPresent: optimization_objective
+        then:
+        - --optimization-objective
+        - inputValue: optimization_objective
+    - if:
+        cond:
+          isPresent: include_column_spec_names
+        then:
+        - --include-column-spec-names
+        - inputValue: include_column_spec_names
+    - if:
+        cond:
+          isPresent: exclude_column_spec_names
+        then:
+        - --exclude-column-spec-names
+        - inputValue: exclude_column_spec_names
+    - if:
+        cond:
+          isPresent: train_budget_milli_node_hours
+        then:
+        - --train-budget-milli-node-hours
+        - inputValue: train_budget_milli_node_hours
+    - '----output-paths'
+    - outputPath: model_display_name
+    - outputPath: model_name
+    - outputPath: model_id

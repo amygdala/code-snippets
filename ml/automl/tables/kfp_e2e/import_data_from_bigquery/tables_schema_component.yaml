@@ -1,0 +1,196 @@
+name: Automl set dataset schema
+inputs:
+- name: gcp_project_id
+  type: String
+- name: gcp_region
+  type: String
+- name: display_name
+  type: String
+- name: target_col_name
+  type: String
+- name: schema_info
+  type: String
+  default: '{}'
+  optional: true
+- name: time_col_name
+  type: String
+  optional: true
+- name: test_train_col_name
+  type: String
+  optional: true
+- name: api_endpoint
+  type: String
+  optional: true
+outputs:
+- name: display_name
+  type: String
+implementation:
+  container:
+    image: python:3.7
+    command:
+    - python3
+    - -u
+    - -c
+    - |
+      from typing import NamedTuple
+
+      def automl_set_dataset_schema(
+        gcp_project_id: str,
+        gcp_region: str,
+        display_name: str,
+        target_col_name: str,
+        schema_info: str = '{}',  # dict with key of col name, value an array with [type, nullable]
+        time_col_name: str = None,
+        test_train_col_name: str = None,
+        api_endpoint: str = None,
+      ) -> NamedTuple('Outputs', [('display_name', str)]):
+        import sys
+        import subprocess
+        subprocess.run([sys.executable, '-m', 'pip', 'install', 'googleapis-common-protos==1.6.0',
+            '--no-warn-script-location'], env={'PIP_DISABLE_PIP_VERSION_CHECK': '1'}, check=True)
+        subprocess.run([sys.executable, '-m', 'pip', 'install', 'google-cloud-automl==0.9.0',
+            '--quiet', '--no-warn-script-location'],
+            env={'PIP_DISABLE_PIP_VERSION_CHECK': '1'}, check=True)
+
+        import json
+        import google
+        import logging
+        from google.api_core.client_options import ClientOptions
+        from google.cloud import automl_v1beta1 as automl
+
+        def update_column_spec(client,
+                               dataset_display_name,
+                               column_spec_display_name,
+                               type_code,
+                               nullable=None
+                               ):
+
+          logging.info("Setting {} to type {} and nullable {}".format(
+              column_spec_display_name, type_code, nullable))
+          response = client.update_column_spec(
+              dataset_display_name=dataset_display_name,
+              column_spec_display_name=column_spec_display_name,
+              type_code=type_code,
+              nullable=nullable
+          )
+
+          # synchronous check of operation status.
+          print("Table spec updated. {}".format(response))
+
+        def update_dataset(client,
+                           dataset_display_name,
+                           target_column_spec_name=None,
+                           time_column_spec_name=None,
+                           test_train_column_spec_name=None):
+
+          if target_column_spec_name:
+            response = client.set_target_column(
+                dataset_display_name=dataset_display_name,
+                column_spec_display_name=target_column_spec_name
+            )
+            print("Target column updated. {}".format(response))
+          if time_column_spec_name:
+            response = client.set_time_column(
+                dataset_display_name=dataset_display_name,
+                column_spec_display_name=time_column_spec_name
+            )
+            print("Time column updated. {}".format(response))
+
+        logging.getLogger().setLevel(logging.INFO)  # TODO: make level configurable
+
+        # TODO: we could instead check for region 'eu' and use 'eu-automl.googleapis.com:443'endpoint
+        # in that case, instead of requiring endpoint to be specified.
+        if api_endpoint:
+          client_options = ClientOptions(api_endpoint=api_endpoint)
+          client = automl.TablesClient(project=gcp_project_id, region=gcp_region,
+            client_options=client_options)
+        else:
+          client = automl.TablesClient(project=gcp_project_id, region=gcp_region)
+
+        schema_dict = json.loads(schema_info)
+        # Update cols for which the desired schema was not inferred.
+        if schema_dict:
+          for k, v in schema_dict.items():
+            update_column_spec(client, display_name, k, v[0], nullable=v[1])
+
+        # Update the dataset with info about the target col, plus optionally info on how to split on
+        # a time col or a test/train col.
+        update_dataset(client, display_name,
+                       target_column_spec_name=target_col_name,
+                       time_column_spec_name=time_col_name,
+                       test_train_column_spec_name=test_train_col_name)
+
+        return display_name
+
+      def _serialize_str(str_value: str) -> str:
+          if not isinstance(str_value, str):
+              raise TypeError('Value "{}" has type "{}" instead of str.'.format(str(str_value), str(type(str_value))))
+          return str_value
+
+      import argparse
+      _parser = argparse.ArgumentParser(prog='Automl set dataset schema', description='')
+      _parser.add_argument("--gcp-project-id", dest="gcp_project_id", type=str, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("--gcp-region", dest="gcp_region", type=str, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("--display-name", dest="display_name", type=str, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("--target-col-name", dest="target_col_name", type=str, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("--schema-info", dest="schema_info", type=str, required=False, default=argparse.SUPPRESS)
+      _parser.add_argument("--time-col-name", dest="time_col_name", type=str, required=False, default=argparse.SUPPRESS)
+      _parser.add_argument("--test-train-col-name", dest="test_train_col_name", type=str, required=False, default=argparse.SUPPRESS)
+      _parser.add_argument("--api-endpoint", dest="api_endpoint", type=str, required=False, default=argparse.SUPPRESS)
+      _parser.add_argument("----output-paths", dest="_output_paths", type=str, nargs=1)
+      _parsed_args = vars(_parser.parse_args())
+      _output_files = _parsed_args.pop("_output_paths", [])
+
+      _outputs = automl_set_dataset_schema(**_parsed_args)
+
+      if not hasattr(_outputs, '__getitem__') or isinstance(_outputs, str):
+          _outputs = [_outputs]
+
+      _output_serializers = [
+          _serialize_str,
+
+      ]
+
+      import os
+      for idx, output_file in enumerate(_output_files):
+          try:
+              os.makedirs(os.path.dirname(output_file))
+          except OSError:
+              pass
+          with open(output_file, 'w') as f:
+              f.write(_output_serializers[idx](_outputs[idx]))
+    args:
+    - --gcp-project-id
+    - inputValue: gcp_project_id
+    - --gcp-region
+    - inputValue: gcp_region
+    - --display-name
+    - inputValue: display_name
+    - --target-col-name
+    - inputValue: target_col_name
+    - if:
+        cond:
+          isPresent: schema_info
+        then:
+        - --schema-info
+        - inputValue: schema_info
+    - if:
+        cond:
+          isPresent: time_col_name
+        then:
+        - --time-col-name
+        - inputValue: time_col_name
+    - if:
+        cond:
+          isPresent: test_train_col_name
+        then:
+        - --test-train-col-name
+        - inputValue: test_train_col_name
+    - if:
+        cond:
+          isPresent: api_endpoint
+        then:
+        - --api-endpoint
+        - inputValue: api_endpoint
+    - '----output-paths'
+    - outputPath: display_name
