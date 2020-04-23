@@ -76,9 +76,9 @@ Once a Pipelines installation is running, we can upload the example AutoML Table
 Click on **Pipelines** in the left nav bar of the Pipelines Dashboard.  Click on **Upload Pipeline**. 
 
 - For Cloud AI Platform Pipelines, upload [`tables_pipeline_caip.py.tar.gz`][36], from this directory.  This archive points to the compiled version of [this pipeline][37], specified and compiled using the [Kubeflow Pipelines SDK][38].  
-- For Kubeflow Pipelines on a Kubeflow installation, upload  [`tables_pipeline_kf.py.tar.gz`][39].  This archive points to the compiled version of [this pipeline][40].
+- For Kubeflow Pipelines on a Kubeflow installation, upload  [`tables_pipeline_kf.py.tar.gz`][39].  This archive points to the compiled version of [this pipeline][40]. **To run this example on a KF installation, you will need to give the `<deployment-name>-user@<project-id>.iam.gserviceaccount.com` service account `AutoML Admin` privileges**.
 
-> Note: The difference between the two pipelines relates to how GCP authentication is handled.  For the Kubeflow pipeline, we’ve added `.apply(gcp.use_gcp_secret('user-gcp-sa'))` annotations to the pipeline steps. This tells the pipeline to use the mounted _secret_—set up during the installation process— that provides GCP account credentials.  With the Cloud AI Platform Pipelines installation, the GKE cluster nodes have been set up to use the `cloud-platform` scope. With an upcoming Kubeflow release, specification of the mounted secret will no longer be necessary.
+> Note: The difference between the two pipelines relates to how GCP authentication is handled.  For the Kubeflow pipeline, we’ve added `.apply(gcp.use_gcp_secret('user-gcp-sa'))` annotations to the pipeline steps. This tells the pipeline to use the mounted _secret_—set up during the installation process— that provides GCP account credentials.  With the Cloud AI Platform Pipelines installation, the GKE cluster nodes have been set up to use the `cloud-platform` scope. With recent Kubeflow releases, specification of the mounted secret is no longer necessary, but we include both versions for compatibility.
 
 The uploaded pipeline graph will look similar to this:
 
@@ -88,7 +88,7 @@ The uploaded pipeline graph will look similar to this:
 </figure>
 
 Click the **+Create Run** button to run the pipeline.  You will need to fill in some pipeline parameters.
-Specifically, replace `YOUR_PROJECT_HERE` with the name of your project; replace `YOUR_DATASET_NAME` with the name you want to give your new dataset (make it unique, and use letters, numbers and underscores up to 32 characters); and replace `YOUR_BUCKET_NAME` with the name of a [GCS bucket][41].  This bucket should be in the [same _region_][42] as that specified by the `gcp_region` parameter. E.g., if you keep the default `us-central1` region, your bucket should also be a _regional_ (not multi-regional) bucket in the `us-central1` region. ++double check that this is necessary.++
+Specifically, replace `YOUR_PROJECT_HERE` with the name of your project; replace `YOUR_DATASET_NAME` with the name you want to give your new dataset (make it unique, and use letters, numbers and underscores up to 32 characters); and replace `YOUR_BUCKET_NAME` with the name of a [GCS bucket][41].  Do not include the `gs://` prefix— just enter the name. This bucket should be in the [same _region_][42] as that specified by the `gcp_region` parameter. E.g., if you keep the default `us-central1` region, your bucket should also be a _regional_ (not multi-regional) bucket in the `us-central1` region. ++double check that this is necessary.++
 
  If you want to schedule a recurrent set of runs, you can do that instead.  If your data is in [BigQuery][43]— as is the case for this example pipeline— and has a temporal aspect, you could define a _view_ to reflect that, e.g. to return data from a window over the last `N` days or hours.  Then, the AutoML pipeline could specify ingestion of data from that view, grabbing an updated data window each time the pipeline is run, and building a new model based on that updated window.
 
