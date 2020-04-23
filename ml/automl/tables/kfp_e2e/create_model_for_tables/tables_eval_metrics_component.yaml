@@ -4,7 +4,7 @@ inputs:
   type: evals
 - name: thresholds
   type: String
-  default: '{"mean_absolute_error": 450}'
+  default: '{"mean_absolute_error": 460}'
   optional: true
 - name: confidence_threshold
   type: Float
@@ -16,7 +16,7 @@ outputs:
 - name: mlpipeline_metrics
   type: UI_metrics
 - name: deploy
-  type: Boolean
+  type: String
 implementation:
   container:
     image: python:3.7
@@ -25,64 +25,35 @@ implementation:
     - -u
     - -c
     - |
-      class OutputPath:
-          '''When creating component from function, OutputPath should be used as function parameter annotation to tell the system that the function wants to output data by writing it into a file with the given path instead of returning the data from the function.'''
-          def __init__(self, type=None):
-              self.type = type
-
       def _make_parent_dirs_and_return_path(file_path: str):
           import os
           os.makedirs(os.path.dirname(file_path), exist_ok=True)
           return file_path
 
-      class InputPath:
-          '''When creating component from function, InputPath should be used as function parameter annotation to tell the system to pass the *data file path* to the function instead of passing the actual data.'''
-          def __init__(self, type=None):
-              self.type = type
-
-      from typing import NamedTuple
-
       def automl_eval_metrics(
-        # gcp_project_id: str,
-        # gcp_region: str,
-        # model_display_name: str,
-        eval_data_path: InputPath('evals'),
-        mlpipeline_ui_metadata_path: OutputPath('UI_metadata'),
-        mlpipeline_metrics_path: OutputPath('UI_metrics'),
-        # api_endpoint: str = None,
+        eval_data_path ,
+        mlpipeline_ui_metadata_path ,
+        mlpipeline_metrics_path ,
         # thresholds: str = '{"au_prc": 0.9}',
-        thresholds: str = '{"mean_absolute_error": 450}',
-        confidence_threshold: float = 0.5  # for classification
+        thresholds  = '{"mean_absolute_error": 460}',
+        confidence_threshold  = 0.5  # for classification
 
-      ) -> NamedTuple('Outputs', [('deploy', bool)]):
+      # ) -> NamedTuple('Outputs', [('deploy', str)]):
+      )    :
         import subprocess
         import sys
-        # we could build a base image that includes these libraries if we don't want to do
-        # the dynamic installation when the step runs.
-        # subprocess.run([sys.executable, '-m', 'pip', 'install', 'googleapis-common-protos==1.6.0',
-        #     '--no-warn-script-location'], env={'PIP_DISABLE_PIP_VERSION_CHECK': '1'}, check=True)
-        # subprocess.run([sys.executable, '-m', 'pip', 'install', 'google-cloud-automl==0.9.0',
-        #    'google-cloud-storage',
-        #    '--no-warn-script-location'], env={'PIP_DISABLE_PIP_VERSION_CHECK': '1'}, check=True)
+        subprocess.run([sys.executable, '-m', 'pip', 'install', 'googleapis-common-protos==1.6.0',
+            '--no-warn-script-location'], env={'PIP_DISABLE_PIP_VERSION_CHECK': '1'}, check=True)
+        subprocess.run([sys.executable, '-m', 'pip', 'install', 'google-cloud-automl==0.9.0',
+           'google-cloud-storage',
+           '--no-warn-script-location'], env={'PIP_DISABLE_PIP_VERSION_CHECK': '1'}, check=True)
 
-        # import google
+        import google
         import json
         import logging
         import pickle
-        # from google.api_core.client_options import ClientOptions
-        # from google.api_core import exceptions
-        # from google.cloud import automl_v1beta1 as automl
-        # from google.cloud import storage
 
         logging.getLogger().setLevel(logging.INFO)  # TODO: make level configurable
-        # TODO: we could instead check for region 'eu' and use 'eu-automl.googleapis.com:443'endpoint
-        # in that case, instead of requiring endpoint to be specified.
-        # if api_endpoint:
-        #   client_options = ClientOptions(api_endpoint=api_endpoint)
-        #   client = automl.TablesClient(project=gcp_project_id, region=gcp_region,
-        #       client_options=client_options)
-        # else:
-        #   client = automl.TablesClient(project=gcp_project_id, region=gcp_region)
 
         thresholds_dict = json.loads(thresholds)
         logging.info('thresholds dict: {}'.format(thresholds_dict))
@@ -102,12 +73,12 @@ implementation:
               if eresults[k] > v:
                 logging.info('{} > {}; returning False'.format(
                     eresults[k], v))
-                return (False, eresults)
+                return ('False', eresults)
             elif eresults[k] < v:
               logging.info('{} < {}; returning False'.format(
                   eresults[k], v))
-              return (False, eresults)
-          return (True, eresults)
+              return ('False', eresults)
+          return ('deploy', eresults)
 
         def classif_threshold_check(eval_info):
           eresults = {}
@@ -132,13 +103,13 @@ implementation:
               if eresults[k] > v:
                 logging.info('{} > {}; returning False'.format(
                     eresults[k], v))
-                return (False, eresults)
+                return ('False', eresults)
             else:
               if eresults[k] < v:
                 logging.info('{} < {}; returning False'.format(
                     eresults[k], v))
-                return (False, eresults)
-          return (True, eresults)
+                return ('False', eresults)
+          return ('deploy', eresults)
 
         with open(eval_data_path, 'rb') as f:
           logging.info('successfully opened eval_data_path {}'.format(eval_data_path))
@@ -201,20 +172,18 @@ implementation:
                 mlpipeline_ui_metadata_file.write(json.dumps(metadata))
               logging.info('deploy flag: {}'.format(res))
               return res
-            return True
+            return 'deploy'
           except Exception as e:
             logging.warning(e)
             # If can't reconstruct the eval, or don't have thresholds defined,
             # return True as a signal to deploy.
             # TODO: is this the right default?
-            return True
+            return 'deploy'
 
-      def _serialize_bool(bool_value: bool) -> str:
-          if isinstance(bool_value, str):
-              return bool_value
-          if not isinstance(bool_value, bool):
-              raise TypeError('Value "{}" has type "{}" instead of bool.'.format(str(bool_value), str(type(bool_value))))
-          return str(bool_value)
+      def _serialize_str(str_value: str) -> str:
+          if not isinstance(str_value, str):
+              raise TypeError('Value "{}" has type "{}" instead of str.'.format(str(str_value), str(type(str_value))))
+          return str_value
 
       import argparse
       _parser = argparse.ArgumentParser(prog='Automl eval metrics', description='')
@@ -229,11 +198,8 @@ implementation:
 
       _outputs = automl_eval_metrics(**_parsed_args)
 
-      if not hasattr(_outputs, '__getitem__') or isinstance(_outputs, str):
-          _outputs = [_outputs]
-
       _output_serializers = [
-          _serialize_bool,
+          _serialize_str,
 
       ]
 

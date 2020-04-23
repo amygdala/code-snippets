@@ -19,46 +19,29 @@ from kfp.components import InputPath, OutputPath
 # An example of how the model eval info could be used to make decisions aboiut whether or not
 # to deploy the model.
 def automl_eval_metrics(
-  # gcp_project_id: str,
-  # gcp_region: str,
-  # model_display_name: str,
   eval_data_path: InputPath('evals'),
   mlpipeline_ui_metadata_path: OutputPath('UI_metadata'),
   mlpipeline_metrics_path: OutputPath('UI_metrics'),
-  # api_endpoint: str = None,
   # thresholds: str = '{"au_prc": 0.9}',
-  thresholds: str = '{"mean_absolute_error": 450}',
+  thresholds: str = '{"mean_absolute_error": 460}',
   confidence_threshold: float = 0.5  # for classification
 
-) -> NamedTuple('Outputs', [('deploy', bool)]):
+# ) -> NamedTuple('Outputs', [('deploy', str)]):  # this gives the same result
+) -> NamedTuple('Outputs', [('deploy', 'String')]):
   import subprocess
   import sys
-  # we could build a base image that includes these libraries if we don't want to do
-  # the dynamic installation when the step runs.
-  # subprocess.run([sys.executable, '-m', 'pip', 'install', 'googleapis-common-protos==1.6.0',
-  #     '--no-warn-script-location'], env={'PIP_DISABLE_PIP_VERSION_CHECK': '1'}, check=True)
-  # subprocess.run([sys.executable, '-m', 'pip', 'install', 'google-cloud-automl==0.9.0',
-  #    'google-cloud-storage',
-  #    '--no-warn-script-location'], env={'PIP_DISABLE_PIP_VERSION_CHECK': '1'}, check=True)
+  subprocess.run([sys.executable, '-m', 'pip', 'install', 'googleapis-common-protos==1.6.0',
+      '--no-warn-script-location'], env={'PIP_DISABLE_PIP_VERSION_CHECK': '1'}, check=True)
+  subprocess.run([sys.executable, '-m', 'pip', 'install', 'google-cloud-automl==0.9.0',
+     'google-cloud-storage',
+     '--no-warn-script-location'], env={'PIP_DISABLE_PIP_VERSION_CHECK': '1'}, check=True)
 
-  # import google
+  import google
   import json
   import logging
   import pickle
-  # from google.api_core.client_options import ClientOptions
-  # from google.api_core import exceptions
-  # from google.cloud import automl_v1beta1 as automl
-  # from google.cloud import storage
 
   logging.getLogger().setLevel(logging.INFO)  # TODO: make level configurable
-  # TODO: we could instead check for region 'eu' and use 'eu-automl.googleapis.com:443'endpoint
-  # in that case, instead of requiring endpoint to be specified.
-  # if api_endpoint:
-  #   client_options = ClientOptions(api_endpoint=api_endpoint)
-  #   client = automl.TablesClient(project=gcp_project_id, region=gcp_region,
-  #       client_options=client_options)
-  # else:
-  #   client = automl.TablesClient(project=gcp_project_id, region=gcp_region)
 
   thresholds_dict = json.loads(thresholds)
   logging.info('thresholds dict: {}'.format(thresholds_dict))
@@ -78,12 +61,12 @@ def automl_eval_metrics(
         if eresults[k] > v:
           logging.info('{} > {}; returning False'.format(
               eresults[k], v))
-          return (False, eresults)
+          return ('False', eresults)
       elif eresults[k] < v:
         logging.info('{} < {}; returning False'.format(
             eresults[k], v))
-        return (False, eresults)
-    return (True, eresults)
+        return ('False', eresults)
+    return ('deploy', eresults)
 
   def classif_threshold_check(eval_info):
     eresults = {}
@@ -108,13 +91,13 @@ def automl_eval_metrics(
         if eresults[k] > v:
           logging.info('{} > {}; returning False'.format(
               eresults[k], v))
-          return (False, eresults)
+          return ('False', eresults)
       else:
         if eresults[k] < v:
           logging.info('{} < {}; returning False'.format(
               eresults[k], v))
-          return (False, eresults)
-    return (True, eresults)
+          return ('False', eresults)
+    return ('deploy', eresults)
 
   with open(eval_data_path, 'rb') as f:
     logging.info('successfully opened eval_data_path {}'.format(eval_data_path))
@@ -177,13 +160,13 @@ def automl_eval_metrics(
           mlpipeline_ui_metadata_file.write(json.dumps(metadata))
         logging.info('deploy flag: {}'.format(res))
         return res
-      return True
+      return 'deploy'
     except Exception as e:
       logging.warning(e)
       # If can't reconstruct the eval, or don't have thresholds defined,
       # return True as a signal to deploy.
       # TODO: is this the right default?
-      return True
+      return 'deploy'
 
 
 if __name__ == '__main__':
