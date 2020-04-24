@@ -130,7 +130,7 @@ def automl_tables(  #pylint: disable=unused-argument
     eval_data=eval_model.outputs['eval_data'],
     )
 
-  with dsl.Condition(eval_metrics.outputs['deploy'] == 'd'):
+  with dsl.Condition(eval_metrics.outputs['deploy'] == 'deploy'):
     deploy_model = deploy_model_op(
       gcp_project_id=gcp_project_id,
       gcp_region=gcp_region,
