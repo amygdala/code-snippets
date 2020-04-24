@@ -26,8 +26,7 @@ def automl_eval_metrics(
   thresholds: str = '{"mean_absolute_error": 460}',
   confidence_threshold: float = 0.5  # for classification
 
-# ) -> NamedTuple('Outputs', [('deploy', str)]):  # this gives the same result
-) -> NamedTuple('Outputs', [('deploy', 'String')]):
+) -> NamedTuple('Outputs', [('deploy', str)]):
   import subprocess
   import sys
   subprocess.run([sys.executable, '-m', 'pip', 'install', 'googleapis-common-protos==1.6.0',
@@ -141,7 +140,7 @@ def automl_eval_metrics(
         with open(mlpipeline_metrics_path, 'w') as mlpipeline_metrics_file:
           mlpipeline_metrics_file.write(json.dumps(metrics))
         logging.info('deploy flag: {}'.format(res))
-        return res
+        return (res,)
 
       if classif and thresholds_dict:
         res, eresults = classif_threshold_check(eval_info)
@@ -159,14 +158,14 @@ def automl_eval_metrics(
         with open(mlpipeline_ui_metadata_path, 'w') as mlpipeline_ui_metadata_file:
           mlpipeline_ui_metadata_file.write(json.dumps(metadata))
         logging.info('deploy flag: {}'.format(res))
-        return res
-      return 'deploy'
+        return (res,)
+      return ('deploy',)
     except Exception as e:
       logging.warning(e)
       # If can't reconstruct the eval, or don't have thresholds defined,
       # return True as a signal to deploy.
       # TODO: is this the right default?
-      return 'deploy'
+      return ('deploy',)
 
 
 if __name__ == '__main__':
