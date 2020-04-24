@@ -26,8 +26,7 @@ def automl_eval_metrics(
   thresholds: str = '{"mean_absolute_error": 460}',
   confidence_threshold: float = 0.5  # for classification
 
-# ) -> NamedTuple('Outputs', [('deploy', str)]):  # this gives the same result
-) -> NamedTuple('Outputs', [('deploy', 'String')]):
+) -> NamedTuple('Outputs', [('deploy', str)]):
   import subprocess
   import sys
   subprocess.run([sys.executable, '-m', 'pip', 'install', 'googleapis-common-protos==1.6.0',

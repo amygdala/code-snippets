@@ -38,7 +38,6 @@ implementation:
         thresholds  = '{"mean_absolute_error": 460}',
         confidence_threshold  = 0.5  # for classification
 
-      # ) -> NamedTuple('Outputs', [('deploy', str)]):  # this gives the same result
       )    :
         import subprocess
         import sys
