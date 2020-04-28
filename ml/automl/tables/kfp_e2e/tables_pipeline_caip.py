@@ -120,7 +120,8 @@ def automl_tables(  #pylint: disable=unused-argument
     gcp_project_id=gcp_project_id,
     gcp_region=gcp_region,
     bucket_name=bucket_name,
-    gcs_path='automl_evals/{}'.format(dsl.RUN_ID_PLACEHOLDER),
+    # gcs_path='automl_evals/{}'.format(dsl.RUN_ID_PLACEHOLDER),
+    gcs_path='automl_evals/{}'.format(train_model.outputs['model_display_name']),
     api_endpoint=api_endpoint,
     model_display_name=train_model.outputs['model_display_name']
     )

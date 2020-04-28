@@ -16,7 +16,7 @@ from typing import NamedTuple
 from kfp.components import InputPath, OutputPath
 
 
-# An example of how the model eval info could be used to make decisions aboiut whether or not
+# An example of how the model eval info could be used to make decisions about whether or not
 # to deploy the model.
 def automl_eval_metrics(
   eval_data_path: InputPath('evals'),
@@ -127,7 +127,7 @@ def automl_eval_metrics(
           }]}
         metrics = {
           'metrics': [{
-            'name': 'MAE',
+            'name': 'mae',
             'numberValue':  eresults['mean_absolute_error'],
             'format': "RAW",
           }]
