@@ -139,7 +139,7 @@ implementation:
                 }]}
               metrics = {
                 'metrics': [{
-                  'name': 'MAE',
+                  'name': 'mae',
                   'numberValue':  eresults['mean_absolute_error'],
                   'format': "RAW",
                 }]
