@@ -1,0 +1,16 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: ktuner-chief
+  name: ktuner-chief
+  namespace: default
+spec:
+  ports:
+  - name: grpc
+    port: 9000
+    targetPort: 9000    
+  selector:
+    app: ktuner-chief
+  type: ClusterIP

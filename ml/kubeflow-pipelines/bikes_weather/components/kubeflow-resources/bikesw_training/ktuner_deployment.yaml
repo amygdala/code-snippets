@@ -1,0 +1,38 @@
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: ktuner-tuner
+  name: ktuner-dep
+  namespace: default
+spec:
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: ktuner-tuner
+        version: v1
+    spec:
+      containers:
+      - args:
+        - --epochs=2
+        - --tuner-dir=gs://aju-pipelines/hptest2
+        - --tuner-proj=p3
+        image: gcr.io/aju-vtests2/ml-pipeline-bikes-tuner
+        env:
+        - name: KERASTUNER_TUNER_ID
+          value: tuner1
+        - name: KERASTUNER_ORACLE_IP
+          value: ktuner-chief
+        - name: KERASTUNER_ORACLE_PORT
+          value: "9000"
+        imagePullPolicy: Always
+        name: kktuner-tuner
+        ports:
+        - name: tuner-port
+          containerPort: 9000
+        resources:
+          limits:
+            nvidia.com/gpu: 1
+            memory: 16Gi
