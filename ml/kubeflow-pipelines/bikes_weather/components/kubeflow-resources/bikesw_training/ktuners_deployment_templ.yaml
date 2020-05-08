@@ -1,13 +1,13 @@
 ---
-apiVersion: extensions/v1beta1
-kind: Deployment
+apiVersion: batch/v1
+kind: Job
 metadata:
   labels:
     app: ktuner-tuner
-  name: ktuner-dep
-  namespace: default
+  name: KTUNER_NAME
+  namespace: NAMESPACE
 spec:
-  replicas: 2
+  # replicas: 1
   template:
     metadata:
       labels:
@@ -16,13 +16,14 @@ spec:
     spec:
       containers:
       - args:
-        - --epochs=2
-        - --tuner-dir=gs://aju-pipelines/hptest2
-        - --tuner-proj=p3
+        - --epochs=EPOCHS
+        - --tuner-dir=TUNER_DIR
+        - --tuner-proj=TUNER_PROJ
+        - --max-trials=MAX_TRIALS
         image: gcr.io/aju-vtests2/ml-pipeline-bikes-tuner
         env:
         - name: KERASTUNER_TUNER_ID
-          value: tuner1
+          value: KTUNER_ID
         - name: KERASTUNER_ORACLE_IP
           value: ktuner-chief
         - name: KERASTUNER_ORACLE_PORT
@@ -32,7 +33,8 @@ spec:
         ports:
         - name: tuner-port
           containerPort: 9000
-        resources:
-          limits:
-            nvidia.com/gpu: 1
-            memory: 16Gi
+        # resources:
+        #   limits:
+        #     nvidia.com/gpu: 1
+        #     memory: 20Gi
+      restartPolicy: Never

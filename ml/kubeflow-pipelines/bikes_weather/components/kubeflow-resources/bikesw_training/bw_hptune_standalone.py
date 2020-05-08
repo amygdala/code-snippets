@@ -171,7 +171,13 @@ def main():
       required=True) 
   parser.add_argument(
       '--tuner-dir',
-      required=True)            
+      required=True)
+  parser.add_argument(
+      '--executions-per-trial', type=int,
+      default=1)
+  parser.add_argument(
+      '--max-trials', type=int,
+      default=20)              
   parser.add_argument(
       '--data-dir',
       default='gs://aju-dev-demos-codelabs/bikes_weather/')
@@ -182,7 +188,7 @@ def main():
 
   TRAIN_DATA_PATTERN = args.data_dir + "train*"
   EVAL_DATA_PATTERN = args.data_dir + "test*"
-  OUTPUT_DIR='{}/bwmodel/trained_model'.format(args.tuner_dir)
+  OUTPUT_DIR='{}/{}/bwmodel/trained_model'.format(args.tuner_dir, args.tuner_proj)
   logging.info('Writing trained model to {}'.format(OUTPUT_DIR))
   # learning_rate = 0.001
 
@@ -206,9 +212,9 @@ def main():
       objective='val_mae',
       # max_epochs=10,
       # hyperband_iterations=2,
-      max_trials=25,
+      max_trials=args.max_trials,
       # distribution_strategy=tf.distribute.MirroredStrategy(),
-      executions_per_trial=1,
+      executions_per_trial=args.executions_per_trial,
       directory=args.tuner_dir,
       project_name=args.tuner_proj
     )

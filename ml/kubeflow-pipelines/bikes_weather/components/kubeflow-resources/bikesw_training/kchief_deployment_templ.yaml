@@ -1,13 +1,29 @@
 ---
-apiVersion: extensions/v1beta1
-kind: Deployment
+  apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      app: ktuner-chief
+    name: ktuner-chief
+    namespace: NAMESPACE
+  spec:
+    ports:
+    - name: grpc
+      port: 9000
+      targetPort: 9000
+    selector:
+      app: ktuner-chief
+    type: ClusterIP
+---
+apiVersion: batch/v1
+kind: Job
 metadata:
   labels:
     app: ktuner-chief
   name: kchief-dep
-  namespace: default
+  namespace: NAMESPACE
 spec:
-  replicas: 1
+  # replicas: 1
   template:
     metadata:
       labels:
@@ -16,15 +32,14 @@ spec:
     spec:
       containers:
       - args:
-        - --epochs=2
-        - --tuner-dir=gs://aju-pipelines/hptest2
-        - --tuner-proj=p3
+        - --epochs=EPOCHS
+        - --tuner-dir=TUNER_DIR
+        - --tuner-proj=TUNER_PROJ
+        - --max-trials=MAX_TRIALS
         image: gcr.io/aju-vtests2/ml-pipeline-bikes-tuner
         env:
         - name: KERASTUNER_TUNER_ID
           value: chief
-        # - name: KERASTUNER_ORACLE_IP
-          # value: 10.60.2.37
         - name: KERASTUNER_ORACLE_IP
           valueFrom:
             fieldRef:
@@ -40,3 +55,4 @@ spec:
           limits:
             cpu: 1
             memory: 2Gi
+      restartPolicy: Never
