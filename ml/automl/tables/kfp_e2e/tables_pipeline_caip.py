@@ -21,10 +21,6 @@ import time
 
 DEFAULT_SCHEMA = json.dumps({"end_station_id": ["CATEGORY", True], "start_station_id": ["CATEGORY", True],
   "loc_cross": ["CATEGORY", True], "bike_id": ["CATEGORY", True]})
-# DEFAULT_SCHEMA = json.dumps({"accepted_answer_id": ["CATEGORY", True], "id": ["CATEGORY", True],
-    # "last_editor_display_name": ["CATEGORY", True], "last_editor_user_id": ["CATEGORY", True],
-    # "owner_display_name": ["CATEGORY", True], "owner_user_id": ["CATEGORY", True],
-    # "parent_id": ["CATEGORY", True], "post_type_id": ["CATEGORY", True], "tags": ["CATEGORY", True]})
 
 
 create_dataset_op = comp.load_component_from_file(
@@ -65,11 +61,9 @@ def automl_tables(  #pylint: disable=unused-argument
   model_prefix: str = 'bwmodel',
   # one of strings: [MAXIMIZE_AU_ROC, MAXIMIZE_AU_PRC, MINIMIZE_LOG_LOSS, MAXIMIZE_RECALL_AT_PRECISION, MAXIMIZE_PRECISION_AT_RECALL, MINIMIZE_RMSE, MINIMIZE_MAE, MINIMIZE_RMSLE]
   optimization_objective: str = '',  # if not set, will use default
-  # ["title", "body", "answer_count", "comment_count", "creation_date", "favorite_count", "owner_user_id", "score", "view_count"]
   include_column_spec_names: str = '',
   exclude_column_spec_names: str = '',
   bucket_name: str = 'YOUR_BUCKET_NAME',
-  # thresholds: str = '{"au_prc": 0.9}',
   thresholds: str = '{"mean_absolute_error": 480}',
   ):
 
