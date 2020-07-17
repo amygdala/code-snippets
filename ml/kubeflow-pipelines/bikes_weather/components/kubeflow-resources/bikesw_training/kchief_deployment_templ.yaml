@@ -4,7 +4,7 @@
   metadata:
     labels:
       app: ktuner-chief
-    name: ktuner-chief
+    name: KTUNER_CHIEF
     namespace: NAMESPACE
   spec:
     ports:
@@ -20,7 +20,7 @@ kind: Job
 metadata:
   labels:
     app: ktuner-chief
-  name: kchief-dep
+  name: KTUNER_CHIEF-dep
   namespace: NAMESPACE
 spec:
   # replicas: 1

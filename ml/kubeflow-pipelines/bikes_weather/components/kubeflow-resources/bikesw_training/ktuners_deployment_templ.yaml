@@ -4,7 +4,7 @@ kind: Job
 metadata:
   labels:
     app: ktuner-tuner
-  name: KTUNER_NAME
+  name: KTUNER_DEP_NAME
   namespace: NAMESPACE
 spec:
   # replicas: 1
@@ -25,7 +25,7 @@ spec:
         - name: KERASTUNER_TUNER_ID
           value: KTUNER_ID
         - name: KERASTUNER_ORACLE_IP
-          value: ktuner-chief
+          value: KTUNER_CHIEF
         - name: KERASTUNER_ORACLE_PORT
           value: "9000"
         imagePullPolicy: Always
