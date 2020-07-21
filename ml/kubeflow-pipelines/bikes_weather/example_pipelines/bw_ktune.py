@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import time 
 
 import kfp.dsl as dsl
 import kfp.gcp as gcp
@@ -31,20 +32,40 @@ from kfp.dsl.types import GCSPath, String
   description='Model bike rental duration given weather, use Keras Tuner'
 )
 def bikes_weather_hptune(  #pylint: disable=unused-argument
-  epochs: int = 2,
+  tune_epochs: int = 2,
+  train_epochs: int = 3,
   num_tuners: int = 3,
-  tuner_dir: str = 'gs://aju-pipelines/hptest2',
+  bucket_name: str = 'aju-pipelines',
+  tuner_dir_prefix: str = 'hptest',
   tuner_proj: str = 'p1',
-  max_trials:int = 8
+  max_trials: int = 32,
+  working_dir: str = 'gs://YOUR_GCS_DIR_HERE',
+  data_dir: str = 'gs://aju-dev-demos-codelabs/bikes_weather/',
+  steps_per_epoch: int = -1 ,  # if -1, don't override normal calcs based on dataset size
+  # load_checkpoint: str = ''
   ):
 
   hptune = dsl.ContainerOp(
       name='ktune',
-      image='gcr.io/aju-vtests2/ml-pipeline-bikes-dep:v3',
-      arguments=['--epochs', epochs, '--num-tuners', num_tuners, '--tuner-dir', tuner_dir,
-          '--tuner-proj', tuner_proj, '--max-trials', max_trials
-          ]
+      image='gcr.io/aju-vtests2/ml-pipeline-bikes-dep:v2',
+      arguments=['--epochs', tune_epochs, '--num-tuners', num_tuners, 
+          '--tuner-dir', '{}_{}'.format(tuner_dir_prefix, int(time.time())),
+          '--tuner-proj', tuner_proj, '--bucket-name', bucket_name, '--max-trials', max_trials,
+          '--deploy'
+          ],
+      file_outputs={'hps': '/tmp/hps.json'},
       )
+  train = dsl.ContainerOp(
+      name='train',
+      image='gcr.io/aju-vtests2/ml-pipeline-bikes-train:v2',
+      arguments=[
+          '--data-dir', data_dir, '--steps-per-epoch', steps_per_epoch,
+          '--workdir', '%s/%s' % (working_dir, dsl.RUN_ID_PLACEHOLDER),
+          # '--load-checkpoint', load_checkpoint,
+          '--epochs', train_epochs, '--hptune-results', hptune.outputs['hps']
+          ],
+      file_outputs={'train_output_path': '/tmp/train_output_path.txt'},
+    )
 
   # train = train_op(
   #   data_dir=data_dir,
@@ -59,7 +80,7 @@ def bikes_weather_hptune(  #pylint: disable=unused-argument
   #   model_name='bikesw'
   #   ).apply(gcp.use_gcp_secret('user-gcp-sa'))
 
-  # train.set_gpu_limit(1)
+  train.set_gpu_limit(1)
 
 if __name__ == '__main__':
   import kfp.compiler as compiler

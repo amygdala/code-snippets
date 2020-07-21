@@ -14,12 +14,16 @@
 
 
 import argparse
-import os
-import time
+import json
 import logging
+import os
 import subprocess
-# import requests
+import time
 
+from google.cloud import storage
+
+
+OUTPUT_PATH = '/tmp/hps.json'
 
 def main():
   parser = argparse.ArgumentParser(description='Keras distributed tuner')
@@ -28,6 +32,8 @@ def main():
   parser.add_argument(
       '--num-tuners', type=int, required=True)
   parser.add_argument(
+      '--bucket-name', required=True)
+  parser.add_argument(
       '--tuner-dir', required=True)
   parser.add_argument(
       '--tuner-proj', required=True)
@@ -35,18 +41,14 @@ def main():
       '--max-trials', type=int, required=True)
   parser.add_argument(
       '--namespace', default='default')
-      
-  args = parser.parse_args()
+  parser.add_argument('--deploy', default=False, action='store_true')
+  parser.add_argument('--no-deploy', dest='deploy', action='store_false')
 
+  args = parser.parse_args()
   logging.getLogger().setLevel(logging.INFO)
   args_dict = vars(args)
-  # # Get cluster name and zone from metadata
-  # metadata_server = "http://metadata/computeMetadata/v1/instance/"
-  # metadata_flavor = {'Metadata-Flavor' : 'Google'}
-  # cluster = requests.get(metadata_server + "attributes/cluster-name",
-  #                         headers=metadata_flavor).text
-  # zone = requests.get(metadata_server + "zone",
-  #                     headers=metadata_flavor).text.split('/')[-1]
+  tuner_path = 'gs://{}/{}'.format(args.bucket_name, args.tuner_dir)
+  logging.info('tuner path: %s', tuner_path)
 
   logging.info('Generating tuner deployment templates.')
   ts = int(time.time())
@@ -63,7 +65,7 @@ def main():
     with open(chief_file_path, "w") as target:
       data = f.read()
       changed = data.replace('EPOCHS', str(args.epochs)).replace(
-          'TUNER_DIR', args.tuner_dir).replace('NAMESPACE', args.namespace).replace(
+          'TUNER_DIR', tuner_path).replace('NAMESPACE', args.namespace).replace(
           'TUNER_PROJ', args.tuner_proj).replace('MAX_TRIALS', str(args.max_trials)).replace(
           'KTUNER_CHIEF', KTUNER_CHIEF)
       target.write(changed)
@@ -80,33 +82,53 @@ def main():
       data = f.read()
       for i in range(args.num_tuners):
         changed = data.replace('EPOCHS', str(args.epochs)).replace(
-            'TUNER_DIR', args.tuner_dir).replace('NAMESPACE', args.namespace).replace(
+            'TUNER_DIR', tuner_path).replace('NAMESPACE', args.namespace).replace(
             'TUNER_PROJ', args.tuner_proj).replace('KTUNER_CHIEF', KTUNER_CHIEF).replace(
-            'MAX_TRIALS', str(args.max_trials))      
+            'MAX_TRIALS', str(args.max_trials))
         changed = changed.replace(
             'KTUNER_DEP_NAME', KTUNER_DEP_PREFIX +'{}'.format(i)).replace(
             'KTUNER_ID', 'tuner{}'.format(i))
         target.write(changed)
 
-  logging.info('deploying chief...')
-  subprocess.call(['kubectl', 'apply', '-f', chief_file_path])
-  logging.info('pausing before tuner worker deployment...')
-  time.sleep(120)
-  logging.info('deploying tuners...')
-  subprocess.call(['kubectl', 'apply', '-f', tuner_file_path])
-  logging.info('finished deployments.')
+  if args.deploy:
+    logging.info('deploying chief...')
+    subprocess.call(['kubectl', 'apply', '-f', chief_file_path])
+    logging.info('pausing before tuner worker deployment...')
+    time.sleep(120)
+    logging.info('deploying tuners...')
+    subprocess.call(['kubectl', 'apply', '-f', tuner_file_path])
+    logging.info('finished deployments.')
 
-  logging.info('pausing before start the wait for job completion...')
-  time.sleep(180)
-  # wait for all the tuner workers to complete
-  for i in range(args.num_tuners):  # hmm...
-    logging.info('waiting for completion of tuner %s...', i)
-    # negative timeout value --> one week
-    subprocess.call(['kubectl', 'wait', '--for=condition=complete', '--timeout=-1m', 'job/{}{}'.format(KTUNER_DEP_PREFIX, i)])  
-  
+    logging.info('pausing 5 mins before starting the wait for job completion...')
+    time.sleep(300)
+    # wait for all the tuner workers to complete
+    for i in range(args.num_tuners):  # hmm...
+      logging.info('waiting for completion of tuner %s...', i)
+      # negative timeout value --> one week
+      subprocess.call(['kubectl', '-n={}'.format(args.namespace), 'wait',
+              '--for=condition=complete', '--timeout=-1m', 'job/{}{}'.format(KTUNER_DEP_PREFIX, i)])
+
+  # parse the final oracle.json file to get the best params
+  # (is there a more preferred way to do this?)
+
+  client = storage.Client()
+  bucket = client.get_bucket(args.bucket_name)
+  blob = bucket.get_blob('{}/{}/oracle.json'.format(args.tuner_dir, args.tuner_proj))  
+
+  oracle_json_str = blob.download_as_string()
+  logging.info('got oracle info: %s', oracle_json_str)
+  oracle_json = json.loads(oracle_json_str)
+  logging.info('oracle json: %s', oracle_json)
+  o_values = oracle_json['hyperparameters']['values']
+  hp_values_str = json.dumps(o_values)
+  logging.info('oracle values: %s', hp_values_str)
+
+  with open(OUTPUT_PATH, 'w') as f:
+    f.write(hp_values_str)
 
 if __name__ == "__main__":
   main()
 
-# python deploy_tuner.py --epochs 2 --num-tuners 3 --tuner-dir gs://aju-pipelines/hptest1 --tuner-proj p2 --max-trials 8
+
 # kubectl create clusterrolebinding sa-admin --clusterrole=cluster-admin --serviceaccount=kubeflow:pipeline-runner
+# kubectl apply -f https://raw.githubusercontent.com/GoogleCloudPlatform/container-engine-accelerators/master/nvidia-driver-installer/cos/daemonset-preloaded.yaml

@@ -1,3 +1,4 @@
+#!/bin/bash -e
 # Copyright 2019 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,12 +13,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM tensorflow/tensorflow:2.0.0-gpu-py3
 
-RUN pip install --upgrade pip
-RUN pip install pathlib2
+if [ -z "$1" ]
+  then
+    PROJECT_ID=$(gcloud config config-helper --format "value(configuration.properties.core.project)")
+else
+  PROJECT_ID=$1
+fi
 
+mkdir -p ./build
+rsync -arvp "../../bikesw_training/"/ ./build/
 
-ADD build /ml
+docker build -t ml-pipeline-bikes-tuner .
+rm -rf ./build
 
-ENTRYPOINT ["python", "/ml/bikes_weather_limited.py"]
+docker tag ml-pipeline-bikes-tuner gcr.io/${PROJECT_ID}/ml-pipeline-bikes-tuner
+docker push gcr.io/${PROJECT_ID}/ml-pipeline-bikes-tuner

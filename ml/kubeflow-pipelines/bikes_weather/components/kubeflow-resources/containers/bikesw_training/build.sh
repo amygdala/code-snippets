@@ -22,10 +22,10 @@ else
 fi
 
 mkdir -p ./build
-rsync -arvp "../../bikesw_training/"/ ./build/
+rsync -arvp "../../bikesw_training"/ ./build/
 
-docker build -t ml-pipeline-bikes-tuner .
+docker build -t ml-pipeline-bikes-train .
 rm -rf ./build
 
-docker tag ml-pipeline-bikes-tuner gcr.io/${PROJECT_ID}/ml-pipeline-bikes-tuner
-docker push gcr.io/${PROJECT_ID}/ml-pipeline-bikes-tuner
+docker tag ml-pipeline-bikes-train gcr.io/${PROJECT_ID}/ml-pipeline-bikes-train
+docker push gcr.io/${PROJECT_ID}/ml-pipeline-bikes-train

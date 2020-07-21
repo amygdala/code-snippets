@@ -33,8 +33,6 @@ spec:
         ports:
         - name: tuner-port
           containerPort: 9000
-        # resources:
-        #   limits:
-        #     nvidia.com/gpu: 1
-        #     memory: 20Gi
+        resources:
+          limits: {nvidia.com/gpu: 1}
       restartPolicy: Never
