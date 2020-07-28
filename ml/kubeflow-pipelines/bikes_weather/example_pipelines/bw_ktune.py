@@ -22,8 +22,8 @@ from kfp.dsl.types import GCSPath, String
 # train_op = comp.load_component_from_url(
 #   'https://raw.githubusercontent.com/amygdala/code-snippets/master/ml/kubeflow-pipelines/sbtb/components/train_component.yaml' # pylint: disable=line-too-long
 #   )
-serve_op = comp.load_component_from_url(
-  'https://raw.githubusercontent.com/amygdala/code-snippets/master/ml/kubeflow-pipelines/sbtb/components/serve_component.yaml' # pylint: disable=line-too-long
+serve_op = comp.load_component_from_file(
+  '/Users/amyu/devrel/code-snippets/ml/kubeflow-pipelines/bikes_weather/components/serve_component_a.yaml' # pylint: disable=line-too-long
   )
 
 
@@ -39,7 +39,7 @@ def bikes_weather_hptune(  #pylint: disable=unused-argument
   tuner_dir_prefix: str = 'hptest',
   tuner_proj: str = 'p1',
   max_trials: int = 32,
-  working_dir: str = 'gs://YOUR_GCS_DIR_HERE',
+  working_dir: str = 'gs://aju-pipelines/ktune5',
   data_dir: str = 'gs://aju-dev-demos-codelabs/bikes_weather/',
   steps_per_epoch: int = -1 ,  # if -1, don't override normal calcs based on dataset size
   # load_checkpoint: str = ''
@@ -47,37 +47,30 @@ def bikes_weather_hptune(  #pylint: disable=unused-argument
 
   hptune = dsl.ContainerOp(
       name='ktune',
-      image='gcr.io/aju-vtests2/ml-pipeline-bikes-dep:v5',
+      image='gcr.io/aju-vtests2/ml-pipeline-bikes-dep:v6',
       arguments=['--epochs', tune_epochs, '--num-tuners', num_tuners, 
           '--tuner-dir', '{}_{}'.format(tuner_dir_prefix, int(time.time())),
           '--tuner-proj', tuner_proj, '--bucket-name', bucket_name, '--max-trials', max_trials,
+          '--namespace', 'default',
           '--deploy'
           ],
       file_outputs={'hps': '/tmp/hps.json'},
       )
   train = dsl.ContainerOp(
       name='train',
-      image='gcr.io/aju-vtests2/ml-pl-bikes-train:v1',
+      image='gcr.io/aju-vtests2/ml-pl-bikes-train:v2',
       arguments=[
           '--data-dir', data_dir, '--steps-per-epoch', steps_per_epoch,
           '--workdir', '%s/%s' % (working_dir, dsl.RUN_ID_PLACEHOLDER),
-          # '--load-checkpoint', load_checkpoint,
           '--epochs', train_epochs, '--hptune-results', hptune.outputs['hps']
           ],
       file_outputs={'train_output_path': '/tmp/train_output_path.txt'},
     )
 
-  # train = train_op(
-  #   data_dir=data_dir,
-  #   workdir='%s/%s' % (working_dir, dsl.RUN_ID_PLACEHOLDER),
-  #   epochs=epochs, steps_per_epoch=steps_per_epoch,
-  #   load_checkpoint=load_checkpoint
-  #   ).apply(gcp.use_gcp_secret('user-gcp-sa'))
-
-
   serve = serve_op(
     model_path=train.outputs['train_output_path'],
-    model_name='bikesw'
+    model_name='bikesw',
+    namespace='kubeflow'
     )
 
   train.set_gpu_limit(2)
@@ -85,3 +78,11 @@ def bikes_weather_hptune(  #pylint: disable=unused-argument
 if __name__ == '__main__':
   import kfp.compiler as compiler
   compiler.Compiler().compile(bikes_weather_hptune, __file__ + '.tar.gz')
+
+
+  # train = train_op(
+  #   data_dir=data_dir,
+  #   workdir='%s/%s' % (working_dir, dsl.RUN_ID_PLACEHOLDER),
+  #   epochs=epochs, steps_per_epoch=steps_per_epoch,
+  #   load_checkpoint=load_checkpoint
+  #   ).apply(gcp.use_gcp_secret('user-gcp-sa'))
