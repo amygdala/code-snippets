@@ -99,10 +99,15 @@ def main():
     subprocess.call(['kubectl', 'apply', '-f', tuner_file_path])
     logging.info('finished deployments.')
 
-    logging.info('pausing 5 mins before starting the wait for job completion...')
-    time.sleep(300)
+    # wait for the tuner pods to be ready... if we're autoscaling the GPU pool,
+    # this might take a while.
+    for i in range(args.num_tuners):  
+      logging.info('waiting for tuner %s pod to be ready...', i)
+      subprocess.call(['kubectl', '-n={}'.format(args.namespace), 'wait', 'pod',
+              '--for=condition=ready', '--timeout=15m', '-l=job-name={}{}'.format(KTUNER_DEP_PREFIX, i)])    
+
     # wait for all the tuner workers to complete
-    for i in range(args.num_tuners):  # hmm...
+    for i in range(args.num_tuners):
       logging.info('waiting for completion of tuner %s...', i)
       # negative timeout value --> one week
       subprocess.call(['kubectl', '-n={}'.format(args.namespace), 'wait',

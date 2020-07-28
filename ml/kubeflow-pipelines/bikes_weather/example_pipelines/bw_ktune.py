@@ -22,9 +22,9 @@ from kfp.dsl.types import GCSPath, String
 # train_op = comp.load_component_from_url(
 #   'https://raw.githubusercontent.com/amygdala/code-snippets/master/ml/kubeflow-pipelines/sbtb/components/train_component.yaml' # pylint: disable=line-too-long
 #   )
-# serve_op = comp.load_component_from_url(
-#   'https://raw.githubusercontent.com/amygdala/code-snippets/master/ml/kubeflow-pipelines/sbtb/components/serve_component.yaml' # pylint: disable=line-too-long
-#   )
+serve_op = comp.load_component_from_url(
+  'https://raw.githubusercontent.com/amygdala/code-snippets/master/ml/kubeflow-pipelines/sbtb/components/serve_component.yaml' # pylint: disable=line-too-long
+  )
 
 
 @dsl.pipeline(
@@ -47,7 +47,7 @@ def bikes_weather_hptune(  #pylint: disable=unused-argument
 
   hptune = dsl.ContainerOp(
       name='ktune',
-      image='gcr.io/aju-vtests2/ml-pipeline-bikes-dep:v2',
+      image='gcr.io/aju-vtests2/ml-pipeline-bikes-dep:v5',
       arguments=['--epochs', tune_epochs, '--num-tuners', num_tuners, 
           '--tuner-dir', '{}_{}'.format(tuner_dir_prefix, int(time.time())),
           '--tuner-proj', tuner_proj, '--bucket-name', bucket_name, '--max-trials', max_trials,
@@ -57,7 +57,7 @@ def bikes_weather_hptune(  #pylint: disable=unused-argument
       )
   train = dsl.ContainerOp(
       name='train',
-      image='gcr.io/aju-vtests2/ml-pipeline-bikes-train:v2',
+      image='gcr.io/aju-vtests2/ml-pl-bikes-train:v1',
       arguments=[
           '--data-dir', data_dir, '--steps-per-epoch', steps_per_epoch,
           '--workdir', '%s/%s' % (working_dir, dsl.RUN_ID_PLACEHOLDER),
@@ -75,12 +75,12 @@ def bikes_weather_hptune(  #pylint: disable=unused-argument
   #   ).apply(gcp.use_gcp_secret('user-gcp-sa'))
 
 
-  # serve = serve_op(
-  #   model_path=train.outputs['train_output_path'],
-  #   model_name='bikesw'
-  #   ).apply(gcp.use_gcp_secret('user-gcp-sa'))
+  serve = serve_op(
+    model_path=train.outputs['train_output_path'],
+    model_name='bikesw'
+    )
 
-  train.set_gpu_limit(1)
+  train.set_gpu_limit(2)
 
 if __name__ == '__main__':
   import kfp.compiler as compiler
