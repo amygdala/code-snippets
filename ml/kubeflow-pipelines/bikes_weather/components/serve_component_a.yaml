@@ -27,7 +27,7 @@ inputs:
     type: String    
 implementation:
   container:
-    image: gcr.io/aju-vtests2/ml-pipeline-tfserve:v1
+    image: gcr.io/aju-vtests2/ml-pipeline-tfserve:v2
     args: [
       --model_name, {inputValue: model_name},
       --model_path, {inputValue: model_path},

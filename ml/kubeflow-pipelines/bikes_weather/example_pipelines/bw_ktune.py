@@ -12,12 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import time 
 
 import kfp.dsl as dsl
 import kfp.gcp as gcp
 import kfp.components as comp
-from kfp.dsl.types import GCSPath, String
+# from kfp.dsl.types import GCSPath, String
 
 # train_op = comp.load_component_from_url(
 #   'https://raw.githubusercontent.com/amygdala/code-snippets/master/ml/kubeflow-pipelines/sbtb/components/train_component.yaml' # pylint: disable=line-too-long
@@ -32,14 +31,14 @@ serve_op = comp.load_component_from_file(
   description='Model bike rental duration given weather, use Keras Tuner'
 )
 def bikes_weather_hptune(  #pylint: disable=unused-argument
-  tune_epochs: int = 2,
-  train_epochs: int = 3,
-  num_tuners: int = 3,
+  tune_epochs: int = 4,
+  train_epochs: int = 10,
+  num_tuners: int = 6,
   bucket_name: str = 'aju-pipelines',
   tuner_dir_prefix: str = 'hptest',
   tuner_proj: str = 'p1',
-  max_trials: int = 32,
-  working_dir: str = 'gs://aju-pipelines/ktune5',
+  max_trials: int = 128,
+  working_dir: str = 'gs://aju-pipelines/ktune7',
   data_dir: str = 'gs://aju-dev-demos-codelabs/bikes_weather/',
   steps_per_epoch: int = -1 ,  # if -1, don't override normal calcs based on dataset size
   # load_checkpoint: str = ''
@@ -47,9 +46,9 @@ def bikes_weather_hptune(  #pylint: disable=unused-argument
 
   hptune = dsl.ContainerOp(
       name='ktune',
-      image='gcr.io/aju-vtests2/ml-pipeline-bikes-dep:v6',
-      arguments=['--epochs', tune_epochs, '--num-tuners', num_tuners, 
-          '--tuner-dir', '{}_{}'.format(tuner_dir_prefix, int(time.time())),
+      image='gcr.io/aju-vtests2/ml-pipeline-bikes-dep:vxx',
+      arguments=['--epochs', tune_epochs, '--num-tuners', num_tuners,
+          '--tuner-dir', '%s/%s' % (tuner_dir_prefix, dsl.RUN_ID_PLACEHOLDER),
           '--tuner-proj', tuner_proj, '--bucket-name', bucket_name, '--max-trials', max_trials,
           '--namespace', 'default',
           '--deploy'
@@ -58,7 +57,7 @@ def bikes_weather_hptune(  #pylint: disable=unused-argument
       )
   train = dsl.ContainerOp(
       name='train',
-      image='gcr.io/aju-vtests2/ml-pl-bikes-train:v2',
+      image='gcr.io/aju-vtests2/ml-pl-bikes-train:v4',
       arguments=[
           '--data-dir', data_dir, '--steps-per-epoch', steps_per_epoch,
           '--workdir', '%s/%s' % (working_dir, dsl.RUN_ID_PLACEHOLDER),

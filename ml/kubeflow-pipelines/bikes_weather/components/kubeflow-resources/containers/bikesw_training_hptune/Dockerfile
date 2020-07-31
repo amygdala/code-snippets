@@ -12,10 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM tensorflow/tensorflow:2.1.0-gpu-py3
+# FROM tensorflow/tensorflow:2.1.0-gpu-py3
+FROM tensorflow/tensorflow:2.3.0-gpu
 
 RUN pip install --upgrade pip
-RUN pip install keras-tuner
+RUN pip install keras-tuner google-cloud-storage
 
 
 ADD build /ml

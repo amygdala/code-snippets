@@ -27,6 +27,8 @@ import numpy as np
 import tensorflow as tf
 from kerastuner.tuners import RandomSearch, Hyperband
 
+from google.cloud import storage
+
 
 DEVELOP_MODE = False
 NBUCKETS = 5 # for embeddings
@@ -141,16 +143,15 @@ def create_model(hp):
   print('num replicas...')
   print(STRATEGY.num_replicas_in_sync)
 
-  # with STRATEGY.scope():  # hmmm
   model = wide_and_deep_classifier(
       inputs,
       linear_feature_columns = sparse.values(),
       dnn_feature_columns = real.values(),
       # dnn_hidden_units = DNN_HIDDEN_UNITS,
-      num_hidden_layers = hp.Int('num_hidden_layers', 2,3, step=1, default=3),
-      dnn_hidden_units1 = hp.Int('hidden_size', 32, 128, step=32, default=96),
+      num_hidden_layers = hp.Int('num_hidden_layers', 2, 5),
+      dnn_hidden_units1 = hp.Int('hidden_size', 32, 256, step=32),
       learning_rate=hp.Choice('learning_rate',
-                    values=[1e-2, 1e-3, 1e-4])
+                    values=[1e-1, 1e-2, 1e-3, 1e-4])
     )
 
   model.summary()
@@ -168,10 +169,15 @@ def main():
       default=-1)  # if set to -1, don't override the normal calcs for this
   parser.add_argument(
       '--tuner-proj',
-      required=True) 
+      required=True)
+  parser.add_argument(
+      '--bucket-name', required=True)      
   parser.add_argument(
       '--tuner-dir',
       required=True)
+  parser.add_argument(
+      '--respath',
+      required=True)      
   parser.add_argument(
       '--executions-per-trial', type=int,
       default=1)
@@ -213,13 +219,14 @@ def main():
       # max_epochs=10,
       # hyperband_iterations=2,
       max_trials=args.max_trials,
-      # distribution_strategy=tf.distribute.MirroredStrategy(),
+      distribution_strategy=STRATEGY,
       executions_per_trial=args.executions_per_trial,
       directory=args.tuner_dir,
       project_name=args.tuner_proj
     )
 
-  tuner.search_space_summary()
+  logging.info("search space summary:")
+  logging.info(tuner.search_space_summary())
 
   checkpoint_path = '{}/checkpoints/bikes_weather.cpt'.format(OUTPUT_DIR)
   logging.info("checkpoint path: %s", checkpoint_path)
@@ -235,8 +242,6 @@ def main():
       validation_steps=eval_batch_size,
       epochs=args.epochs,
       steps_per_epoch=steps_per_epoch,
-      # callbacks=[cp_callback  # , tb_callback
-      # ]
       )
   best_hyperparameters = tuner.get_best_hyperparameters(1)[0]
   logging.info('best hyperparameters: {}, {}'.format(best_hyperparameters, 
@@ -244,8 +249,15 @@ def main():
   best_model = tuner.get_best_models(1)[0]
   logging.info('best model: {}'.format(best_model))
 
-  ts = str(int(time.time()))
-  export_dir = '{}/export/bikesw/{}'.format(OUTPUT_DIR, ts)
+  # aju vv temp hardwiring - arghh, testing
+  # ts = str(int(time.time()))
+  storage_client = storage.Client()
+  # respath = 'hptest_res/{}'.format(ts)
+  logging.info('writing best results to %s', args.respath)
+  bucket = storage_client.get_bucket(args.bucket_name)
+  blob = bucket.blob(args.respath)
+  blob.upload_from_string('{}'.format(best_hyperparameters))
+  
   logging.info('Exporting to {}'.format(export_dir))
 
   try:

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM tensorflow/tensorflow:2.0.0-gpu-py3
+FROM tensorflow/tensorflow:2.1.0-gpu-py3
 
 RUN pip install --upgrade pip
 RUN pip install pathlib2
