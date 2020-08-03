@@ -244,20 +244,22 @@ def main():
       steps_per_epoch=steps_per_epoch,
       )
   best_hyperparameters = tuner.get_best_hyperparameters(1)[0]
+  best_hp_values = json.dumps(best_hyperparameters.values)
+  # best_hp_values = '{}'.format(best_hyperparameters)
   logging.info('best hyperparameters: {}, {}'.format(best_hyperparameters, 
-      best_hyperparameters.values))
+      best_hp_values))
   best_model = tuner.get_best_models(1)[0]
   logging.info('best model: {}'.format(best_model))
 
-  # aju vv temp hardwiring - arghh, testing
-  # ts = str(int(time.time()))
   storage_client = storage.Client()
-  # respath = 'hptest_res/{}'.format(ts)
+  # respath = '{}/{}'.format(args.respath, 'best_params.json')  # arghh
   logging.info('writing best results to %s', args.respath)
   bucket = storage_client.get_bucket(args.bucket_name)
   blob = bucket.blob(args.respath)
-  blob.upload_from_string('{}'.format(best_hyperparameters))
+  blob.upload_from_string(str(best_hp_values))
   
+  ts = str(int(time.time()))
+  export_dir = '{}/export/bikesw/{}'.format(OUTPUT_DIR, ts)
   logging.info('Exporting to {}'.format(export_dir))
 
   try:

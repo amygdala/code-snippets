@@ -48,7 +48,7 @@ def main():
   logging.getLogger().setLevel(logging.INFO)
   args_dict = vars(args)
   tuner_path = 'gs://{}/{}'.format(args.bucket_name, args.tuner_dir)
-  res_path = '{}/{}'.format(args.bucket_name, args.tuner_dir)  
+  res_path = '{}/{}/{}'.format(args.bucket_name, args.tuner_dir, 'bp.txt')
   logging.info('tuner path: %s, res path %s', tuner_path, res_path)
 
   logging.info('Generating tuner deployment templates.')
@@ -123,18 +123,13 @@ def main():
     bucket = client.get_bucket(args.bucket_name)
     blob = bucket.get_blob(res_path)
 
-    # oracle_json_str = blob.download_as_string()
     results_string = blob.download_as_string()
     logging.info('got results info: %s', results_string)
-    # oracle_json = json.loads(oracle_json_str)
-    # logging.info('oracle json: %s', oracle_json)
-    # o_values = oracle_json['hyperparameters']['values']
-    # hp_values_str = json.dumps(o_values)
-    # logging.info('oracle values: %s', hp_values_str)
+    rs = results_string.decode("utf-8")
+    logging.info('rs: %s', rs)
 
     with open(OUTPUT_PATH, 'w') as f:
-      # f.write(hp_values_str)
-      f.write(results_string)
+      f.write(rs)
 
 if __name__ == "__main__":
   main()

@@ -46,7 +46,7 @@ def bikes_weather_hptune(  #pylint: disable=unused-argument
 
   hptune = dsl.ContainerOp(
       name='ktune',
-      image='gcr.io/aju-vtests2/ml-pipeline-bikes-dep:vxx',
+      image='gcr.io/aju-vtests2/ml-pipeline-bikes-dep:xyz3',
       arguments=['--epochs', tune_epochs, '--num-tuners', num_tuners,
           '--tuner-dir', '%s/%s' % (tuner_dir_prefix, dsl.RUN_ID_PLACEHOLDER),
           '--tuner-proj', tuner_proj, '--bucket-name', bucket_name, '--max-trials', max_trials,
@@ -57,7 +57,7 @@ def bikes_weather_hptune(  #pylint: disable=unused-argument
       )
   train = dsl.ContainerOp(
       name='train',
-      image='gcr.io/aju-vtests2/ml-pl-bikes-train:v4',
+      image='gcr.io/aju-vtests2/ml-pl-bikes-train:v5',
       arguments=[
           '--data-dir', data_dir, '--steps-per-epoch', steps_per_epoch,
           '--workdir', '%s/%s' % (working_dir, dsl.RUN_ID_PLACEHOLDER),
