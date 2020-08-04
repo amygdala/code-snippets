@@ -4,6 +4,7 @@ kind: Service
 metadata:
   labels:
     app: SERVICE_NAME
+    apptype: tf-serving
   name: SERVICE_NAME
   namespace: KUBEFLOW_NAMESPACE
 spec:
@@ -23,6 +24,7 @@ kind: Deployment
 metadata:
   labels:
     app: SERVICE_NAME
+    apptype: tf-serving
   name: SERVICE_NAME
   namespace: KUBEFLOW_NAMESPACE
 spec:

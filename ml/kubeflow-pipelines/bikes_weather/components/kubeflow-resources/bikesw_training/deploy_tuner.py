@@ -48,7 +48,8 @@ def main():
   logging.getLogger().setLevel(logging.INFO)
   args_dict = vars(args)
   tuner_path = 'gs://{}/{}'.format(args.bucket_name, args.tuner_dir)
-  logging.info('tuner path: %s', tuner_path)
+  res_path = '{}/{}/{}'.format(args.bucket_name, args.tuner_dir, 'bp.txt')
+  logging.info('tuner path: %s, res path %s', tuner_path, res_path)
 
   logging.info('Generating tuner deployment templates.')
   ts = int(time.time())
@@ -67,7 +68,8 @@ def main():
       changed = data.replace('EPOCHS', str(args.epochs)).replace(
           'TUNER_DIR', tuner_path).replace('NAMESPACE', args.namespace).replace(
           'TUNER_PROJ', args.tuner_proj).replace('MAX_TRIALS', str(args.max_trials)).replace(
-          'KTUNER_CHIEF', KTUNER_CHIEF)
+          'KTUNER_CHIEF', KTUNER_CHIEF).replace('RES_PATH', res_path).replace(
+          'BUCKET_NAME', args.bucket_name)
       target.write(changed)
 
   tuner_file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'ktuners_dep.yaml')
@@ -84,7 +86,8 @@ def main():
         changed = data.replace('EPOCHS', str(args.epochs)).replace(
             'TUNER_DIR', tuner_path).replace('NAMESPACE', args.namespace).replace(
             'TUNER_PROJ', args.tuner_proj).replace('KTUNER_CHIEF', KTUNER_CHIEF).replace(
-            'MAX_TRIALS', str(args.max_trials))
+            'MAX_TRIALS', str(args.max_trials)).replace('RES_PATH', res_path).replace(
+            'BUCKET_NAME', args.bucket_name)
         changed = changed.replace(
             'KTUNER_DEP_NAME', KTUNER_DEP_PREFIX +'{}'.format(i)).replace(
             'KTUNER_ID', 'tuner{}'.format(i))
@@ -113,23 +116,20 @@ def main():
       subprocess.call(['kubectl', '-n={}'.format(args.namespace), 'wait',
               '--for=condition=complete', '--timeout=-1m', 'job/{}{}'.format(KTUNER_DEP_PREFIX, i)])
 
-  # parse the final oracle.json file to get the best params
-  # (is there a more preferred way to do this?)
+    # parse the results to get the best params
+    # (is there a more preferred way to do this?)
 
-  client = storage.Client()
-  bucket = client.get_bucket(args.bucket_name)
-  blob = bucket.get_blob('{}/{}/oracle.json'.format(args.tuner_dir, args.tuner_proj))  
+    client = storage.Client()
+    bucket = client.get_bucket(args.bucket_name)
+    blob = bucket.get_blob(res_path)
 
-  oracle_json_str = blob.download_as_string()
-  logging.info('got oracle info: %s', oracle_json_str)
-  oracle_json = json.loads(oracle_json_str)
-  logging.info('oracle json: %s', oracle_json)
-  o_values = oracle_json['hyperparameters']['values']
-  hp_values_str = json.dumps(o_values)
-  logging.info('oracle values: %s', hp_values_str)
+    results_string = blob.download_as_string()
+    logging.info('got results info: %s', results_string)
+    rs = results_string.decode("utf-8")
+    logging.info('rs: %s', rs)
 
-  with open(OUTPUT_PATH, 'w') as f:
-    f.write(hp_values_str)
+    with open(OUTPUT_PATH, 'w') as f:
+      f.write(rs)
 
 if __name__ == "__main__":
   main()
