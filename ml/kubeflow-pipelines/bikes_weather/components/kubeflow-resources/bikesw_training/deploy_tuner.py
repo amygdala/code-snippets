@@ -121,6 +121,7 @@ def main():
 
     client = storage.Client()
     bucket = client.get_bucket(args.bucket_name)
+    logging.info('using bucket %s: %s, path %s', args.bucket_name, bucket, res_path)
     blob = bucket.get_blob(res_path)
 
     results_string = blob.download_as_string()

@@ -180,7 +180,7 @@ def main():
       required=True)      
   parser.add_argument(
       '--executions-per-trial', type=int,
-      default=1)
+      default=2)
   parser.add_argument(
       '--max-trials', type=int,
       default=20)              
@@ -245,18 +245,20 @@ def main():
       )
   best_hyperparameters = tuner.get_best_hyperparameters(1)[0]
   best_hp_values = json.dumps(best_hyperparameters.values)
-  # best_hp_values = '{}'.format(best_hyperparameters)
   logging.info('best hyperparameters: {}, {}'.format(best_hyperparameters, 
       best_hp_values))
   best_model = tuner.get_best_models(1)[0]
   logging.info('best model: {}'.format(best_model))
 
   storage_client = storage.Client()
-  # respath = '{}/{}'.format(args.respath, 'best_params.json')  # arghh
   logging.info('writing best results to %s', args.respath)
   bucket = storage_client.get_bucket(args.bucket_name)
+  logging.info('using bucket %s: %s, path %s', args.bucket_name, bucket, args.respath)
   blob = bucket.blob(args.respath)
-  blob.upload_from_string(str(best_hp_values))
+  blob.upload_from_string(best_hp_values)
+  # aju temp -- arghh, try separate test 
+  blob2 = bucket.blob('{}/{}'.format(args.tuner_dir, 'arghh.txt'))
+  blob2.upload_from_string('is there something about the string?')
   
   ts = str(int(time.time()))
   export_dir = '{}/export/bikesw/{}'.format(OUTPUT_DIR, ts)
