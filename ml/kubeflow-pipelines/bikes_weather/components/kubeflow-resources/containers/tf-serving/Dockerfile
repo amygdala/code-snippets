@@ -34,16 +34,9 @@ RUN wget -nv https://dl.google.com/dl/cloudsdk/release/google-cloud-sdk.zip && \
     tools/google-cloud-sdk/bin/gcloud config set component_manager/disable_update_check true && \
     touch /tools/google-cloud-sdk/lib/third_party/google.py
 
-# RUN wget -nv https://github.com/ksonnet/ksonnet/releases/download/v0.11.0/ks_0.11.0_linux_amd64.tar.gz && \
-#     tar -xvzf ks_0.11.0_linux_amd64.tar.gz && \
-#     mkdir -p /tools/ks/bin && \
-#     cp ./ks_0.11.0_linux_amd64/ks /tools/ks/bin && \
-#     rm ks_0.11.0_linux_amd64.tar.gz && \
-#     rm -r ks_0.11.0_linux_amd64
 
-ENV PATH $PATH:/tools/google-cloud-sdk/bin:/tools/ks/bin
+ENV PATH $PATH:/tools/google-cloud-sdk/bin
 
 ADD build /ml
 
 ENTRYPOINT ["python", "/ml/deploy-tfserve.py"]
-
