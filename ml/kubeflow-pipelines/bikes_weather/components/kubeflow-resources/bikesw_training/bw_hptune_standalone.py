@@ -56,8 +56,8 @@ def features_and_labels(features):
   features.pop('bike_id')
   return features, label
 
-# def parse_fn(filename): 
-#   return tf.data.Dataset.range(10) 
+# def parse_fn(filename):
+#   return tf.data.Dataset.range(10)
 
 
 def read_dataset(pattern, batch_size, mode=tf.estimator.ModeKeys.TRAIN, truncate=None):
@@ -171,19 +171,22 @@ def main():
       '--tuner-proj',
       required=True)
   parser.add_argument(
-      '--bucket-name', required=True)      
+      '--bucket-name', required=True)
   parser.add_argument(
       '--tuner-dir',
       required=True)
   parser.add_argument(
       '--respath',
-      required=True)      
+      required=True)
   parser.add_argument(
       '--executions-per-trial', type=int,
       default=2)
   parser.add_argument(
       '--max-trials', type=int,
-      default=20)              
+      default=20)
+  parser.add_argument(
+      '--num-best-hps', type=int,
+      default=2)
   parser.add_argument(
       '--data-dir',
       default='gs://aju-dev-demos-codelabs/bikes_weather/')
@@ -243,23 +246,31 @@ def main():
       epochs=args.epochs,
       steps_per_epoch=steps_per_epoch,
       )
-  best_hyperparameters = tuner.get_best_hyperparameters(1)[0]
-  best_hp_values = json.dumps(best_hyperparameters.values)
-  logging.info('best hyperparameters: {}, {}'.format(best_hyperparameters, 
-      best_hp_values))
+  best_hps = tuner.get_best_hyperparameters(args.num_best_hps)
+  # best_hyperparameters = best_hps[0]
+  # next_best_hyperparameters = best_hps[1]
+  # best_hyperparameters = tuner.get_best_hyperparameters(1)[0]
+  best_hps_list = []
+  for i in range(args.num_best_hps):
+    best_hps_list.append(best_hps[i].values)
+  logging.info('best_hps_list: %s', best_hps_list)
+  best_hp_values = json.dumps(best_hps_list)
+  logging.info('best hyperparameters:{}'.format(best_hp_values))
+
   best_model = tuner.get_best_models(1)[0]
   logging.info('best model: {}'.format(best_model))
 
   storage_client = storage.Client()
+  ## TODO: consider writing list that includes 2nd best HPs also...
   logging.info('writing best results to %s', args.respath)
   bucket = storage_client.get_bucket(args.bucket_name)
   logging.info('using bucket %s: %s, path %s', args.bucket_name, bucket, args.respath)
   blob = bucket.blob(args.respath)
   blob.upload_from_string(best_hp_values)
-  # aju temp -- arghh, try separate test 
-  blob2 = bucket.blob('{}/{}'.format(args.tuner_dir, 'arghh.txt'))
-  blob2.upload_from_string('is there something about the string?')
-  
+  # aju temp -- arghh, try separate test
+  # blob2 = bucket.blob('{}/{}'.format(args.tuner_dir, 'arghh.txt'))
+  # blob2.upload_from_string('is there something about the string?')
+
   ts = str(int(time.time()))
   export_dir = '{}/export/bikesw/{}'.format(OUTPUT_DIR, ts)
   logging.info('Exporting to {}'.format(export_dir))

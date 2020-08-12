@@ -20,6 +20,8 @@ spec:
         - --tuner-dir=TUNER_DIR
         - --tuner-proj=TUNER_PROJ
         - --max-trials=MAX_TRIALS
+        - --executions-per-trial=EXECS_PER_TRIAL
+        - --num-best-hps=NUM_BEST_HPS
         - --respath=RES_PATH
         - --bucket-name=BUCKET_NAME
         image: gcr.io/aju-vtests2/ml-pipeline-bikes-tuner

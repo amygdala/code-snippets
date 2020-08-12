@@ -17,7 +17,7 @@ spec:
     targetPort: 8500
   selector:
     app: SERVICE_NAME
-  type: LoadBalancer
+  type: ClusterIP
 ---
 apiVersion: apps/v1
 kind: Deployment
