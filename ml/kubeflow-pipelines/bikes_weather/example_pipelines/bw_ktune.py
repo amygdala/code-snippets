@@ -57,7 +57,7 @@ def bikes_weather_hptune(  #pylint: disable=unused-argument
       )
   train0 = dsl.ContainerOp(
       name='train',
-      image='gcr.io/aju-vtests2/ml-pl-bikes-train:v6',
+      image='gcr.io/aju-vtests2/ml-pl-bikes-train:v7',
       arguments=[
           '--data-dir', data_dir, '--steps-per-epoch', steps_per_epoch,
           '--workdir', '%s/%s0' % (working_dir, dsl.RUN_ID_PLACEHOLDER),
