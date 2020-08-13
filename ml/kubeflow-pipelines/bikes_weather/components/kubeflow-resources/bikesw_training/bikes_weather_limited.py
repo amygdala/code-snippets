@@ -28,64 +28,66 @@ import numpy as np
 import pathlib2
 import tensorflow as tf
 
+import bwmodel.model as bwmodel
+
 DEVELOP_MODE = False
 NBUCKETS = 5 # for embeddings
 NUM_EXAMPLES = 1000*1000 * 20 # assume 20 million examples
 # DNN_HIDDEN_UNITS = '128,64,32'
 
-CSV_COLUMNS  = ('duration,end_station_id,bike_id,ts,day_of_week,start_station_id' +
-                ',start_latitude,start_longitude,end_latitude,end_longitude' +
-                ',euclidean,loc_cross,prcp,max,min,temp,dewp').split(',')
-LABEL_COLUMN = 'duration'
-DEFAULTS     = [[0.0],['na'],['na'],[0.0],['na'],['na'],
-               [0.0],[0.0],[0.0],[0.0],
-               [0.0],['na'],[0.0],[0.0],[0.0],[0.0], [0.0]]
+# CSV_COLUMNS  = ('duration,end_station_id,bike_id,ts,day_of_week,start_station_id' +
+#                 ',start_latitude,start_longitude,end_latitude,end_longitude' +
+#                 ',euclidean,loc_cross,prcp,max,min,temp,dewp').split(',')
+# LABEL_COLUMN = 'duration'
+# DEFAULTS     = [[0.0],['na'],['na'],[0.0],['na'],['na'],
+#                [0.0],[0.0],[0.0],[0.0],
+#                [0.0],['na'],[0.0],[0.0],[0.0],[0.0], [0.0]]
 
 STRATEGY = tf.distribute.MirroredStrategy()
 TRAIN_BATCH_SIZE = 64 * STRATEGY.num_replicas_in_sync
 
 TRAIN_OUTPUT_PATH = '/tmp/train_output_path.txt'
 
-def load_dataset(pattern, batch_size=1):
-  return tf.data.experimental.make_csv_dataset(pattern, batch_size, CSV_COLUMNS, DEFAULTS)
+# def load_dataset(pattern, batch_size=1):
+#   return tf.data.experimental.make_csv_dataset(pattern, batch_size, CSV_COLUMNS, DEFAULTS)
 
-def features_and_labels(features):
-  label = features.pop('duration') # this is what we will train for
-  features.pop('bike_id')
-  return features, label
+# def features_and_labels(features):
+#   label = features.pop('duration') # this is what we will train for
+#   features.pop('bike_id')
+#   return features, label
 
-def read_dataset(pattern, batch_size, mode=tf.estimator.ModeKeys.TRAIN, truncate=None):
-  dataset = load_dataset(pattern, batch_size)
-  dataset = dataset.map(features_and_labels, num_parallel_calls=tf.data.experimental.AUTOTUNE)
-  if mode == tf.estimator.ModeKeys.TRAIN:
-    dataset = dataset.repeat().shuffle(batch_size*10)
-    # dataset = dataset.repeat()
-  dataset = dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
-  # dataset = dataset.prefetch(1)
-  if truncate is not None:
-    dataset = dataset.take(truncate)
-  return dataset
+# def read_dataset(pattern, batch_size, mode=tf.estimator.ModeKeys.TRAIN, truncate=None):
+#   dataset = load_dataset(pattern, batch_size)
+#   dataset = dataset.map(features_and_labels, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+#   if mode == tf.estimator.ModeKeys.TRAIN:
+#     dataset = dataset.repeat().shuffle(batch_size*10)
+#     # dataset = dataset.repeat()
+#   dataset = dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
+#   # dataset = dataset.prefetch(1)
+#   if truncate is not None:
+#     dataset = dataset.take(truncate)
+#   return dataset
 
 
-# Build a wide-and-deep model.
-def wide_and_deep_classifier(inputs, linear_feature_columns, dnn_feature_columns,
-    num_hidden_layers, dnn_hidden_units1, learning_rate):
-    deep = tf.keras.layers.DenseFeatures(dnn_feature_columns, name='deep_inputs')(inputs)
-    # layers = [int(x) for x in dnn_hidden_units.split(',')]
-    layers = [dnn_hidden_units1]
-    if num_hidden_layers > 1:
-      layers += [int(dnn_hidden_units1/(x*2)) for x in range(1, num_hidden_layers)]
-    # layers = [dnn_hidden_units1, dnn_hidden_units1/2, dnn_hidden_units1/4]  # using hp tuning val, but hardwired to 3 layers currently.
-    for layerno, numnodes in enumerate(layers):
-        deep = tf.keras.layers.Dense(numnodes, activation='relu', name='dnn_{}'.format(layerno+1))(deep)
-    wide = tf.keras.layers.DenseFeatures(linear_feature_columns, name='wide_inputs')(inputs)
-    both = tf.keras.layers.concatenate([deep, wide], name='both')
-    output = tf.keras.layers.Dense(1, name='dur')(both)
-    model = tf.keras.Model(inputs, output)
-    optimizer = tf.keras.optimizers.RMSprop(learning_rate)
-    model.compile(loss='mse', optimizer=optimizer,
-                 metrics=['mse', 'mae', tf.keras.metrics.RootMeanSquaredError()])
-    return model
+# # Build a wide-and-deep model.
+# def wide_and_deep_classifier(inputs, linear_feature_columns, dnn_feature_columns,
+#     num_hidden_layers, dnn_hidden_units1, learning_rate):
+#     deep = tf.keras.layers.DenseFeatures(dnn_feature_columns, name='deep_inputs')(inputs)
+#     # layers = [int(x) for x in dnn_hidden_units.split(',')]
+#     layers = [dnn_hidden_units1]
+#     if num_hidden_layers > 1:
+#       layers += [int(dnn_hidden_units1/(x*2)) for x in range(1, num_hidden_layers)]
+#     # layers = [dnn_hidden_units1, dnn_hidden_units1/2, dnn_hidden_units1/4]  # using hp tuning val, but hardwired to 3 layers currently.
+#     for layerno, numnodes in enumerate(layers):
+#         deep = tf.keras.layers.Dense(numnodes, activation='relu', name='dnn_{}'.format(layerno+1))(deep)
+#     wide = tf.keras.layers.DenseFeatures(linear_feature_columns, name='wide_inputs')(inputs)
+#     both = tf.keras.layers.concatenate([deep, wide], name='both')
+#     output = tf.keras.layers.Dense(1, name='dur')(both)
+#     model = tf.keras.Model(inputs, output)
+#     optimizer = tf.keras.optimizers.RMSprop(learning_rate)
+#     model.compile(loss='mse', optimizer=optimizer,
+#                  metrics=['mse', 'mae', tf.keras.metrics.RootMeanSquaredError()])
+#     return model
 
 
 def create_model(learning_rate, hidden_size, num_hidden_layers):
@@ -139,22 +141,8 @@ def create_model(learning_rate, hidden_size, num_hidden_layers):
   print('num replicas...')
   print(STRATEGY.num_replicas_in_sync)
 
-  # with STRATEGY.scope():
-  #   if load_checkpoint:
-  #     learning_rate = 0.0000001
-  #   logging.info("using learning rate {}".format(learning_rate))
-  #   model = wide_and_deep_classifier(
-  #       inputs,
-  #       linear_feature_columns = sparse.values(),
-  #       dnn_feature_columns = real.values(),
-  #       dnn_hidden_units = DNN_HIDDEN_UNITS,
-  #       learning_rate=learning_rate)
-  #   if load_checkpoint:
-  #     logging.info("loading model weights from {}".format(load_checkpoint))
-  #     model.load_weights(load_checkpoint)
-
   with STRATEGY.scope():  # hmmm
-    model = wide_and_deep_classifier(
+    model = bwmodel.wide_and_deep_classifier(
         inputs,
         linear_feature_columns = sparse.values(),
         dnn_feature_columns = real.values(),
@@ -219,8 +207,8 @@ def main():
     steps_per_epoch = args.steps_per_epoch
   logging.info('using {} steps per epoch'.format(steps_per_epoch))
 
-  train_dataset = read_dataset(TRAIN_DATA_PATTERN, train_batch_size)
-  eval_dataset = read_dataset(EVAL_DATA_PATTERN, eval_batch_size, tf.estimator.ModeKeys.EVAL,
+  train_dataset = bwmodel.read_dataset(TRAIN_DATA_PATTERN, train_batch_size)
+  eval_dataset = bwmodel.read_dataset(EVAL_DATA_PATTERN, eval_batch_size, tf.estimator.ModeKeys.EVAL,
      eval_batch_size * 100 * STRATEGY.num_replicas_in_sync
   )
 
