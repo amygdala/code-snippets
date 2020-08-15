@@ -41,7 +41,8 @@ def bikes_weather_hptune(  #pylint: disable=unused-argument
   working_dir: str = 'gs://aju-pipelines/ktune7',
   data_dir: str = 'gs://aju-dev-demos-codelabs/bikes_weather/',
   steps_per_epoch: int = -1 ,  # if -1, don't override normal calcs based on dataset size
-  # load_checkpoint: str = ''
+  num_best_hps: int = 2,
+  num_best_hps_list: list = [0, 1]
   ):
 
   hptune = dsl.ContainerOp(
@@ -50,47 +51,68 @@ def bikes_weather_hptune(  #pylint: disable=unused-argument
       arguments=['--epochs', tune_epochs, '--num-tuners', num_tuners,
           '--tuner-dir', '%s/%s' % (tuner_dir_prefix, dsl.RUN_ID_PLACEHOLDER),
           '--tuner-proj', tuner_proj, '--bucket-name', bucket_name, '--max-trials', max_trials,
-          '--namespace', 'default', '--num-best-hps', 2, '--executions-per-trial', 2,
+          '--namespace', 'default', '--num-best-hps', num_best_hps, '--executions-per-trial', 2,
           '--deploy'
           ],
       file_outputs={'hps': '/tmp/hps.json'},
       )
-  train0 = dsl.ContainerOp(
-      name='train',
-      image='gcr.io/aju-vtests2/ml-pl-bikes-train:v7',
-      arguments=[
-          '--data-dir', data_dir, '--steps-per-epoch', steps_per_epoch,
-          '--workdir', '%s/%s0' % (working_dir, dsl.RUN_ID_PLACEHOLDER),
-          '--epochs', train_epochs, '--hptune-results', hptune.outputs['hps'],
-          '--hp-idx', 0
-          ],
-      file_outputs={'train_output_path': '/tmp/train_output_path.txt'},
-    )
 
-  train1 = dsl.ContainerOp(
-      name='train',
-      image='gcr.io/aju-vtests2/ml-pl-bikes-train:v6',
-      arguments=[
-          '--data-dir', data_dir, '--steps-per-epoch', steps_per_epoch,
-          '--workdir', '%s/%s1' % (working_dir, dsl.RUN_ID_PLACEHOLDER),
-          '--epochs', train_epochs, '--hptune-results', hptune.outputs['hps'],
-          '--hp-idx', 1
-          ],
-      file_outputs={'train_output_path': '/tmp/train_output_path.txt'},
-    )
+  with dsl.ParallelFor(num_best_hps_list) as idx:
+    train = dsl.ContainerOp(
+        name='train',
+        image='gcr.io/aju-vtests2/ml-pl-bikes-train:v7',
+        arguments=[
+            '--data-dir', data_dir, '--steps-per-epoch', steps_per_epoch,
+            '--workdir', '%s/%s0' % (working_dir, dsl.RUN_ID_PLACEHOLDER),
+            '--epochs', train_epochs, '--hptune-results', hptune.outputs['hps'],
+            '--hp-idx', idx
+            ],
+        file_outputs={'train_output_path': '/tmp/train_output_path.txt'},
+      )
+    serve = serve_op(
+      model_path=train.outputs['train_output_path'],
+      model_name='bikesw',
+      namespace='kubeflow'
+      )
+    train.set_gpu_limit(2)
 
-  serve0 = serve_op(
-    model_path=train0.outputs['train_output_path'],
-    model_name='bikesw',
-    namespace='kubeflow'
-    )
-  serve1 = serve_op(
-    model_path=train1.outputs['train_output_path'],
-    model_name='bikesw',
-    namespace='kubeflow'
-    )
-  train0.set_gpu_limit(2)
-  train1.set_gpu_limit(2)
+     
+  # train0 = dsl.ContainerOp(
+  #     name='train',
+  #     image='gcr.io/aju-vtests2/ml-pl-bikes-train:v7',
+  #     arguments=[
+  #         '--data-dir', data_dir, '--steps-per-epoch', steps_per_epoch,
+  #         '--workdir', '%s/%s0' % (working_dir, dsl.RUN_ID_PLACEHOLDER),
+  #         '--epochs', train_epochs, '--hptune-results', hptune.outputs['hps'],
+  #         '--hp-idx', 0
+  #         ],
+  #     file_outputs={'train_output_path': '/tmp/train_output_path.txt'},
+  #   )
+
+  # train1 = dsl.ContainerOp(
+  #     name='train',
+  #     image='gcr.io/aju-vtests2/ml-pl-bikes-train:v6',
+  #     arguments=[
+  #         '--data-dir', data_dir, '--steps-per-epoch', steps_per_epoch,
+  #         '--workdir', '%s/%s1' % (working_dir, dsl.RUN_ID_PLACEHOLDER),
+  #         '--epochs', train_epochs, '--hptune-results', hptune.outputs['hps'],
+  #         '--hp-idx', 1
+  #         ],
+  #     file_outputs={'train_output_path': '/tmp/train_output_path.txt'},
+  #   )
+
+  # serve0 = serve_op(
+  #   model_path=train0.outputs['train_output_path'],
+  #   model_name='bikesw',
+  #   namespace='kubeflow'
+  #   )
+  # serve1 = serve_op(
+  #   model_path=train1.outputs['train_output_path'],
+  #   model_name='bikesw',
+  #   namespace='kubeflow'
+  #   )
+  # train0.set_gpu_limit(2)
+  # train1.set_gpu_limit(2)
 
 if __name__ == '__main__':
   import kfp.compiler as compiler

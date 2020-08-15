@@ -164,18 +164,31 @@ def main():
       eval_batch_size * 100 * STRATEGY.num_replicas_in_sync
   )
 
-  tuner = RandomSearch(
-  # tuner = Hyperband(
-      create_model,
-      objective='val_mae',
-      # max_epochs=10,
-      # hyperband_iterations=2,
-      max_trials=args.max_trials,
-      distribution_strategy=STRATEGY,
-      executions_per_trial=args.executions_per_trial,
-      directory=args.tuner_dir,
-      project_name=args.tuner_proj
-    )
+  # TODO: parameterize
+  retries = 0
+  num_retries = 5
+  sleep_time = 5
+  while retries < num_retries:
+    try:
+      tuner = RandomSearch(
+      # tuner = Hyperband(
+          create_model,
+          objective='val_mae',
+          # max_epochs=10,
+          # hyperband_iterations=2,
+          max_trials=args.max_trials,
+          distribution_strategy=STRATEGY,
+          executions_per_trial=args.executions_per_trial,
+          directory=args.tuner_dir,
+          project_name=args.tuner_proj
+        )
+      break
+    except Exception as e:
+      logging.warn(e)
+      logging.info('sleeping %s seconds...', sleep_time)
+      time.sleep(sleep_time)
+      retries += 1
+      sleep_time *=2
 
   logging.info("search space summary:")
   logging.info(tuner.search_space_summary())
