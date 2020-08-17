@@ -16,13 +16,14 @@
 import kfp.dsl as dsl
 import kfp.gcp as gcp
 import kfp.components as comp
-# from kfp.dsl.types import GCSPath, String
+from kfp.dsl.types import GCSPath, String
 
-# train_op = comp.load_component_from_url(
-#   'https://raw.githubusercontent.com/amygdala/code-snippets/master/ml/kubeflow-pipelines/sbtb/components/train_component.yaml' # pylint: disable=line-too-long
-#   )
+
+train_op = comp.load_component_from_file(
+  '../components/train_component.yaml' # pylint: disable=line-too-long
+  )
 serve_op = comp.load_component_from_file(
-  '/Users/amyu/devrel/code-snippets/ml/kubeflow-pipelines/bikes_weather/components/serve_component_a.yaml' # pylint: disable=line-too-long
+  '../components/serve_component.yaml' # pylint: disable=line-too-long
   )
 
 
@@ -47,7 +48,7 @@ def bikes_weather_hptune(  #pylint: disable=unused-argument
 
   hptune = dsl.ContainerOp(
       name='ktune',
-      image='gcr.io/aju-vtests2/ml-pipeline-bikes-dep:xyz6',
+      image='gcr.io/aju-vtests2/ml-pipeline-bikes-dep:abc1',
       arguments=['--epochs', tune_epochs, '--num-tuners', num_tuners,
           '--tuner-dir', '%s/%s' % (tuner_dir_prefix, dsl.RUN_ID_PLACEHOLDER),
           '--tuner-proj', tuner_proj, '--bucket-name', bucket_name, '--max-trials', max_trials,
@@ -58,17 +59,24 @@ def bikes_weather_hptune(  #pylint: disable=unused-argument
       )
 
   with dsl.ParallelFor(num_best_hps_list) as idx:
-    train = dsl.ContainerOp(
-        name='train',
-        image='gcr.io/aju-vtests2/ml-pl-bikes-train:v7',
-        arguments=[
-            '--data-dir', data_dir, '--steps-per-epoch', steps_per_epoch,
-            '--workdir', '%s/%s0' % (working_dir, dsl.RUN_ID_PLACEHOLDER),
-            '--epochs', train_epochs, '--hptune-results', hptune.outputs['hps'],
-            '--hp-idx', idx
-            ],
-        file_outputs={'train_output_path': '/tmp/train_output_path.txt'},
+    train = train_op(
+      data_dir=data_dir,
+      workdir='%s/%s0' % (working_dir, dsl.RUN_ID_PLACEHOLDER),
+      epochs=train_epochs, steps_per_epoch=steps_per_epoch,
+      hp_idx=idx, hptune_results=hptune.outputs['hps']
       )
+    # train = dsl.ContainerOp(
+    #     name='train',
+    #     image='gcr.io/aju-vtests2/ml-pl-bikes-train:v7',
+    #     arguments=[
+    #         '--data-dir', data_dir, '--steps-per-epoch', steps_per_epoch,
+    #         '--workdir', '%s/%s0' % (working_dir, dsl.RUN_ID_PLACEHOLDER),
+    #         '--epochs', train_epochs, '--hptune-results', hptune.outputs['hps'],
+    #         '--hp-idx', idx
+    #         ],
+    #     file_outputs={'train_output_path': '/tmp/train_output_path.txt'},
+    #   )
+
     serve = serve_op(
       model_path=train.outputs['train_output_path'],
       model_name='bikesw',

@@ -48,15 +48,55 @@ def read_dataset(pattern, batch_size, mode=tf.estimator.ModeKeys.TRAIN, truncate
     dataset = dataset.take(truncate)
   return dataset
 
+def get_layers():
+
+  # duration,end_station_id,bike_id,ts,day_of_week,start_station_id,start_latitude,start_longitude,end_latitude,end_longitude,
+  # euclidean,loc_cross,prcp,max,min,temp,dewp  
+  real = {
+      colname : tf.feature_column.numeric_column(colname)
+            for colname in
+  #            ('ts,start_latitude,start_longitude,end_latitude,end_longitude,euclidean,prcp,max,min,temp,dewp').split(',')
+              ('ts,euclidean,prcp,max,min,temp,dewp').split(',')
+  }
+  sparse = {
+        'day_of_week': tf.feature_column.categorical_column_with_vocabulary_list('day_of_week',
+                    vocabulary_list='1,2,3,4,5,6,7'.split(',')),
+        'end_station_id' : tf.feature_column.categorical_column_with_hash_bucket(
+            'end_station_id', hash_bucket_size=800),
+        'start_station_id' : tf.feature_column.categorical_column_with_hash_bucket(
+            'start_station_id', hash_bucket_size=800),
+        'loc_cross' : tf.feature_column.categorical_column_with_hash_bucket(
+            'loc_cross', hash_bucket_size=21000),
+  #      'bike_id' : tf.feature_column.categorical_column_with_hash_bucket('bike_id', hash_bucket_size=14000)
+  }
+  inputs = {
+      colname : tf.keras.layers.Input(name=colname, shape=(), dtype='float32')
+            for colname in real.keys()
+  }
+  inputs.update({
+      colname : tf.keras.layers.Input(name=colname, shape=(), dtype='string')
+            for colname in sparse.keys()
+  })
+  # embed all the sparse columns
+  embed = {
+      'embed_{}'.format(colname) : tf.feature_column.embedding_column(col, 10)
+          for colname, col in sparse.items()
+  }
+  real.update(embed)
+  # one-hot encode the sparse columns
+  sparse = {
+      colname : tf.feature_column.indicator_column(col)
+          for colname, col in sparse.items()
+  }
+  return inputs, sparse, real
+
 # Build a wide-and-deep model.
 def wide_and_deep_classifier(inputs, linear_feature_columns, dnn_feature_columns,
     num_hidden_layers, dnn_hidden_units1, learning_rate):
     deep = tf.keras.layers.DenseFeatures(dnn_feature_columns, name='deep_inputs')(inputs)
-    # layers = [int(x) for x in dnn_hidden_units.split(',')]
     layers = [dnn_hidden_units1]
     if num_hidden_layers > 1:
       layers += [int(dnn_hidden_units1/(x*2)) for x in range(1, num_hidden_layers)]
-    # layers = [dnn_hidden_units1, dnn_hidden_units1/2, dnn_hidden_units1/4]  # using hp tuning val, but hardwired to 3 layers currently.
     for layerno, numnodes in enumerate(layers):
         deep = tf.keras.layers.Dense(numnodes, activation='relu', name='dnn_{}'.format(layerno+1))(deep)
     wide = tf.keras.layers.DenseFeatures(linear_feature_columns, name='wide_inputs')(inputs)

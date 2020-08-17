@@ -3,7 +3,8 @@
   kind: Service
   metadata:
     labels:
-      app: ktuner-chief
+      app: KTUNER_CHIEF
+      apptype: ktuner-chief
     name: KTUNER_CHIEF
     namespace: NAMESPACE
   spec:
@@ -12,14 +13,15 @@
       port: 9000
       targetPort: 9000
     selector:
-      app: ktuner-chief
+      app: KTUNER_CHIEF
     type: ClusterIP
 ---
 apiVersion: batch/v1
 kind: Job
 metadata:
   labels:
-    app: ktuner-chief
+    app: KTUNER_CHIEF
+    apptype: ktuner-chief
   name: KTUNER_CHIEF-dep
   namespace: NAMESPACE
 spec:
@@ -27,7 +29,8 @@ spec:
   template:
     metadata:
       labels:
-        app: ktuner-chief
+        app: KTUNER_CHIEF
+        apptype: ktuner-chief
         version: v1
     spec:
       containers:

@@ -14,7 +14,6 @@
 
 
 import argparse
-import json
 import logging
 import os
 import subprocess
@@ -52,7 +51,6 @@ def main():
 
   args = parser.parse_args()
   logging.getLogger().setLevel(logging.INFO)
-  args_dict = vars(args)
   tuner_path = 'gs://{}/{}'.format(args.bucket_name, args.tuner_dir)
   res_path = '{}/{}/{}'.format(args.bucket_name, args.tuner_dir, 'bp.txt')
   logging.info('tuner path: %s, res path %s', tuner_path, res_path)
@@ -60,9 +58,9 @@ def main():
   logging.info('Generating tuner deployment templates.')
   ts = int(time.time())
   KTUNER_CHIEF = 'ktuner{}-chief'.format(ts)
-  logging.info('KTUNER_CHIEF: {}'.format(KTUNER_CHIEF))
+  logging.info('KTUNER_CHIEF: %s', KTUNER_CHIEF)
   KTUNER_DEP_PREFIX = 'ktuner{}-dep'.format(ts)
-  logging.info('KTUNER_DEP_PREFIX: {}'.format(KTUNER_DEP_PREFIX))
+  logging.info('KTUNER_DEP_PREFIX: %s', KTUNER_DEP_PREFIX)
 
   template_file = os.path.join(
       os.path.dirname(os.path.realpath(__file__)), 'kchief_deployment_templ.yaml')
@@ -113,10 +111,11 @@ def main():
 
     # wait for the tuner pods to be ready... if we're autoscaling the GPU pool,
     # this might take a while.
-    for i in range(args.num_tuners):  
+    for i in range(args.num_tuners):
       logging.info('waiting for tuner %s pod to be ready...', i)
       subprocess.call(['kubectl', '-n={}'.format(args.namespace), 'wait', 'pod',
-              '--for=condition=ready', '--timeout=15m', '-l=job-name={}{}'.format(KTUNER_DEP_PREFIX, i)])    
+              '--for=condition=ready', '--timeout=15m',
+              '-l=job-name={}{}'.format(KTUNER_DEP_PREFIX, i)])
 
     # wait for all the tuner workers to complete
     for i in range(args.num_tuners):
