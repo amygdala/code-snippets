@@ -75,6 +75,9 @@ def main():
       '--tuner-dir',
       required=True)
   parser.add_argument(
+      '--tuner-num',
+      required=True)
+  parser.add_argument(
       '--respath',
       required=True)
   parser.add_argument(
@@ -95,8 +98,7 @@ def main():
 
   TRAIN_DATA_PATTERN = args.data_dir + "train*"
   EVAL_DATA_PATTERN = args.data_dir + "test*"
-  OUTPUT_DIR = '{}/{}/bwmodel/trained_model'.format(args.tuner_dir, args.tuner_proj)
-  logging.info('Writing trained model to %s', OUTPUT_DIR)
+
 
   train_batch_size = TRAIN_BATCH_SIZE
   eval_batch_size = 1000
@@ -144,14 +146,6 @@ def main():
   logging.info("search space summary:")
   logging.info(tuner.search_space_summary())
 
-  checkpoint_path = '{}/checkpoints/bikes_weather.cpt'.format(OUTPUT_DIR)
-  logging.info("checkpoint path: %s", checkpoint_path)
-  cp_callback = tf.keras.callbacks.ModelCheckpoint(checkpoint_path,
-                                                  save_weights_only=True,
-                                                  verbose=1)
-  tb_callback = tf.keras.callbacks.TensorBoard(log_dir='{}/logs'.format(OUTPUT_DIR),
-                                              update_freq=10000)
-
   logging.info("hp tuning model....")
   tuner.search(train_dataset,
       validation_data=eval_dataset,
@@ -160,16 +154,10 @@ def main():
       steps_per_epoch=steps_per_epoch,
       )
   best_hps = tuner.get_best_hyperparameters(args.num_best_hps)
-  # best_hps_list = []
-  # for i in range(args.num_best_hps):
-    # best_hps_list.append(best_hps[i].values)
   best_hps_list = [best_hps[i].values for i in range(args.num_best_hps)]
   logging.info('best_hps_list: %s', best_hps_list)
   best_hp_values = json.dumps(best_hps_list)
   logging.info('best hyperparameters: %s', best_hp_values)
-
-  best_model = tuner.get_best_models(1)[0]
-  logging.info('best model: %s', best_model)
 
   storage_client = storage.Client()
   logging.info('writing best results to %s', args.respath)
@@ -178,19 +166,27 @@ def main():
   blob = bucket.blob(args.respath)
   blob.upload_from_string(best_hp_values)
 
-  ts = str(int(time.time()))
-  export_dir = '{}/export/bikesw/{}'.format(OUTPUT_DIR, ts)
-  logging.info('Exporting to %s', export_dir)
+  # uncomment to also save best model from hp search
+  # OUTPUT_DIR = '{}/{}/{}/bwmodel/trained_model'.format(args.tuner_dir,
+  #     args.tuner_proj, args.tuner_num)
+  # logging.info('Writing trained model to %s', OUTPUT_DIR)
 
-  try:
-    logging.info("exporting model....")
-    tf.saved_model.save(best_model, export_dir)
-  except Exception as e:  # retry once if error
-    logging.warning(e)
-    logging.info("retrying...")
-    time.sleep(10)
-    logging.info("again ... exporting model....")
-    tf.saved_model.save(best_model, export_dir)
+  # best_model = tuner.get_best_models(1)[0]
+  # logging.info('best model: %s', best_model)
+
+  # ts = str(int(time.time()))
+  # export_dir = '{}/export/bikesw/{}'.format(OUTPUT_DIR, ts)
+  # logging.info('Exporting to %s', export_dir)
+
+  # try:
+  #   logging.info("exporting model....")
+  #   tf.saved_model.save(best_model, export_dir)
+  # except Exception as e:  # retry once if error
+  #   logging.warning(e)
+  #   logging.info("retrying...")
+  #   time.sleep(10)
+  #   logging.info("again ... exporting model....")
+  #   tf.saved_model.save(best_model, export_dir)
 
 
 if __name__ == "__main__":

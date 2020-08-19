@@ -71,7 +71,8 @@ def main():
       data = f.read()
       changed = data.replace('EPOCHS', str(args.epochs)).replace(
           'TUNER_DIR', tuner_path).replace('NAMESPACE', args.namespace).replace(
-          'TUNER_PROJ', args.tuner_proj).replace('MAX_TRIALS', str(args.max_trials)).replace(
+          'TUNER_PROJ', args.tuner_proj).replace('TUNER_NUM', 'chief').replace(
+          'MAX_TRIALS', str(args.max_trials)).replace(
           'KTUNER_CHIEF', KTUNER_CHIEF).replace('RES_PATH', res_path).replace(
           'BUCKET_NAME', args.bucket_name).replace('NUM_BEST_HPS', str(args.num_best_hps)).replace(
           'EXECS_PER_TRIAL', str(args.executions_per_trial))
@@ -90,7 +91,8 @@ def main():
       for i in range(args.num_tuners):
         changed = data.replace('EPOCHS', str(args.epochs)).replace(
             'TUNER_DIR', tuner_path).replace('NAMESPACE', args.namespace).replace(
-            'TUNER_PROJ', args.tuner_proj).replace('KTUNER_CHIEF', KTUNER_CHIEF).replace(
+            'TUNER_PROJ', args.tuner_proj).replace('TUNER_NUM', str(i)).replace(
+            'KTUNER_CHIEF', KTUNER_CHIEF).replace(
             'MAX_TRIALS', str(args.max_trials)).replace('RES_PATH', res_path).replace(
             'BUCKET_NAME', args.bucket_name).replace(
             'NUM_BEST_HPS', str(args.num_best_hps)).replace(
@@ -104,7 +106,7 @@ def main():
     logging.info('deploying chief...')
     subprocess.call(['kubectl', 'apply', '-f', chief_file_path])
     logging.info('pausing before tuner worker deployment...')
-    time.sleep(60)
+    time.sleep(120)
     logging.info('deploying tuners...')
     subprocess.call(['kubectl', 'apply', '-f', tuner_file_path])
     logging.info('finished deployments.')

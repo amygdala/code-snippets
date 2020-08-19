@@ -38,6 +38,7 @@ spec:
         - --epochs=EPOCHS
         - --tuner-dir=TUNER_DIR
         - --tuner-proj=TUNER_PROJ
+        - --tuner-num=TUNER_NUM
         - --max-trials=MAX_TRIALS
         - --executions-per-trial=EXECS_PER_TRIAL
         - --num-best-hps=NUM_BEST_HPS

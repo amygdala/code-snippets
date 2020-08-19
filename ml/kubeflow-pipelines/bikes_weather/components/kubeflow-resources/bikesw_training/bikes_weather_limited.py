@@ -77,9 +77,13 @@ def main():
   parser.add_argument(
       '--workdir', required=True)
   parser.add_argument(
+      '--tb-dir', required=True)
+  parser.add_argument(
       '--data-dir', default='gs://aju-dev-demos-codelabs/bikes_weather/')
   parser.add_argument(
       '--train-output-path', required=True)
+  # parser.add_argument(
+  #     '--mlpipeline-ui-metadata-path', required=True)      
 
   args = parser.parse_args()
   logging.info('Tensorflow version %s', tf.__version__)
@@ -91,7 +95,7 @@ def main():
   learning_rate = hptune_info[args.hp_idx]['learning_rate']
   hidden_size = hptune_info[args.hp_idx]['hidden_size']
   num_hidden_layers = hptune_info[args.hp_idx]['num_hidden_layers']
-  logging.info('using: learning rate %s, hidden size %s, first hidden layer %s', 
+  logging.info('using: learning rate %s, hidden size %s, first hidden layer %s',
       learning_rate, hidden_size, num_hidden_layers)
 
   TRAIN_DATA_PATTERN = args.data_dir + "train*"
@@ -111,6 +115,26 @@ def main():
   eval_dataset = bwmodel.read_dataset(EVAL_DATA_PATTERN, eval_batch_size, tf.estimator.ModeKeys.EVAL,
      eval_batch_size * 100 * STRATEGY.num_replicas_in_sync
   )
+
+  # Create metadata.json file for Tensorboard 'artifact'
+  metadata = {
+    'outputs' : [{
+      'type': 'tensorboard',
+      'source': args.tb_dir
+    }]
+  }
+  # logging.info('using metadata ui path: {}'.format(args.mlpipeline_ui_metadata_path))
+  # try:
+  #   pathlib2.Path(args.mlpipeline_ui_metadata_path).parent.mkdir(parents=True)
+  # except FileExistsError as e1:
+  #   logging.info(e1)
+  # pathlib2.Path(args.mlpipeline_ui_metadata_path).write_text(json.dumps(metadata))
+
+  # with open(args.mlpipeline_ui_metadata_path, 'w') as mlpipeline_ui_metadata_file:
+  #   mlpipeline_ui_metadata_file.write(json.dumps(metadata))  
+
+  with open('/mlpipeline-ui-metadata.json', 'w') as f:
+    json.dump(metadata, f)
 
   model = create_model(learning_rate, hidden_size, num_hidden_layers)
 
@@ -156,15 +180,6 @@ def main():
     export_path = '{}/export/bikesw'.format(OUTPUT_DIR)
     pathlib2.Path(args.train_output_path).write_text(export_path)
 
-  # Create metadata.json file for Tensorboard 'artifact'
-  metadata = {
-    'outputs' : [{
-      'type': 'tensorboard',
-      'source': OUTPUT_DIR,
-    }]
-  }
-  with open('/mlpipeline-ui-metadata.json', 'w') as f:
-    json.dump(metadata, f)
 
 
 if __name__ == "__main__":

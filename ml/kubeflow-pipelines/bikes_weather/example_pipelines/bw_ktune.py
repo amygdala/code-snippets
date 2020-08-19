@@ -42,13 +42,13 @@ def bikes_weather_hptune(  #pylint: disable=unused-argument
   working_dir: str = 'gs://aju-pipelines/ktune7',
   data_dir: str = 'gs://aju-dev-demos-codelabs/bikes_weather/',
   steps_per_epoch: int = -1 ,  # if -1, don't override normal calcs based on dataset size
-  num_best_hps: int = 2,
-  num_best_hps_list: list = [0, 1]
+  num_best_hps: int = 3,
+  num_best_hps_list: list = [0, 1, 2]
   ):
 
   hptune = dsl.ContainerOp(
       name='ktune',
-      image='gcr.io/aju-vtests2/ml-pipeline-bikes-dep:abc1',
+      image='gcr.io/aju-vtests2/ml-pipeline-bikes-dep:abc4',
       arguments=['--epochs', tune_epochs, '--num-tuners', num_tuners,
           '--tuner-dir', '%s/%s' % (tuner_dir_prefix, dsl.RUN_ID_PLACEHOLDER),
           '--tuner-proj', tuner_proj, '--bucket-name', bucket_name, '--max-trials', max_trials,
@@ -62,6 +62,7 @@ def bikes_weather_hptune(  #pylint: disable=unused-argument
     train = train_op(
       data_dir=data_dir,
       workdir='%s/%s/%s' % (working_dir, dsl.RUN_ID_PLACEHOLDER, idx),
+      tb_dir='%s/%s' % (working_dir, dsl.RUN_ID_PLACEHOLDER),
       epochs=train_epochs, steps_per_epoch=steps_per_epoch,
       hp_idx=idx, hptune_results=hptune.outputs['hps']
       )

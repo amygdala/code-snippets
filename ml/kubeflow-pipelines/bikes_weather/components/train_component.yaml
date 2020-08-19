@@ -30,6 +30,8 @@ inputs:
     type: String
   - name: workdir
     type: String
+  - name: tb_dir
+    type: String
   - name: hp_idx
     type: Integer
   - name: hptune_results
@@ -37,17 +39,22 @@ inputs:
 outputs:
   - name: train_output_path
     type: GCSPath
+  - name: MLPipeline UI metadata
+    type: UI metadata
 implementation:
   container:
-    image: gcr.io/aju-vtests2/bw-pl-bikes-train:v4
+    image: gcr.io/aju-vtests2/bw-pl-bikes-train:v8
     args: [
       --data-dir, {inputValue: data_dir},
       --epochs, {inputValue: epochs},
       --steps-per-epoch, {inputValue: steps_per_epoch},
       --workdir, {inputValue: workdir},
+      --tb-dir, {inputValue: tb_dir},
       --train-output-path, {outputPath: train_output_path},
       --hp-idx, {inputValue: hp_idx},
       --hptune-results, {inputValue: hptune_results}
     ]
     env:
       KFP_POD_NAME: "{{pod.name}}"
+    fileOutputs:
+      MLPipeline UI metadata: /mlpipeline-ui-metadata.json
