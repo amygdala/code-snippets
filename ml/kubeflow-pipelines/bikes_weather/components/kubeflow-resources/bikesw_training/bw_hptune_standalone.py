@@ -12,12 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Adapted in part from:
-# https://github.com/GoogleCloudPlatform/data-science-on-gcp/blob/master/09_cloudml/flights_model_tf2.ipynb
-# by Valliappa Lakshmanan.  (See that repo for more info about the accompanying book,
-# "Data Science on the Google Cloud Platform", from O'Reilly.)
-
-
 import argparse
 import logging
 import json
@@ -33,10 +27,8 @@ import bwmodel.model as bwmodel
 DEVELOP_MODE = False
 NBUCKETS = 5 # for embeddings
 NUM_EXAMPLES = 1000*1000 * 20 # assume 20 million examples
-# DNN_HIDDEN_UNITS = '128,64,32'
 
 STRATEGY = tf.distribute.MirroredStrategy()
-# TRAIN_BATCH_SIZE = 256
 TRAIN_BATCH_SIZE = 256 * STRATEGY.num_replicas_in_sync
 
 
@@ -105,7 +97,6 @@ def main():
   EVAL_DATA_PATTERN = args.data_dir + "test*"
   OUTPUT_DIR = '{}/{}/bwmodel/trained_model'.format(args.tuner_dir, args.tuner_proj)
   logging.info('Writing trained model to %s', OUTPUT_DIR)
-  # learning_rate = 0.001
 
   train_batch_size = TRAIN_BATCH_SIZE
   eval_batch_size = 1000
@@ -169,12 +160,10 @@ def main():
       steps_per_epoch=steps_per_epoch,
       )
   best_hps = tuner.get_best_hyperparameters(args.num_best_hps)
-  # best_hyperparameters = best_hps[0]
-  # next_best_hyperparameters = best_hps[1]
-  # best_hyperparameters = tuner.get_best_hyperparameters(1)[0]
-  best_hps_list = []
-  for i in range(args.num_best_hps):
-    best_hps_list.append(best_hps[i].values)
+  # best_hps_list = []
+  # for i in range(args.num_best_hps):
+    # best_hps_list.append(best_hps[i].values)
+  best_hps_list = [best_hps[i].values for i in range(args.num_best_hps)]
   logging.info('best_hps_list: %s', best_hps_list)
   best_hp_values = json.dumps(best_hps_list)
   logging.info('best hyperparameters: %s', best_hp_values)
@@ -183,15 +172,11 @@ def main():
   logging.info('best model: %s', best_model)
 
   storage_client = storage.Client()
-  ## TODO: consider writing list that includes 2nd best HPs also...
   logging.info('writing best results to %s', args.respath)
   bucket = storage_client.get_bucket(args.bucket_name)
   logging.info('using bucket %s: %s, path %s', args.bucket_name, bucket, args.respath)
   blob = bucket.blob(args.respath)
   blob.upload_from_string(best_hp_values)
-  # aju temp -- arghh, try separate test
-  # blob2 = bucket.blob('{}/{}'.format(args.tuner_dir, 'arghh.txt'))
-  # blob2.upload_from_string('is there something about the string?')
 
   ts = str(int(time.time()))
   export_dir = '{}/export/bikesw/{}'.format(OUTPUT_DIR, ts)

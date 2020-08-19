@@ -1,5 +1,5 @@
 
-# Copyright 2019 Google Inc. All Rights Reserved.
+# Copyright 2020 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,12 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-# Adapted in part from:
-# https://github.com/GoogleCloudPlatform/data-science-on-gcp/blob/master/09_cloudml/flights_model_tf2.ipynb
-# by Valliappa Lakshmanan.  (See that repo for more info about the accompanying book,
-# "Data Science on the Google Cloud Platform", from O'Reilly.)
-
 
 
 import argparse
@@ -38,12 +32,11 @@ NUM_EXAMPLES = 1000*1000 * 20 # assume 20 million examples
 STRATEGY = tf.distribute.MirroredStrategy()
 TRAIN_BATCH_SIZE = 64 * STRATEGY.num_replicas_in_sync
 
-TRAIN_OUTPUT_PATH = '/tmp/train_output_path.txt'
+# TRAIN_OUTPUT_PATH = '/tmp/train_output_path.txt'
 
 def create_model(learning_rate, hidden_size, num_hidden_layers):
 
   inputs, sparse, real = bwmodel.get_layers()
-
 
   logging.info('sparse keys: %s', sparse.keys())
   logging.info('real keys: %s', real.keys())
@@ -85,6 +78,8 @@ def main():
       '--workdir', required=True)
   parser.add_argument(
       '--data-dir', default='gs://aju-dev-demos-codelabs/bikes_weather/')
+  parser.add_argument(
+      '--train-output-path', required=True)
 
   args = parser.parse_args()
   logging.info('Tensorflow version %s', tf.__version__)
@@ -96,7 +91,8 @@ def main():
   learning_rate = hptune_info[args.hp_idx]['learning_rate']
   hidden_size = hptune_info[args.hp_idx]['hidden_size']
   num_hidden_layers = hptune_info[args.hp_idx]['num_hidden_layers']
-  logging.info('using: %s, %s, %s', learning_rate, hidden_size, num_hidden_layers)
+  logging.info('using: learning rate %s, hidden size %s, first hidden layer %s', 
+      learning_rate, hidden_size, num_hidden_layers)
 
   TRAIN_DATA_PATTERN = args.data_dir + "train*"
   EVAL_DATA_PATTERN = args.data_dir + "test*"
@@ -124,7 +120,7 @@ def main():
                                                    save_weights_only=True,
                                                    verbose=1)
   tb_callback = tf.keras.callbacks.TensorBoard(log_dir='{}/logs'.format(OUTPUT_DIR),
-                                               update_freq=10000)
+                                               update_freq=20000)
 
   logging.info("training model....")
   history = model.fit(train_dataset,
@@ -132,8 +128,7 @@ def main():
                       validation_steps=eval_batch_size,
                       epochs=args.epochs,
                       steps_per_epoch=steps_per_epoch,
-                      callbacks=[cp_callback  # , tb_callback
-                      ]
+                      callbacks=[cp_callback, tb_callback]
                      )
   logging.info(history.history.keys())
 
@@ -142,16 +137,16 @@ def main():
   logging.info('Exporting to %s', export_dir)
 
   try:
-    pathlib2.Path(TRAIN_OUTPUT_PATH).parent.mkdir(parents=True)
+    pathlib2.Path(args.train_output_path).parent.mkdir(parents=True)
   except FileExistsError as e1:
     logging.info(e1)
   try:
     logging.info("exporting model....")
     tf.saved_model.save(model, export_dir)
-    logging.info("train_output_path: %s", TRAIN_OUTPUT_PATH)
+    logging.info("train_output_path: %s", args.train_output_path)
     export_path = '{}/export/bikesw'.format(OUTPUT_DIR)
     logging.info('export path: %s', export_path)
-    pathlib2.Path(TRAIN_OUTPUT_PATH).write_text(export_path)
+    pathlib2.Path(args.train_output_path).write_text(export_path)
   except Exception as e:  # retry once if error
     logging.warning(e)
     logging.info("retrying...")
@@ -159,7 +154,17 @@ def main():
     logging.info("again ... exporting model....")
     tf.saved_model.save(model, export_dir)
     export_path = '{}/export/bikesw'.format(OUTPUT_DIR)
-    pathlib2.Path(TRAIN_OUTPUT_PATH).write_text(export_path)
+    pathlib2.Path(args.train_output_path).write_text(export_path)
+
+  # Create metadata.json file for Tensorboard 'artifact'
+  metadata = {
+    'outputs' : [{
+      'type': 'tensorboard',
+      'source': OUTPUT_DIR,
+    }]
+  }
+  with open('/mlpipeline-ui-metadata.json', 'w') as f:
+    json.dump(metadata, f)
 
 
 if __name__ == "__main__":

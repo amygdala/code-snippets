@@ -39,7 +39,7 @@ outputs:
     type: GCSPath
 implementation:
   container:
-    image: gcr.io/aju-vtests2/bw-pl-bikes-train:v1
+    image: gcr.io/aju-vtests2/bw-pl-bikes-train:v4
     args: [
       --data-dir, {inputValue: data_dir},
       --epochs, {inputValue: epochs},

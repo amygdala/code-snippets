@@ -104,7 +104,7 @@ def main():
     logging.info('deploying chief...')
     subprocess.call(['kubectl', 'apply', '-f', chief_file_path])
     logging.info('pausing before tuner worker deployment...')
-    time.sleep(120)
+    time.sleep(60)
     logging.info('deploying tuners...')
     subprocess.call(['kubectl', 'apply', '-f', tuner_file_path])
     logging.info('finished deployments.')

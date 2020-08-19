@@ -61,7 +61,7 @@ def bikes_weather_hptune(  #pylint: disable=unused-argument
   with dsl.ParallelFor(num_best_hps_list) as idx:
     train = train_op(
       data_dir=data_dir,
-      workdir='%s/%s0' % (working_dir, dsl.RUN_ID_PLACEHOLDER),
+      workdir='%s/%s/%s' % (working_dir, dsl.RUN_ID_PLACEHOLDER, idx),
       epochs=train_epochs, steps_per_epoch=steps_per_epoch,
       hp_idx=idx, hptune_results=hptune.outputs['hps']
       )

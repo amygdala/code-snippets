@@ -20,13 +20,13 @@
 import tensorflow as tf
 
 
-CSV_COLUMNS  = ('duration,end_station_id,bike_id,ts,day_of_week,start_station_id' +
-                ',start_latitude,start_longitude,end_latitude,end_longitude' +
-                ',euclidean,loc_cross,prcp,max,min,temp,dewp').split(',')
+CSV_COLUMNS = ('duration,end_station_id,bike_id,ts,day_of_week,start_station_id' +
+               ',start_latitude,start_longitude,end_latitude,end_longitude' +
+               ',euclidean,loc_cross,prcp,max,min,temp,dewp').split(',')
 LABEL_COLUMN = 'duration'
-DEFAULTS     = [[0.0],['na'],['na'],[0.0],['na'],['na'],
-               [0.0],[0.0],[0.0],[0.0],
-               [0.0],['na'],[0.0],[0.0],[0.0],[0.0], [0.0]]
+DEFAULTS = [[0.0], ['na'], ['na'], [0.0], ['na'], ['na'],
+           [0.0], [0.0], [0.0], [0.0],
+           [0.0], ['na'], [0.0], [0.0], [0.0], [0.0], [0.0]]
 
 def load_dataset(pattern, batch_size=1):
   return tf.data.experimental.make_csv_dataset(pattern, batch_size, CSV_COLUMNS, DEFAULTS)
@@ -51,7 +51,7 @@ def read_dataset(pattern, batch_size, mode=tf.estimator.ModeKeys.TRAIN, truncate
 def get_layers():
 
   # duration,end_station_id,bike_id,ts,day_of_week,start_station_id,start_latitude,start_longitude,end_latitude,end_longitude,
-  # euclidean,loc_cross,prcp,max,min,temp,dewp  
+  # euclidean,loc_cross,prcp,max,min,temp,dewp
   real = {
       colname : tf.feature_column.numeric_column(colname)
             for colname in
@@ -92,18 +92,18 @@ def get_layers():
 
 # Build a wide-and-deep model.
 def wide_and_deep_classifier(inputs, linear_feature_columns, dnn_feature_columns,
-    num_hidden_layers, dnn_hidden_units1, learning_rate):
-    deep = tf.keras.layers.DenseFeatures(dnn_feature_columns, name='deep_inputs')(inputs)
-    layers = [dnn_hidden_units1]
-    if num_hidden_layers > 1:
-      layers += [int(dnn_hidden_units1/(x*2)) for x in range(1, num_hidden_layers)]
-    for layerno, numnodes in enumerate(layers):
-        deep = tf.keras.layers.Dense(numnodes, activation='relu', name='dnn_{}'.format(layerno+1))(deep)
-    wide = tf.keras.layers.DenseFeatures(linear_feature_columns, name='wide_inputs')(inputs)
-    both = tf.keras.layers.concatenate([deep, wide], name='both')
-    output = tf.keras.layers.Dense(1, name='dur')(both)
-    model = tf.keras.Model(inputs, output)
-    optimizer = tf.keras.optimizers.RMSprop(learning_rate)
-    model.compile(loss='mse', optimizer=optimizer,
-                 metrics=['mse', 'mae', tf.keras.metrics.RootMeanSquaredError()])
-    return model
+  num_hidden_layers, dnn_hidden_units1, learning_rate):
+  deep = tf.keras.layers.DenseFeatures(dnn_feature_columns, name='deep_inputs')(inputs)
+  layers = [dnn_hidden_units1]
+  if num_hidden_layers > 1:
+    layers += [int(dnn_hidden_units1/(x*2)) for x in range(1, num_hidden_layers)]
+  for layerno, numnodes in enumerate(layers):
+    deep = tf.keras.layers.Dense(numnodes, activation='relu', name='dnn_{}'.format(layerno+1))(deep)
+  wide = tf.keras.layers.DenseFeatures(linear_feature_columns, name='wide_inputs')(inputs)
+  both = tf.keras.layers.concatenate([deep, wide], name='both')
+  output = tf.keras.layers.Dense(1, name='dur')(both)
+  model = tf.keras.Model(inputs, output)
+  optimizer = tf.keras.optimizers.RMSprop(learning_rate)
+  model.compile(loss='mse', optimizer=optimizer,
+                metrics=['mse', 'mae', tf.keras.metrics.RootMeanSquaredError()])
+  return model
