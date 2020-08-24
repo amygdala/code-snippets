@@ -17,7 +17,7 @@ spec:
     targetPort: 8500
   selector:
     app: SERVICE_NAME
-  type: LoadBalancer
+  type: ClusterIP
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -46,7 +46,7 @@ spec:
         - --model_base_path=MODEL_PATH
         command:
         - /usr/bin/tensorflow_model_server
-        image: tensorflow/serving
+        image: tensorflow/serving:2.3.0-rc0
         imagePullPolicy: Always
         livenessProbe:
           initialDelaySeconds: 30

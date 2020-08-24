@@ -14,7 +14,6 @@
 
 
 import argparse
-import json
 import logging
 import os
 import subprocess
@@ -41,12 +40,17 @@ def main():
       '--max-trials', type=int, required=True)
   parser.add_argument(
       '--namespace', default='default')
+  parser.add_argument(
+      '--executions-per-trial', type=int,
+      default=2)
+  parser.add_argument(
+      '--num-best-hps', type=int,
+      default=2)
   parser.add_argument('--deploy', default=False, action='store_true')
   parser.add_argument('--no-deploy', dest='deploy', action='store_false')
 
   args = parser.parse_args()
   logging.getLogger().setLevel(logging.INFO)
-  args_dict = vars(args)
   tuner_path = 'gs://{}/{}'.format(args.bucket_name, args.tuner_dir)
   res_path = '{}/{}/{}'.format(args.bucket_name, args.tuner_dir, 'bp.txt')
   logging.info('tuner path: %s, res path %s', tuner_path, res_path)
@@ -54,9 +58,9 @@ def main():
   logging.info('Generating tuner deployment templates.')
   ts = int(time.time())
   KTUNER_CHIEF = 'ktuner{}-chief'.format(ts)
-  logging.info('KTUNER_CHIEF: {}'.format(KTUNER_CHIEF))
+  logging.info('KTUNER_CHIEF: %s', KTUNER_CHIEF)
   KTUNER_DEP_PREFIX = 'ktuner{}-dep'.format(ts)
-  logging.info('KTUNER_DEP_PREFIX: {}'.format(KTUNER_DEP_PREFIX))
+  logging.info('KTUNER_DEP_PREFIX: %s', KTUNER_DEP_PREFIX)
 
   template_file = os.path.join(
       os.path.dirname(os.path.realpath(__file__)), 'kchief_deployment_templ.yaml')
@@ -67,9 +71,11 @@ def main():
       data = f.read()
       changed = data.replace('EPOCHS', str(args.epochs)).replace(
           'TUNER_DIR', tuner_path).replace('NAMESPACE', args.namespace).replace(
-          'TUNER_PROJ', args.tuner_proj).replace('MAX_TRIALS', str(args.max_trials)).replace(
+          'TUNER_PROJ', args.tuner_proj).replace('TUNER_NUM', 'chief').replace(
+          'MAX_TRIALS', str(args.max_trials)).replace(
           'KTUNER_CHIEF', KTUNER_CHIEF).replace('RES_PATH', res_path).replace(
-          'BUCKET_NAME', args.bucket_name)
+          'BUCKET_NAME', args.bucket_name).replace('NUM_BEST_HPS', str(args.num_best_hps)).replace(
+          'EXECS_PER_TRIAL', str(args.executions_per_trial))
       target.write(changed)
 
   tuner_file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'ktuners_dep.yaml')
@@ -85,9 +91,12 @@ def main():
       for i in range(args.num_tuners):
         changed = data.replace('EPOCHS', str(args.epochs)).replace(
             'TUNER_DIR', tuner_path).replace('NAMESPACE', args.namespace).replace(
-            'TUNER_PROJ', args.tuner_proj).replace('KTUNER_CHIEF', KTUNER_CHIEF).replace(
+            'TUNER_PROJ', args.tuner_proj).replace('TUNER_NUM', str(i)).replace(
+            'KTUNER_CHIEF', KTUNER_CHIEF).replace(
             'MAX_TRIALS', str(args.max_trials)).replace('RES_PATH', res_path).replace(
-            'BUCKET_NAME', args.bucket_name)
+            'BUCKET_NAME', args.bucket_name).replace(
+            'NUM_BEST_HPS', str(args.num_best_hps)).replace(
+            'EXECS_PER_TRIAL', str(args.executions_per_trial))
         changed = changed.replace(
             'KTUNER_DEP_NAME', KTUNER_DEP_PREFIX +'{}'.format(i)).replace(
             'KTUNER_ID', 'tuner{}'.format(i))
@@ -104,10 +113,11 @@ def main():
 
     # wait for the tuner pods to be ready... if we're autoscaling the GPU pool,
     # this might take a while.
-    for i in range(args.num_tuners):  
+    for i in range(args.num_tuners):
       logging.info('waiting for tuner %s pod to be ready...', i)
       subprocess.call(['kubectl', '-n={}'.format(args.namespace), 'wait', 'pod',
-              '--for=condition=ready', '--timeout=15m', '-l=job-name={}{}'.format(KTUNER_DEP_PREFIX, i)])    
+              '--for=condition=ready', '--timeout=15m',
+              '-l=job-name={}{}'.format(KTUNER_DEP_PREFIX, i)])
 
     # wait for all the tuner workers to complete
     for i in range(args.num_tuners):
@@ -121,6 +131,7 @@ def main():
 
     client = storage.Client()
     bucket = client.get_bucket(args.bucket_name)
+    logging.info('using bucket %s: %s, path %s', args.bucket_name, bucket, res_path)
     blob = bucket.get_blob(res_path)
 
     results_string = blob.download_as_string()

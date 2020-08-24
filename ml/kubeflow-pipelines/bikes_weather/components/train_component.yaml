@@ -1,0 +1,60 @@
+# Copyright 2019 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: Train bikes_weather model
+description: |
+  A Kubeflow Pipeline component to train a Tensor2Tensor
+  model
+metadata:
+  labels:
+    add-pod-env: 'true'
+inputs:
+  - name: epochs
+    type: Integer
+    default: 1
+  - name: steps_per_epoch
+    type: Integer
+    default: -1
+  - name: data_dir
+    type: String
+  - name: workdir
+    type: String
+  - name: tb_dir
+    type: String
+  - name: hp_idx
+    type: Integer
+  - name: hptune_results
+    type: String
+outputs:
+  - name: train_output_path
+    type: GCSPath
+  - name: MLPipeline UI metadata
+    type: UI metadata
+implementation:
+  container:
+    image: gcr.io/aju-vtests2/bw-pl-bikes-train:v8
+    args: [
+      --data-dir, {inputValue: data_dir},
+      --epochs, {inputValue: epochs},
+      --steps-per-epoch, {inputValue: steps_per_epoch},
+      --workdir, {inputValue: workdir},
+      --tb-dir, {inputValue: tb_dir},
+      --train-output-path, {outputPath: train_output_path},
+      --hp-idx, {inputValue: hp_idx},
+      --hptune-results, {inputValue: hptune_results}
+    ]
+    env:
+      KFP_POD_NAME: "{{pod.name}}"
+    fileOutputs:
+      MLPipeline UI metadata: /mlpipeline-ui-metadata.json

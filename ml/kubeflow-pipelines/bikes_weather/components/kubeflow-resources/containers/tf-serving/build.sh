@@ -24,8 +24,8 @@ fi
 mkdir -p ./build
 rsync -arvp "../../tf-serving"/ ./build/
 
-docker build -t ml-pipeline-tfserve .
+docker build -t bw-pipeline-tfserve .
 rm -rf ./build
 
-docker tag ml-pipeline-tfserve gcr.io/${PROJECT_ID}/ml-pipeline-tfserve
-docker push gcr.io/${PROJECT_ID}/ml-pipeline-tfserve
+docker tag bw-pipeline-tfserve gcr.io/${PROJECT_ID}/bw-pipeline-tfserve
+docker push gcr.io/${PROJECT_ID}/bw-pipeline-tfserve
