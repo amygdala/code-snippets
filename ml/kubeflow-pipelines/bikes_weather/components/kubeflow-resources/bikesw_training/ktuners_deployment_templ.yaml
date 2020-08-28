@@ -25,7 +25,7 @@ spec:
         - --num-best-hps=NUM_BEST_HPS
         - --respath=RES_PATH
         - --bucket-name=BUCKET_NAME
-        image: gcr.io/aju-vtests2/ml-pipeline-bikes-tuner
+        image: gcr.io/google-samples/ml-pipeline-bikes-tuner
         env:
         - name: KERASTUNER_TUNER_ID
           value: KTUNER_ID
