@@ -1,5 +1,8 @@
 
-# Kubeflow Pipelines - GitHub Issue Summarization
+
+**This tutorial is out of date (and probably doesn't work). A newer version is [here](https://github.com/kubeflow/examples/tree/master/github_issue_summarization/pipelines).**
+
+# (Deprecated) Kubeflow Pipelines - GitHub Issue Summarization
 
 <walkthrough-tutorial-duration duration="90"></walkthrough-tutorial-duration>
 
@@ -243,7 +246,7 @@ The pipeline you will run has three steps:
 To download the script containing the pipeline definition, execute this command:
 
 ```bash
-curl -O https://raw.githubusercontent.com/amygdala/code-snippets/master/ml/kubeflow-pipelines/samples/kubeflow-tf/gh_summ.py
+curl -O https://raw.githubusercontent.com/amygdala/code-snippets/master/ml/kubeflow-pipelines/samples/kubeflow-tf/older/gh_summ.py
 ```
 
 Compile the pipeline definition file by running it:
@@ -262,7 +265,7 @@ You will see the file `gh_summ.py.tar.gz` appear as a result.
 From the Kubeflow dashboard, click the __Pipeline Dashboard__ link to navigate to the Kubeflow Pipelines web UI. Click on __Upload pipeline__, and select __Import by URL__. Paste in the following URL, which points to the same pipeline that you just compiled.
 
 ```
-https://github.com/amygdala/code-snippets/raw/master/ml/kubeflow-pipelines/samples/kubeflow-tf/gh_summ.py.tar.gz
+https://github.com/amygdala/code-snippets/raw/master/ml/kubeflow-pipelines/samples/kubeflow-tf/older/gh_summ.py.tar.gz
 ```
 
 Give the pipeline a name (e.g. `gh_summ`).
@@ -315,7 +318,7 @@ Once the pipeline run is launched, you can click on an individual step in the ru
 
 ### View the pipeline definition
 
-While the pipeline is running, take a  [closer look](https://github.com/amygdala/code-snippets/blob/master/ml/kubeflow-pipelines/samples/kubeflow-tf/gh_summ.py) at how it is put together and what it is doing.
+While the pipeline is running, take a  [closer look](https://github.com/amygdala/code-snippets/blob/master/ml/kubeflow-pipelines/samples/kubeflow-tf/older/gh_summ.py) at how it is put together and what it is doing.
 
 ### View TensorBoard
 
@@ -344,11 +347,11 @@ Click the __Populate Random Issue__ button to retrieve a block of text. Click on
 
 If you have any trouble running the training pipeline, or if you had any issues setting up a GPU node pool, try this shorter pipeline.  It uses an already-exported TensorFlow model, skips the training step, and takes only a minute or so to run. Download the Python pipeline definition here:
 
-[https://raw.githubusercontent.com/amygdala/code-snippets/master/ml/kubeflow-pipelines/samples/kubeflow-tf/gh_summ_serve.py](https://raw.githubusercontent.com/amygdala/code-snippets/master/ml/kubeflow-pipelines/samples/kubeflow-tf/gh_summ_serve.py)
+[https://raw.githubusercontent.com/amygdala/code-snippets/master/ml/kubeflow-pipelines/samples/kubeflow-tf/older/gh_summ_serve.py](https://raw.githubusercontent.com/amygdala/code-snippets/master/ml/kubeflow-pipelines/samples/kubeflow-tf/older/gh_summ_serve.py)
 
 or the compiled version of the pipeline here:
 
-[https://github.com/amygdala/code-snippets/blob/master/ml/kubeflow-pipelines/samples/kubeflow-tf/gh_summ_serve.py.tar.gz?raw=true](https://github.com/amygdala/code-snippets/blob/master/ml/kubeflow-pipelines/samples/kubeflow-tf/gh_summ_serve.py.tar.gz?raw=true) -->
+[https://github.com/amygdala/code-snippets/blob/master/ml/kubeflow-pipelines/samples/kubeflow-tf/older/gh_summ_serve.py.tar.gz?raw=true](https://github.com/amygdala/code-snippets/blob/master/ml/kubeflow-pipelines/samples/kubeflow-tf/older/gh_summ_serve.py.tar.gz?raw=true) -->
 
 
 ## Run a pipeline from a Jupyter notebook
@@ -379,7 +382,7 @@ In the Terminal window, run:
 
 ```bash
 cd work
-curl -O https://raw.githubusercontent.com/amygdala/code-snippets/master/ml/kubeflow-pipelines/samples/kubeflow-tf/pipelines-kubecon.ipynb
+curl -O https://raw.githubusercontent.com/amygdala/code-snippets/master/ml/kubeflow-pipelines/samples/kubeflow-tf/older/pipelines-kubecon.ipynb
 ```
 
 
