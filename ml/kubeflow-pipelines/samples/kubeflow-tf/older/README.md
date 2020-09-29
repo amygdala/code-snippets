@@ -1,7 +1,9 @@
 
 # Run the example pipelines
 
-See the top-level [`README_taxidata_examples.md`](../../README_taxidata_examples.md) for installation instructions and more on what these examples do.
+**These examples are not currently maintained and are probably out of date**.
+
+See the top-level [`README_taxidata_examples.md`](../../../README_taxidata_examples.md) for installation instructions and more on what these examples do.
 
 Then, if you have not already, install the [Kubeflow Pipelines SDK](https://github.com/kubeflow/pipelines/releases) according to the [instructions](https://www.kubeflow.org/docs/guides/pipelines/build-pipeline/).  It's most straightforward to install into a virtual environment such as Conda.
 
