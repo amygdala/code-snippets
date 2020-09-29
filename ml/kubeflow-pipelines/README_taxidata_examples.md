@@ -1,5 +1,7 @@
 
-# Kubeflow Pipelines examples
+# (Deprecated) Kubeflow Pipelines examples
+
+**These examples are not currently maintained and are probably no longer working properly.**
 
 - [Installation and setup](#installation-and-setup)
   - [Create a GCP project and enable the necessary APIs](#create-a-gcp-project-and-enable-the-necessary-apis)
@@ -72,7 +74,7 @@ There are two examples. Both revolve around a TensorFlow 'taxi fare tip predicti
 Both examples use [TFT](https://github.com/tensorflow/transform) for data preprocessing and [TFMA](https://github.com/tensorflow/model-analysis/) for model analysis (either can be run via local [Apache Beam](https://beam.apache.org/), or via [Dataflow](https://cloud.google.com/dataflow)); do distributed training via the Kubeflow tf-jobs [custom resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/); and deploy to the Cloud ML Engine Online Prediction service.
 The first example also includes use of [TF-Serving](https://github.com/tensorflow/serving) via Kubeflow, and the second includes use of [BigQuery](cloud.google.com/bigquery) as a data source.
 
-Change to the [`samples/kubeflow-tf`](samples/kubeflow-tf) directory, and see that [README](samples/kubeflow-tf/README.md) for details on runing the examples. To bring up the Pipelines UI, set up a port-forward to the Kubeflow dashboard:
+Change to the [`samples/kubeflow-tf/older`](samples/kubeflow-tf/older) directory, and see that [README](samples/kubeflow-tf/older/README.md) for details on runing the examples. To bring up the Pipelines UI, set up a port-forward to the Kubeflow dashboard:
 
 ```
 export NAMESPACE=kubeflow
@@ -93,7 +95,7 @@ In particular, this lets you monitor creation and status of the pods used for Ku
 
 ### Example workflow 1
 
-Run the first example [as described here](samples/kubeflow-tf/README.md#example-workflow-1).
+Run the first example [as described here](samples/kubeflow-tf/older/README.md#example-workflow-1).
 This example illustrates how you can use a Kubeflow pipeline to experiment with
 [TFT](https://github.com/tensorflow/transform)-based feature engineering, and how you can serve your trained model from both on-prem and cloud endpoints.
 
@@ -104,7 +106,7 @@ This example illustrates how you can use a Kubeflow pipeline to experiment with
 
 <p></p>
 
-The pipeline runs two paths concurrently, passing a different TFT preprocessing function to each ([`preprocessing.py`](components/dataflow/tft/preprocessing.py) vs [`preprocessing2.py`](components/dataflow/tft/preprocessing.py)).
+The pipeline runs two paths concurrently, passing a different TFT preprocessing function to each ([`preprocessing.py`](components/older/dataflow/tft/preprocessing.py) vs [`preprocessing2.py`](components/older/dataflow/tft/preprocessing.py)).
 
 Then each model is trained, using Kubeflow's tf-jobs [CRD](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).  For example purposes, distributed training is used for one path, and single-node training is used for the other.  This is done by specifying the number of *workers* and *parameter servers* to use for the training job.
 
@@ -121,17 +123,17 @@ When the training is finished, both models are deployed to both Cloud ML Engine 
 
 #### View the results of model analysis in a Jupyter notebook
 
-One of the workflow steps runs TensorFlow Model Analysis (TFMA) on the trained model, using a given [specification of how to slice the data](components/dataflow/tfma/model_analysis-taxi.py#L45).  You can visualize the results via a Jupyter notebook.
+One of the workflow steps runs TensorFlow Model Analysis (TFMA) on the trained model, using a given [specification of how to slice the data](components/older/dataflow/tfma/model_analysis-taxi.py#L45).  You can visualize the results via a Jupyter notebook.
 You can do this in a local notebook (see the TFMA docs for installation).
 
 Or, kubeflow's JupyterHub installation makes this easy to do, via a `port-forward` to your GKE cluster. The necessary libraries and visualization widgets are already installed.
 See the *"To connect to your Jupyter Notebook locally"* section in this [Kubeflow guide](https://www.kubeflow.org/docs/guides/components/jupyter/) for more info.
 
-Load and run the [`tfma_expers.ipynb`](components/dataflow/tfma/tfma_expers.ipynb) notebook to explore the results of the TFMA analysis.
+Load and run the [`tfma_expers.ipynb`](components/older/dataflow/tfma/tfma_expers.ipynb) notebook to explore the results of the TFMA analysis.
 
 #### Use your models for prediction
 
-Change to the [`components/kubeflow/tf-serving`](components/kubeflow/tf-serving) directory, and copy the `trainer` module from the `taxi_model` directory into this directory:
+Change to the [`components/older/kubeflow/tf-serving`](components/older/kubeflow/tf-serving) directory, and copy the `trainer` module from the `taxi_model` directory into this directory:
 
 ```sh
 cp -pr ../taxi_model/trainer .
@@ -145,7 +147,7 @@ You can view the deployed versions of the `taxifare` model in the Cloud Console:
 [https://console.cloud.google.com/mlengine/models](https://console.cloud.google.com/mlengine/models).
 
 Make a prediction using one of the deployed model versions as follows.
-In the [`components/kubeflow/tf-serving`](components/kubeflow/tf-serving) directory, run the following client script, replacing `<MODEL_VERSION_NAME>` with one of your deployed versions. (Note that this script assumes that you have gcloud configured to point to the correct project.  If it is not, first run `gcloud config set project <YOUR_PROJECT_NAME>`). You'll need to use Python 2.7 and have `tensorflow_serving-api` installed to run the script.
+In the [`components/older/kubeflow/tf-serving`](components/older/kubeflow/tf-serving) directory, run the following client script, replacing `<MODEL_VERSION_NAME>` with one of your deployed versions. (Note that this script assumes that you have gcloud configured to point to the correct project.  If it is not, first run `gcloud config set project <YOUR_PROJECT_NAME>`). You'll need to use Python 2.7 and have `tensorflow_serving-api` installed to run the script.
 
 ```sh
 python chicago_taxi_client.py \
@@ -186,7 +188,7 @@ python chicago_taxi_client.py \
 
 This workflow shows how you might use TFMA to investigate relative accuracies of models trained on different datasets, evaluating against fresh data. As part of the preprocessing step, it pulls data directly from the source [BigQuery Chicago taxi dataset](https://cloud.google.com/bigquery/public-data/chicago-taxi), with differing min and max time boundaries, effectively training on 'recent' data vs a batch that includes older data.  Then, it runs TFMA analysis on both learned models, using 'recent' data for evaluation. As with Workflow 1 above, it also deploys the trained models to Cloud ML Engine.
 
-Run the second example [as described here](samples/kubeflow-tf/README.md#example-workflow-2).
+Run the second example [as described here](samples/kubeflow-tf/older/README.md#example-workflow-2).
 
 <figure>
 <a href="https://storage.googleapis.com/amy-jo/images/kf-pls/wkflw2_graph_ds.png" target="_blank"><img src="https://storage.googleapis.com/amy-jo/images/kf-pls/wkflw2_graph_ds.png" width="90%"/></a>

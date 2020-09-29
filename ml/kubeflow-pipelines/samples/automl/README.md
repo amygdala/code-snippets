@@ -6,4 +6,3 @@ This pipeline requires a GKE installation of Kubeflow, e.g. via the
 Once Kubeflow is installed on your GKE cluster, to run this pipeline, you'll need to vist the [IAM panel in the GCP Cloud Console](https://pantheon.corp.google.com/iam-admin/iam), find the Kubeflow-created service account
 `<deployment>-user@<project>.iam.gserviceaccount.com`, and add permissions to make that account an `AutoML Admin`. This will give the Kubeflow Pipeline steps permission to call the AutoML APIs.
 
-[More detail TBD soon].
