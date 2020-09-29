@@ -20,10 +20,14 @@ from kfp.dsl.types import GCSPath, String
 
 
 train_op = comp.load_component_from_file(
-  '../components/train_component.yaml' # pylint: disable=line-too-long
+  '../components/train_component.yaml'
   )
 serve_op = comp.load_component_from_file(
-  '../components/serve_component.yaml' # pylint: disable=line-too-long
+  '../components/serve_component.yaml'
+  )
+
+tb_op = comp.load_component_from_url(
+  'https://raw.githubusercontent.com/kubeflow/pipelines/master/components/tensorflow/tensorboard/prepare_tensorboard/component.yaml' # pylint: disable=line-too-long
   )
 
 
@@ -33,7 +37,7 @@ serve_op = comp.load_component_from_file(
 )
 def bikes_weather_hptune(  #pylint: disable=unused-argument
   tune_epochs: int = 2,
-  train_epochs: int = 7,
+  train_epochs: int = 5,
   num_tuners: int = 8,
   bucket_name: str = 'YOUR_BUCKET_NAME',  # used for the HP dirs; don't include the 'gs://'
   tuner_dir_prefix: str = 'hptest',
@@ -60,11 +64,18 @@ def bikes_weather_hptune(  #pylint: disable=unused-argument
       file_outputs={'hps': '/tmp/hps.json'},
       )
 
-  with dsl.ParallelFor(num_best_hps_list) as idx:
+  # create TensorBoard viz for the parent directory of all training runs, so that we can
+  # compare them.
+  tb_viz = tb_op(
+    log_dir_uri='%s/%s' % (working_dir, dsl.RUN_ID_PLACEHOLDER)
+  )
+
+  with dsl.ParallelFor(num_best_hps_list) as idx:  # start the full training runs in parallel
+
     train = train_op(
       data_dir=data_dir,
-      workdir='%s/%s/%s' % (working_dir, dsl.RUN_ID_PLACEHOLDER, idx),
-      tb_dir='%s/%s' % (working_dir, dsl.RUN_ID_PLACEHOLDER),
+      workdir='%s/%s' % (tb_viz.outputs['log_dir_uri'], idx),
+      tb_dir=tb_viz.outputs['log_dir_uri'],
       epochs=train_epochs, steps_per_epoch=steps_per_epoch,
       hp_idx=idx, hptune_results=hptune.outputs['hps']
       )
