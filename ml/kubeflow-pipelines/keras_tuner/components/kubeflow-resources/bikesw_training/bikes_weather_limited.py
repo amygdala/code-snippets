@@ -27,12 +27,10 @@ import bwmodel.model as bwmodel
 DEVELOP_MODE = False
 NBUCKETS = 5 # for embeddings
 NUM_EXAMPLES = 1000*1000 * 20 # assume 20 million examples
-# DNN_HIDDEN_UNITS = '128,64,32'
 
 STRATEGY = tf.distribute.MirroredStrategy()
 TRAIN_BATCH_SIZE = 64 * STRATEGY.num_replicas_in_sync
 
-# TRAIN_OUTPUT_PATH = '/tmp/train_output_path.txt'
 
 def create_model(learning_rate, hidden_size, num_hidden_layers):
 
@@ -82,8 +80,6 @@ def main():
       '--data-dir', default='gs://aju-dev-demos-codelabs/bikes_weather/')
   parser.add_argument(
       '--train-output-path', required=True)
-  # parser.add_argument(
-  #     '--mlpipeline-ui-metadata-path', required=True)      
 
   args = parser.parse_args()
   logging.info('Tensorflow version %s', tf.__version__)
@@ -112,8 +108,8 @@ def main():
   logging.info('using %s steps per epoch', steps_per_epoch)
 
   train_dataset = bwmodel.read_dataset(TRAIN_DATA_PATTERN, train_batch_size)
-  eval_dataset = bwmodel.read_dataset(EVAL_DATA_PATTERN, eval_batch_size, tf.estimator.ModeKeys.EVAL,
-     eval_batch_size * 100 * STRATEGY.num_replicas_in_sync
+  eval_dataset = bwmodel.read_dataset(EVAL_DATA_PATTERN, eval_batch_size,
+      tf.estimator.ModeKeys.EVAL, eval_batch_size * 100 * STRATEGY.num_replicas_in_sync
   )
 
   # Create metadata.json file for Tensorboard 'artifact'
@@ -123,15 +119,6 @@ def main():
       'source': args.tb_dir
     }]
   }
-  # logging.info('using metadata ui path: {}'.format(args.mlpipeline_ui_metadata_path))
-  # try:
-  #   pathlib2.Path(args.mlpipeline_ui_metadata_path).parent.mkdir(parents=True)
-  # except FileExistsError as e1:
-  #   logging.info(e1)
-  # pathlib2.Path(args.mlpipeline_ui_metadata_path).write_text(json.dumps(metadata))
-
-  # with open(args.mlpipeline_ui_metadata_path, 'w') as mlpipeline_ui_metadata_file:
-  #   mlpipeline_ui_metadata_file.write(json.dumps(metadata))  
 
   with open('/mlpipeline-ui-metadata.json', 'w') as f:
     json.dump(metadata, f)
