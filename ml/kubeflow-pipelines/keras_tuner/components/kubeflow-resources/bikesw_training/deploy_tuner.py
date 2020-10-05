@@ -126,9 +126,7 @@ def main():
       subprocess.call(['kubectl', '-n={}'.format(args.namespace), 'wait',
               '--for=condition=complete', '--timeout=-1m', 'job/{}{}'.format(KTUNER_DEP_PREFIX, i)])
 
-    # parse the results to get the best params
-    # (is there a more preferred way to do this?)
-
+    # get info on the best params once search has completed
     client = storage.Client()
     bucket = client.get_bucket(args.bucket_name)
     logging.info('using bucket %s: %s, path %s', args.bucket_name, bucket, res_path)
@@ -144,7 +142,3 @@ def main():
 
 if __name__ == "__main__":
   main()
-
-
-# kubectl create clusterrolebinding sa-admin --clusterrole=cluster-admin --serviceaccount=kubeflow:pipeline-runner
-# kubectl apply -f https://raw.githubusercontent.com/GoogleCloudPlatform/container-engine-accelerators/master/nvidia-driver-installer/cos/daemonset-preloaded.yaml

@@ -11,13 +11,13 @@ You can create an AI Platform Pipelines installation with just a few clicks. Aft
 
 [Keras Tuner][9] is an easy-to-use, distributable hyperparameter optimization framework. Keras Tuner makes it easy to define a search space and leverage included algorithms to find the best hyperparameter values. Keras Tuner comes with several search  algorithms built-in, and is also designed to be easy for researchers to extend in order to experiment with new search algorithms.  It is straightforward to run the tuner in [distributed search mode][10], which we’ll leverage for this example.
 
-The intent of a HP tuning search is typically not to do full training for each parameter combination, but to find the best starting points.  The number of epochs run in the HP search trials are typically smaller than that used in the full training. So, an HP tuning-based workflow could be:
+The intent of a HP tuning search is typically not to do full training for each parameter combination, but to find the best starting points.  The number of epochs run in the HP search trials are typically smaller than that used in the full training. So, an HP tuning-based workflow could include:
 
 - perform a distributed HP tuning search, and obtain the results
 - do concurrent model training runs for each of the best N parameter configurations, and export the model for each
 - serve the results (often after model evaluation).
 
-As mentioned above, a Cloud AI Platform (KFP) Pipeline runs under the hood on a GKE cluster.  This makes it straightforward to implement this workflow— including the distributed HP search— so that you just need to launch a pipeline job to kick it off.  This tutorial shows how to do that.  It also shows how to use **preemptible** GPU-enabled VMS for the HP search, to reduce costs; and how to use [TF-serving][11] to deploy the trained model(s) on the same cluster for serving.
+As mentioned above, a Cloud AI Platform (KFP) Pipeline runs under the hood on a GKE cluster.  This makes it straightforward to implement this workflow— including the distributed HP search and model serving— so that you just need to launch a pipeline job to kick it off.  This tutorial shows how to do that.  It also shows how to use **preemptible** GPU-enabled VMS for the HP search, to reduce costs; and how to use [TF-serving][11] to deploy the trained model(s) on the same cluster for serving.
 As part of the process, we’ll see how GKE provides a scalable, resilient platform with easily-configured use of accelerators.
 
 ## About the dataset and modeling task
@@ -32,7 +32,7 @@ We’ll use this dataset to build a [Keras][17] _regression model_ to predict th
 
 We’ll then use the Keras Tuner package to do an HP search using this model.
 
-## Keras tuner in distributed mode on GKE
+## Keras tuner in distributed mode on GKE with preemptible VMs
 
 The [Keras Tuner][18] supports running a hyperparameter search  in [distributed mode][19].
 [Google Kubernetes Engine (GKE)][20] makes it straightforward to configure and run a distributed HP tuning search.  GKE is  a good fit not only because it lets you easily distribute the HP tuning workload, but because you can leverage autoscaling to boost node pools for a large job, then scale down when the resources are no longer needed.  It’s also easy to deploy trained models for serving onto the same GKE cluster, using [TF-serving][21].  In addition, the Keras Tuner works well with [preemptible VMs][22], making it even cheaper to run your workloads.
@@ -47,11 +47,11 @@ Once the HP search has finished, any of the tuners can obtain information on the
 
 ## Defining the HP Tuning + training workflow as a pipeline
 
-The definition of the pipeline itself is [here][25], specified using the KFP SDK.  It’s then compiled to an archive file and uploaded to AI Platforms Pipelines. (To compile it yourself, you’ll need to have the [KFP SDK installed][26].  Pipeline steps are container-based, and you can find the Dockerfiles and underlying code for the steps under the [`components`][27] directory.
+The definition of the pipeline itself is [here][25], specified using the KFP SDK.  It’s then compiled to an archive file and uploaded to AI Platforms Pipelines. (To compile it yourself, you’ll need to have the [KFP SDK installed][26]).  Pipeline steps are container-based, and you can find the Dockerfiles and underlying code for the steps under the [`components`][27] directory.
 
 The example pipeline first runs a distributed HP tuning search using a specified number of tuner workers,  then obtains the best `N` parameter combinations—by default, two.  The pipeline step itself does not do the heavy lifting, but rather launches all the tuner [*jobs*][28] on GKE, which run concurrently, and monitors for their completion. (Unsurprisingly, this stage of the pipeline may run for quite a long time, depending upon how many HP search trials were specified and how many tuners you’re using).
 
-Concurrently to the Keras Tuner runs, the pipeline sets up a TensorBoard visualization component, its log directory set to the GCS path under which we’ll run the full training jobs.  The output of this step—the log dir info— is consumed by the training step.
+Concurrently to the Keras Tuner runs, the pipeline sets up a [TensorBoard visualization component](https://github.com/kubeflow/pipelines/blob/master/components/tensorflow/tensorboard/prepare_tensorboard/component.yaml), its log directory set to the GCS path under which we’ll run the full training jobs.  The output of this step—the log dir info— is consumed by the training step.
 
 The pipeline then runs full training jobs, concurrently, for each of the `N` best parameter sets (by default, 2).  It does this via the KFP [loop][29] construct, allowing the pipeline to support dynamic specification of `N`.
 We’ll be able to compare the training jobs to each other using TensorBoard, both while they’re running and after they’ve completed.
@@ -211,7 +211,6 @@ In the [`bikesw_training`][49] directory, [`deploy_tuner.py`][50] implements the
 
 The [`bikes_weather_limited.py`][53] is used for full training with the given HP tuning parameters. The [`bwmodel`][54] module contains core model code used by both.
 
-
 > Note: With Keras Tuner, you can do both data-parallel and trial-parallel distribution. That is, you can use tf.distribute.Strategy to run each Model on multiple GPUs, and you can also search over multiple different hyperparameter combinations in parallel on different workers.  The template yamls specify just one GPU, but it would be easy to modify the code to support the former.
 
 The TF-Serving component is in the [`tf-serving`][55] directory, which contains both the code that launches the TF-serving service, and the `yaml` template used to do so.
@@ -242,10 +241,6 @@ kubectl delete services -n kubeflow -l apptype=tf-serving
 
 You can also take down your Cloud AI Platform Pipelines installation— optionally deleting its GKE cluster too— via the Pipelines panel in the Cloud Console.
 
-## What’s next?
-
-### What if we had wanted to do model evaluation?
-…
 
 [1]:	https://en.wikipedia.org/wiki/Hyperparameter_(machine_learning)
 [2]:	https://cloud.google.com/blog/products/ai-machine-learning/introducing-cloud-ai-platform-pipelines
