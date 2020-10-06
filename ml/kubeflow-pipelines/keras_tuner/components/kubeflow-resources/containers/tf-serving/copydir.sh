@@ -14,4 +14,6 @@
 
 
 mkdir -p ./build
-cp -pr "../../bikesw_training"/ ./build/
+cp -pr "../../tf-serving"/ ./build/
+
+

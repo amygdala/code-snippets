@@ -1,4 +1,3 @@
-#!/bin/bash -e
 # Copyright 2020 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,13 +17,12 @@ steps:
   - name: 'bash'
     args: ['./copydir.sh']
     id: 'copydir'
-    dir: 'containers/bikesw_training'
-
+    dir: 'ml/kubeflow-pipelines/keras_tuner/components/kubeflow-resources/containers/bikesw_training'
 
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t', 'gcr.io/$PROJECT_ID/bw-pl-bikes-train:$SHORT_SHA', '.']
-    dir: 'containers/bikesw_training'    
+    dir: 'ml/kubeflow-pipelines/keras_tuner/components/kubeflow-resources/containers/bikesw_training'
 
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'gcr.io/$PROJECT_ID/bw-pl-bikes-train:$SHORT_SHA']
-  
+
