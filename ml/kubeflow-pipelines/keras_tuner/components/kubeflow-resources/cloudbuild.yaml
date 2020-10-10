@@ -47,14 +47,14 @@ steps:
 # ml-pipeline-bikes-dep
 - name: 'bash'
   args: ['./copydir.sh']
-  id: ['copy3']
+  id: copy3
   dir: 'ml/kubeflow-pipelines/keras_tuner/components/kubeflow-resources/containers/deploy_jobs'
   waitFor: ['-']
 
 - name: 'gcr.io/cloud-builders/docker'
   args: ['build', '-t', 'gcr.io/$PROJECT_ID/ml-pipeline-bikes-dep:$SHORT_SHA', '.']
   dir: 'ml/kubeflow-pipelines/keras_tuner/components/kubeflow-resources/containers/deploy_jobs'
-  waitFor: copy3
+  waitFor: ['copy3']
 
 - name: 'gcr.io/cloud-builders/docker'
   args: ['push', 'gcr.io/$PROJECT_ID/ml-pipeline-bikes-dep:$SHORT_SHA']
