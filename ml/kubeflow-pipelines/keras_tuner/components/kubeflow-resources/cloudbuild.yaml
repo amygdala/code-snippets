@@ -14,50 +14,64 @@
 
 steps:
 
-  # bw-pl-bikes-train
-  - name: 'bash'
-    args: ['./copydir.sh']
-    dir: 'ml/kubeflow-pipelines/keras_tuner/components/kubeflow-resources/containers/bikesw_training'
+# bw-pl-bikes-train
+- name: 'bash'
+  args: ['./copydir.sh']
+  id: copy1
+  dir: 'ml/kubeflow-pipelines/keras_tuner/components/kubeflow-resources/containers/bikesw_training'
 
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/bw-pl-bikes-train:$SHORT_SHA', '.']
-    dir: 'ml/kubeflow-pipelines/keras_tuner/components/kubeflow-resources/containers/bikesw_training'
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', 'gcr.io/$PROJECT_ID/bw-pl-bikes-train:$SHORT_SHA', '.']
+  dir: 'ml/kubeflow-pipelines/keras_tuner/components/kubeflow-resources/containers/bikesw_training'
+  waitFor: ['copy1']
 
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/bw-pl-bikes-train:$SHORT_SHA']
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'gcr.io/$PROJECT_ID/bw-pl-bikes-train:$SHORT_SHA']
 
-  # ml-pipeline-bikes-tuner
-  - name: 'bash'
-    args: ['./copydir.sh']
-    dir: 'ml/kubeflow-pipelines/keras_tuner/components/kubeflow-resources/containers/bikesw_training_hptune'
+# ml-pipeline-bikes-tuner
+- name: 'bash'
+  args: ['./copydir.sh']
+  id: copy2
+  dir: 'ml/kubeflow-pipelines/keras_tuner/components/kubeflow-resources/containers/bikesw_training_hptune'
+  waitFor: ['-']  # The '-' indicates that this step begins immediately.
 
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/ml-pipeline-bikes-tuner:$SHORT_SHA', '.']
-    dir: 'ml/kubeflow-pipelines/keras_tuner/components/kubeflow-resources/containers/bikesw_training_hptune'
 
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/ml-pipeline-bikes-tuner:$SHORT_SHA']
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', 'gcr.io/$PROJECT_ID/ml-pipeline-bikes-tuner:$SHORT_SHA', '.']
+  dir: 'ml/kubeflow-pipelines/keras_tuner/components/kubeflow-resources/containers/bikesw_training_hptune'
+  waitFor: ['copy2']
 
-  # ml-pipeline-bikes-dep
-  - name: 'bash'
-    args: ['./copydir.sh']
-    dir: 'ml/kubeflow-pipelines/keras_tuner/components/kubeflow-resources/containers/deploy_jobs'
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'gcr.io/$PROJECT_ID/ml-pipeline-bikes-tuner:$SHORT_SHA']
 
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/ml-pipeline-bikes-dep:$SHORT_SHA', '.']
-    dir: 'ml/kubeflow-pipelines/keras_tuner/components/kubeflow-resources/containers/deploy_jobs'
+# ml-pipeline-bikes-dep
+- name: 'bash'
+  args: ['./copydir.sh']
+  id: ['copy3']
+  dir: 'ml/kubeflow-pipelines/keras_tuner/components/kubeflow-resources/containers/deploy_jobs'
+  waitFor: ['-']
 
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/ml-pipeline-bikes-dep:$SHORT_SHA']
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', 'gcr.io/$PROJECT_ID/ml-pipeline-bikes-dep:$SHORT_SHA', '.']
+  dir: 'ml/kubeflow-pipelines/keras_tuner/components/kubeflow-resources/containers/deploy_jobs'
+  waitFor: copy3
 
-  # bw-pipeline-tfserve
-  - name: 'bash'
-    args: ['./copydir.sh']
-    dir: 'ml/kubeflow-pipelines/keras_tuner/components/kubeflow-resources/containers/tf-serving'
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'gcr.io/$PROJECT_ID/ml-pipeline-bikes-dep:$SHORT_SHA']
 
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/bw-pipeline-tfserve:$SHORT_SHA', '.']
-    dir: 'ml/kubeflow-pipelines/keras_tuner/components/kubeflow-resources/containers/tf-serving'
+# bw-pipeline-tfserve
+- name: 'bash'
+  args: ['./copydir.sh']
+  id: copy4
+  dir: 'ml/kubeflow-pipelines/keras_tuner/components/kubeflow-resources/containers/tf-serving'
+  waitFor: ['-']
 
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/bw-pipeline-tfserve:$SHORT_SHA']    
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', 'gcr.io/$PROJECT_ID/bw-pipeline-tfserve:$SHORT_SHA', '.']
+  dir: 'ml/kubeflow-pipelines/keras_tuner/components/kubeflow-resources/containers/tf-serving'
+  waitFor: ['copy4']
+
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'gcr.io/$PROJECT_ID/bw-pipeline-tfserve:$SHORT_SHA']
+
+timeout: 2000s
