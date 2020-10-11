@@ -35,7 +35,6 @@ steps:
   dir: 'ml/kubeflow-pipelines/keras_tuner/components/kubeflow-resources/containers/bikesw_training_hptune'
   waitFor: ['-']  # The '-' indicates that this step begins immediately.
 
-
 - name: 'gcr.io/cloud-builders/docker'
   args: ['build', '-t', 'gcr.io/$PROJECT_ID/ml-pipeline-bikes-tuner:$SHORT_SHA', '.']
   dir: 'ml/kubeflow-pipelines/keras_tuner/components/kubeflow-resources/containers/bikesw_training_hptune'
