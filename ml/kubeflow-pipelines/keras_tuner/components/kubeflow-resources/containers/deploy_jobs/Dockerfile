@@ -25,6 +25,7 @@ RUN apt-get update \
 RUN pip install --upgrade pip
 RUN pip install urllib3 certifi retrying
 RUN pip install google-cloud-storage
+RUN pip install --upgrade six
 
 
 RUN wget -nv https://dl.google.com/dl/cloudsdk/release/google-cloud-sdk.zip && \

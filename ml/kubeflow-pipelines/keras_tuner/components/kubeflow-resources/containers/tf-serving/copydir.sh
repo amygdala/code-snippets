@@ -14,6 +14,6 @@
 
 
 mkdir -p ./build
-cp -pr "../../tf-serving"/ ./build/
+cp -pr ../../tf-serving/* ./build/
 
 
