@@ -255,11 +255,11 @@ After you’re done running the example, you probably want to do some cleanup.
 
 You can delete the ‘chief’ _job_ when you’re done with it via this command:
 ```bash
-kubectl delete jobs -l app=ktuner-chief
+kubectl delete jobs -l apptype=ktuner-chief
 ```
 Then delete the chief _service_ as well:
 ```bash
-kubectl delete services -l app=ktuner-chief
+kubectl delete services -l apptype=ktuner-chief
 ```
 You can delete the tuner jobs as follows (if the jobs have completed, this will tear down their pods; if the jobs are still running, this will terminate them):
 ```bash
