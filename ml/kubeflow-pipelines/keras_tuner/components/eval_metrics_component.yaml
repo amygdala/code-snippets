@@ -1,0 +1,79 @@
+name: Eval metrics
+inputs:
+- {name: metrics, type: String}
+- {name: thresholds, type: String}
+outputs:
+- {name: deploy, type: String}
+implementation:
+  container:
+    image: gcr.io/deeplearning-platform-release/tf2-cpu.2-3:latest
+    command:
+    - python3
+    - -u
+    - -c
+    - |
+      def eval_metrics(
+        metrics,
+        thresholds
+      ):
+
+        import json
+        import logging
+
+        def regression_threshold_check(metrics_info):
+          # ...
+          for k, v in thresholds_dict.items():
+            logging.info('k {}, v {}'.format(k, v))
+            if k in ['root_mean_squared_error', 'mae']:
+              if metrics_info[k][-1] > v:
+                logging.info('{} > {}; returning False'.format(metrics_info[k][0], v))
+                return ('False', )
+          return ('deploy', )
+
+        logging.getLogger().setLevel(logging.INFO)  # TODO: make level configurable
+
+        thresholds_dict = json.loads(thresholds)
+        logging.info('thresholds dict: {}'.format(thresholds_dict))
+        logging.info('metrics: %s', metrics)
+        metrics_dict = json.loads(metrics)
+
+        logging.info("got metrics info: %s", metrics_dict)
+        res = regression_threshold_check(metrics_dict)
+        logging.info('deploy decision: %s', res)
+        return res
+
+      def _serialize_str(str_value: str) -> str:
+          if not isinstance(str_value, str):
+              raise TypeError('Value "{}" has type "{}" instead of str.'.format(str(str_value), str(type(str_value))))
+          return str_value
+
+      import argparse
+      _parser = argparse.ArgumentParser(prog='Eval metrics', description='')
+      _parser.add_argument("--metrics", dest="metrics", type=str, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("--thresholds", dest="thresholds", type=str, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("----output-paths", dest="_output_paths", type=str, nargs=1)
+      _parsed_args = vars(_parser.parse_args())
+      _output_files = _parsed_args.pop("_output_paths", [])
+
+      _outputs = eval_metrics(**_parsed_args)
+
+      _output_serializers = [
+          _serialize_str,
+
+      ]
+
+      import os
+      for idx, output_file in enumerate(_output_files):
+          try:
+              os.makedirs(os.path.dirname(output_file))
+          except OSError:
+              pass
+          with open(output_file, 'w') as f:
+              f.write(_output_serializers[idx](_outputs[idx]))
+    args:
+    - --metrics
+    - {inputValue: metrics}
+    - --thresholds
+    - {inputValue: thresholds}
+    - '----output-paths'
+    - {outputPath: deploy}

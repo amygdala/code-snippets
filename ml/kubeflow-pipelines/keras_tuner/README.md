@@ -208,15 +208,15 @@ To do this, we’re using a [prebuilt KFP component][45] for TensorBoard visuali
 
 After the full models have been trained and deployed for serving, you can request predictions from the TF-serving services.  For this example, we’re not putting the services behind external IP addresses, so we’ll port-forward to connect to them.
 
-Find the `TF-serving` service names by running this command:
+Find the `TF-serving` service names by running this command (edit the following if you deployed to a different namespace):
 ```bash
-kubectl -n kubeflow get services  -l apptype=tf-serving
+kubectl -n default get services  -l apptype=tf-serving
 ```
 
 By default, you should see two such services per pipeline run.  The service names will look something like `bikeswxxxxxxxxxx`.  Port-forward to a service as follows, **first editing to use your service name**:
 
 ```bash
-kubectl -n kubeflow port-forward svc/bikeswxxxxxxxxxx 8500:8500
+kubectl -n default port-forward svc/bikeswxxxxxxxxxx 8500:8500
 ```
 
 Then, send the `TF-serving` service a prediction request, formatted as follows:
@@ -266,10 +266,10 @@ You can delete the tuner jobs as follows (if the jobs have completed, this will 
 kubectl delete jobs -l app=ktuner-tuner
 ```
 
-To take down the TF-serving _deployments_ and _services_:
+To take down the TF-serving _deployments_ and _services_ (edit the following if you deployed to a different namespace):
 ```bash
-kubectl delete deployment -n kubeflow -l apptype=tf-serving
-kubectl delete services -n kubeflow -l apptype=tf-serving
+kubectl delete deployment -n default -l apptype=tf-serving
+kubectl delete services -n default -l apptype=tf-serving
 ```
 
 You can also take down your Cloud AI Platform Pipelines installation— optionally deleting its GKE cluster too— via the Pipelines panel in the Cloud Console.

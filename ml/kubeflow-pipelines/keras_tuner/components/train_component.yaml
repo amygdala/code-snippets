@@ -39,11 +39,13 @@ inputs:
 outputs:
   - name: train_output_path
     type: GCSPath
+  - name: metrics_output_path
+    type: String
   - name: MLPipeline UI metadata
     type: UI metadata
 implementation:
   container:
-    image: gcr.io/google-samples/bw-pl-bikes-train:v1
+    image: gcr.io/google-samples/bw-pl-bikes-train:aad15ad
     args: [
       --data-dir, {inputValue: data_dir},
       --epochs, {inputValue: epochs},
@@ -51,6 +53,7 @@ implementation:
       --workdir, {inputValue: workdir},
       --tb-dir, {inputValue: tb_dir},
       --train-output-path, {outputPath: train_output_path},
+      --metrics-output-path, {outputPath: metrics_output_path},
       --hp-idx, {inputValue: hp_idx},
       --hptune-results, {inputValue: hptune_results}
     ]

@@ -54,7 +54,7 @@ def bikes_weather_hptune(  #pylint: disable=unused-argument
 
   hptune = dsl.ContainerOp(
       name='ktune',
-      image='gcr.io/google-samples/ml-pipeline-bikes-dep:v1',
+      image='gcr.io/google-samples/ml-pipeline-bikes-dep:aad15ad',
       arguments=['--epochs', tune_epochs, '--num-tuners', num_tuners,
           '--tuner-dir', '%s/%s' % (tuner_dir_prefix, dsl.RUN_ID_PLACEHOLDER),
           '--tuner-proj', tuner_proj, '--bucket-name', bucket_name, '--max-trials', max_trials,
@@ -83,7 +83,7 @@ def bikes_weather_hptune(  #pylint: disable=unused-argument
     serve = serve_op(
       model_path=train.outputs['train_output_path'],
       model_name='bikesw',
-      namespace='kubeflow'
+      namespace='default'
       )
     train.set_gpu_limit(2)
 

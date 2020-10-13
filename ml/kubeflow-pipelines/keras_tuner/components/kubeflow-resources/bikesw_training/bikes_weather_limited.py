@@ -147,6 +147,10 @@ def main():
   # write metrics info dict
   metrics_json = json.dumps(history.history)
   print('metrics json: {}'.format(metrics_json))
+  try:
+    pathlib2.Path(args.metrics_output_path).parent.mkdir(parents=True)
+  except FileExistsError as e1:
+    logging.info(e1)
   pathlib2.Path(args.metrics_output_path).write_text(metrics_json)
 
   ts = str(int(time.time()))
@@ -155,8 +159,8 @@ def main():
 
   try:
     pathlib2.Path(args.train_output_path).parent.mkdir(parents=True)
-  except FileExistsError as e1:
-    logging.info(e1)
+  except FileExistsError as e2:
+    logging.info(e2)
   try:
     logging.info("exporting model....")
     tf.saved_model.save(model, export_dir)
