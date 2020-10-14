@@ -80,6 +80,8 @@ def main():
       '--data-dir', default='gs://aju-dev-demos-codelabs/bikes_weather/')
   parser.add_argument(
       '--train-output-path', required=True)
+  parser.add_argument(
+      '--metrics-output-path', required=True)
 
   args = parser.parse_args()
   logging.info('Tensorflow version %s', tf.__version__)
@@ -142,6 +144,14 @@ def main():
                       callbacks=[cp_callback, tb_callback]
                      )
   logging.info(history.history.keys())
+  # write metrics info dict
+  metrics_json = json.dumps(history.history)
+  print('metrics json: {}'.format(metrics_json))
+  try:
+    pathlib2.Path(args.metrics_output_path).parent.mkdir(parents=True)
+  except FileExistsError as e1:
+    logging.info(e1)
+  pathlib2.Path(args.metrics_output_path).write_text(metrics_json)
 
   ts = str(int(time.time()))
   export_dir = '{}/export/bikesw/{}'.format(OUTPUT_DIR, ts)
@@ -149,8 +159,8 @@ def main():
 
   try:
     pathlib2.Path(args.train_output_path).parent.mkdir(parents=True)
-  except FileExistsError as e1:
-    logging.info(e1)
+  except FileExistsError as e2:
+    logging.info(e2)
   try:
     logging.info("exporting model....")
     tf.saved_model.save(model, export_dir)

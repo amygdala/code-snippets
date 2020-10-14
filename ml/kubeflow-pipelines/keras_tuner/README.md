@@ -34,7 +34,40 @@ We’ll then use the Keras Tuner package to do an HP search using this model.
 
 ## Keras tuner in distributed mode on GKE with preemptible VMs
 
-The [Keras Tuner][18] supports running a hyperparameter search  in [distributed mode][19].
+With the Keras Tuner, you set up a HP tuning search along these lines (the code is from this example; other search algorithms are supported in addition to 'random'):
+
+```python
+tuner = RandomSearch(
+    create_model,
+    objective='val_mae',
+    max_trials=args.max_trials,
+    distribution_strategy=STRATEGY,
+    executions_per_trial=args.executions_per_trial,
+    directory=args.tuner_dir,
+    project_name=args.tuner_proj
+)
+```
+
+...where in the above, the `create_model` call takes takes an argument `hp` from which you can sample hyperparameters.  For this example, we're varying number of hidden layers, number of nodes per hidden layer, and learning rate in the HP search. There are many other hyperparameters that you might also want to vary in your search.
+```python
+def create_model(hp):
+  inputs, sparse, real = bwmodel.get_layers()
+  ...
+  model = bwmodel.wide_and_deep_classifier(
+      inputs,
+      linear_feature_columns=sparse.values(),
+      dnn_feature_columns=real.values(),
+      num_hidden_layers=hp.Int('num_hidden_layers', 2, 5),
+      dnn_hidden_units1=hp.Int('hidden_size', 32, 256, step=32),
+      learning_rate=hp.Choice('learning_rate',
+                    values=[1e-1, 1e-2, 1e-3, 1e-4])
+    )
+```
+
+Then, call `tuner.search(...)`.  See the Keras Tuner docs for more.
+
+
+The [Keras Tuner][18] supports running a hyperparameter search in [distributed mode][19].
 [Google Kubernetes Engine (GKE)][20] makes it straightforward to configure and run a distributed HP tuning search.  GKE is  a good fit not only because it lets you easily distribute the HP tuning workload, but because you can leverage autoscaling to boost node pools for a large job, then scale down when the resources are no longer needed.  It’s also easy to deploy trained models for serving onto the same GKE cluster, using [TF-serving][21].  In addition, the Keras Tuner works well with [preemptible VMs][22], making it even cheaper to run your workloads.
 
 With the Keras Tuner’s distributed config, you specify one node as the ‘chief’, which coordinates the search, and ‘tuner’ nodes that do the actual work of running model training jobs using a given param set (the _trials_).  When you set up an HP search, you indicate the max number of trials to run, and how many ‘executions’ to run per trial. The Kubeflow pipeline allows dynamic specification of the number of tuners to use for a given HP search— this determines how many trials you can run concurrently— as well as the max number of trials and number of executions.
@@ -175,15 +208,15 @@ To do this, we’re using a [prebuilt KFP component][45] for TensorBoard visuali
 
 After the full models have been trained and deployed for serving, you can request predictions from the TF-serving services.  For this example, we’re not putting the services behind external IP addresses, so we’ll port-forward to connect to them.
 
-Find the `TF-serving` service names by running this command:
+Find the `TF-serving` service names by running this command (edit the following if you deployed to a different namespace):
 ```bash
-kubectl -n kubeflow get services  -l apptype=tf-serving
+kubectl -n default get services  -l apptype=tf-serving
 ```
 
 By default, you should see two such services per pipeline run.  The service names will look something like `bikeswxxxxxxxxxx`.  Port-forward to a service as follows, **first editing to use your service name**:
 
 ```bash
-kubectl -n kubeflow port-forward svc/bikeswxxxxxxxxxx 8500:8500
+kubectl -n default port-forward svc/bikeswxxxxxxxxxx 8500:8500
 ```
 
 Then, send the `TF-serving` service a prediction request, formatted as follows:
@@ -222,21 +255,21 @@ After you’re done running the example, you probably want to do some cleanup.
 
 You can delete the ‘chief’ _job_ when you’re done with it via this command:
 ```bash
-kubectl delete jobs -l app=ktuner-chief
+kubectl delete jobs -l apptype=ktuner-chief
 ```
 Then delete the chief _service_ as well:
 ```bash
-kubectl delete services -l app=ktuner-chief
+kubectl delete services -l apptype=ktuner-chief
 ```
 You can delete the tuner jobs as follows (if the jobs have completed, this will tear down their pods; if the jobs are still running, this will terminate them):
 ```bash
 kubectl delete jobs -l app=ktuner-tuner
 ```
 
-To take down the TF-serving _deployments_ and _services_:
+To take down the TF-serving _deployments_ and _services_ (edit the following if you deployed to a different namespace):
 ```bash
-kubectl delete deployment -n kubeflow -l apptype=tf-serving
-kubectl delete services -n kubeflow -l apptype=tf-serving
+kubectl delete deployment -n default -l apptype=tf-serving
+kubectl delete services -n default -l apptype=tf-serving
 ```
 
 You can also take down your Cloud AI Platform Pipelines installation— optionally deleting its GKE cluster too— via the Pipelines panel in the Cloud Console.
