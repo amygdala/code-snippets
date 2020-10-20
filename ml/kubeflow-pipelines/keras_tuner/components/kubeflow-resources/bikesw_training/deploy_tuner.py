@@ -104,18 +104,18 @@ def main():
 
   if args.deploy:
     logging.info('deploying chief...')
-    subprocess.call(['kubectl', 'apply', '-f', chief_file_path])
+    subprocess.run(['kubectl', 'apply', '-f', chief_file_path])
     logging.info('pausing before tuner worker deployment...')
     time.sleep(120)
     logging.info('deploying tuners...')
-    subprocess.call(['kubectl', 'apply', '-f', tuner_file_path])
+    subprocess.run(['kubectl', 'apply', '-f', tuner_file_path])
     logging.info('finished deployments.')
 
     # wait for the tuner pods to be ready... if we're autoscaling the GPU pool,
     # this might take a while.
     for i in range(args.num_tuners):
       logging.info('waiting for tuner %s pod to be ready...', i)
-      subprocess.call(['kubectl', '-n={}'.format(args.namespace), 'wait', 'pod',
+      subprocess.run(['kubectl', '-n={}'.format(args.namespace), 'wait', 'pod',
               '--for=condition=ready', '--timeout=15m',
               '-l=job-name={}{}'.format(KTUNER_DEP_PREFIX, i)])
 
@@ -123,8 +123,20 @@ def main():
     for i in range(args.num_tuners):
       logging.info('waiting for completion of tuner %s...', i)
       # negative timeout value --> one week
-      subprocess.call(['kubectl', '-n={}'.format(args.namespace), 'wait',
-              '--for=condition=complete', '--timeout=-1m', 'job/{}{}'.format(KTUNER_DEP_PREFIX, i)])
+      sp_res = subprocess.run(['kubectl', '-n={}'.format(args.namespace), 'wait',
+            '--for=condition=complete', '--timeout=-1m', 'job/{}{}'.format(KTUNER_DEP_PREFIX, i)],
+            capture_output=True)
+      # In some cases the k8s api seems to be temporarily unavailable, which causes the
+      # 'wait' to terminate prematurely.  TODO: What's the best way to address this?
+      if 'The connection to the server' in str(sp_res.stdout):
+        # then try again after a pause
+        logging.info('got connection error; sleeping for 20s')
+        time.sleep(20)
+        logging.info('waiting again for completion of tuner %s...', i)
+        sp_res = subprocess.run(['kubectl', '-n={}'.format(args.namespace), 'wait',
+            '--for=condition=complete', '--timeout=-1m', 'job/{}{}'.format(KTUNER_DEP_PREFIX, i)],
+            capture_output=True)
+
 
     # get info on the best params once search has completed
     client = storage.Client()

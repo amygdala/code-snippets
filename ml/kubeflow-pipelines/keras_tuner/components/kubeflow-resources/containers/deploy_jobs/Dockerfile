@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM ubuntu:18.04
+FROM ubuntu:20.04
 
 RUN apt-get update \
   && apt-get install -y python3-pip python3-dev wget unzip \
