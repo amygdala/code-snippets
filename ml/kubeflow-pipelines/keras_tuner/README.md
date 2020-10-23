@@ -129,6 +129,12 @@ Then,  apply a Nvidia `daemonset`, that will install Nvidia drivers on any GPU-e
 kubectl apply -f https://raw.githubusercontent.com/GoogleCloudPlatform/container-engine-accelerators/master/nvidia-driver-installer/cos/daemonset-preloaded.yaml
 ```
 
+Then, run:
+
+```bash
+kubectl create clusterrolebinding sa-admin --clusterrole=cluster-admin --serviceaccount=kubeflow:pipeline-runner
+```
+
 Next, create GPU node pools. Just for the purposes of this example, we’ll create two: one a pool of preemptible nodes with one GPU each (the lighter-weight Keras tuner jobs can select this pool), and another of nodes with two GPUs each, which we’ll use for full training.  (The pipeline is defined so that the full training steps are placed on nodes with at least 2 GPUs, though you can change this value and recompile the pipeline if you like.)
 
 We’ll configure both node pools to use autoscaling and to scale down to zero when not in use. This means that when you run the example, you may see pauses while a node pool scales up.
