@@ -1,0 +1,108 @@
+name: Generate tfdv stats
+inputs:
+- {name: input_data, type: String}
+- {name: output_path, type: String}
+- {name: job_name, type: String}
+- {name: use_dataflow, type: String}
+- {name: project_id, type: String}
+- {name: region, type: String}
+- {name: gcs_temp_location, type: String}
+- {name: gcs_staging_location, type: String}
+- {name: whl_location, type: String, default: '', optional: true}
+- {name: requirements_file, type: String, default: requirements.txt, optional: true}
+implementation:
+  container:
+    image: gcr.io/aju-vtests2/tfdv-tests:v9
+    command:
+    - sh
+    - -ec
+    - |
+      program_path=$(mktemp)
+      echo -n "$0" > "$program_path"
+      python3 -u "$program_path" "$@"
+    - |
+      def generate_tfdv_stats(input_data, output_path, job_name, use_dataflow,
+                              project_id, region, gcs_temp_location, gcs_staging_location,
+                              whl_location = '', requirements_file = 'requirements.txt'):
+        import logging
+        import time
+
+        import tensorflow_data_validation as tfdv
+        import tensorflow_data_validation.statistics.stats_impl
+        from apache_beam.options.pipeline_options import PipelineOptions, GoogleCloudOptions, StandardOptions, SetupOptions
+
+        # pip download tensorflow_data_validation --no-deps --platform manylinux2010_x86_64 --only-binary=:all:
+        # CHANGE this if your download resulted in a different filename.
+
+        logging.getLogger().setLevel(logging.INFO)
+        logging.info("output path: %s", output_path)
+        logging.info("Building pipeline options")
+        # Create and set your PipelineOptions.
+        options = PipelineOptions()
+
+        if use_dataflow == 'true':
+          logging.info("using Dataflow")
+          if not whl_location:
+            logging.warning('tfdv whl file required with dataflow runner.')
+            exit(1)
+          # For Cloud execution, set the Cloud Platform project, job_name,
+          # staging location, temp_location and specify DataflowRunner.
+          google_cloud_options = options.view_as(GoogleCloudOptions)
+          google_cloud_options.project = project_id
+          google_cloud_options.job_name = '{}-{}'.format(job_name, str(int(time.time())))
+          google_cloud_options.staging_location = gcs_staging_location
+          google_cloud_options.temp_location = gcs_temp_location
+          google_cloud_options.region = region
+          options.view_as(StandardOptions).runner = 'DataflowRunner'
+
+          setup_options = options.view_as(SetupOptions)
+          # PATH_TO_WHL_FILE should point to the downloaded tfdv wheel file.
+          setup_options.extra_packages = [whl_location]
+          setup_options.requirements_file = 'requirements.txt'
+
+        tfdv.generate_statistics_from_csv(
+          data_location=input_data, output_path=output_path,
+          pipeline_options=options)
+
+      import argparse
+      _parser = argparse.ArgumentParser(prog='Generate tfdv stats', description='')
+      _parser.add_argument("--input-data", dest="input_data", type=str, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("--output-path", dest="output_path", type=str, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("--job-name", dest="job_name", type=str, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("--use-dataflow", dest="use_dataflow", type=str, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("--project-id", dest="project_id", type=str, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("--region", dest="region", type=str, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("--gcs-temp-location", dest="gcs_temp_location", type=str, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("--gcs-staging-location", dest="gcs_staging_location", type=str, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("--whl-location", dest="whl_location", type=str, required=False, default=argparse.SUPPRESS)
+      _parser.add_argument("--requirements-file", dest="requirements_file", type=str, required=False, default=argparse.SUPPRESS)
+      _parsed_args = vars(_parser.parse_args())
+
+      _outputs = generate_tfdv_stats(**_parsed_args)
+    args:
+    - --input-data
+    - {inputValue: input_data}
+    - --output-path
+    - {inputValue: output_path}
+    - --job-name
+    - {inputValue: job_name}
+    - --use-dataflow
+    - {inputValue: use_dataflow}
+    - --project-id
+    - {inputValue: project_id}
+    - --region
+    - {inputValue: region}
+    - --gcs-temp-location
+    - {inputValue: gcs_temp_location}
+    - --gcs-staging-location
+    - {inputValue: gcs_staging_location}
+    - if:
+        cond: {isPresent: whl_location}
+        then:
+        - --whl-location
+        - {inputValue: whl_location}
+    - if:
+        cond: {isPresent: requirements_file}
+        then:
+        - --requirements-file
+        - {inputValue: requirements_file}

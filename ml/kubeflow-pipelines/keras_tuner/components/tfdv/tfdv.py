@@ -27,6 +27,7 @@ def generate_tfdv_stats(input_data: str, output_path: str, job_name: str, use_da
   # CHANGE this if your download resulted in a different filename.
 
   logging.getLogger().setLevel(logging.INFO)
+  logging.info("output path: %s", output_path)
   logging.info("Building pipeline options")
   # Create and set your PipelineOptions.
   options = PipelineOptions()
@@ -59,4 +60,4 @@ def generate_tfdv_stats(input_data: str, output_path: str, job_name: str, use_da
 if __name__ == '__main__':
   import kfp
   kfp.components.func_to_container_op(generate_tfdv_stats,
-      output_component_file='../tfdv_component.yaml', base_image='gcr.io/aju-vtests2/tfdv-tests:v8')
+      output_component_file='../tfdv_component.yaml', base_image='gcr.io/aju-vtests2/tfdv-tests:v9')
