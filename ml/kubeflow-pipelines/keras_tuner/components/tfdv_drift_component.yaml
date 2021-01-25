@@ -1,0 +1,89 @@
+name: Tfdv detect drift
+inputs:
+- {name: stats_older_path, type: String}
+- {name: stats_new_path, type: String}
+outputs:
+- {name: train, type: String}
+implementation:
+  container:
+    image: gcr.io/aju-vtests2/tfdv-tests:v9
+    command:
+    - sh
+    - -ec
+    - |
+      program_path=$(mktemp)
+      echo -n "$0" > "$program_path"
+      python3 -u "$program_path" "$@"
+    - |
+      def tfdv_detect_drift(
+          stats_older_path, stats_new_path
+      ):
+
+        import logging
+        import time
+
+        import tensorflow_data_validation as tfdv
+        import tensorflow_data_validation.statistics.stats_impl
+
+        logging.getLogger().setLevel(logging.INFO)
+        logging.info('stats_older_path: %s', stats_older_path)
+        logging.info('stats_new_path: %s', stats_new_path)
+
+        if stats_older_path == 'none':
+          return ('true', )
+
+        stats1 = tfdv.load_statistics(stats_older_path)
+        stats2 = tfdv.load_statistics(stats_new_path)
+
+        schema1 = tfdv.infer_schema(statistics=stats1)
+        tfdv.get_feature(schema1, 'duration').drift_comparator.jensen_shannon_divergence.threshold = 0.01
+        drift_anomalies = tfdv.validate_statistics(
+            statistics=stats2, schema=schema1, previous_statistics=stats1)
+        logging.info('drift analysis results: %s', drift_anomalies.drift_skew_info)
+
+        from google.protobuf.json_format import MessageToDict
+        d = MessageToDict(drift_anomalies)
+        val = d['driftSkewInfo'][0]['driftMeasurements'][0]['value']
+        thresh = d['driftSkewInfo'][0]['driftMeasurements'][0]['threshold']
+        logging.info('value %s and threshold %s', val, thresh)
+        res = 'true'
+        if val < thresh:
+          res = 'false'
+        logging.info('train decision: %s', res)
+        return (res, )
+
+      def _serialize_str(str_value: str) -> str:
+          if not isinstance(str_value, str):
+              raise TypeError('Value "{}" has type "{}" instead of str.'.format(str(str_value), str(type(str_value))))
+          return str_value
+
+      import argparse
+      _parser = argparse.ArgumentParser(prog='Tfdv detect drift', description='')
+      _parser.add_argument("--stats-older-path", dest="stats_older_path", type=str, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("--stats-new-path", dest="stats_new_path", type=str, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("----output-paths", dest="_output_paths", type=str, nargs=1)
+      _parsed_args = vars(_parser.parse_args())
+      _output_files = _parsed_args.pop("_output_paths", [])
+
+      _outputs = tfdv_detect_drift(**_parsed_args)
+
+      _output_serializers = [
+          _serialize_str,
+
+      ]
+
+      import os
+      for idx, output_file in enumerate(_output_files):
+          try:
+              os.makedirs(os.path.dirname(output_file))
+          except OSError:
+              pass
+          with open(output_file, 'w') as f:
+              f.write(_output_serializers[idx](_outputs[idx]))
+    args:
+    - --stats-older-path
+    - {inputValue: stats_older_path}
+    - --stats-new-path
+    - {inputValue: stats_new_path}
+    - '----output-paths'
+    - {outputPath: train}

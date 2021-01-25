@@ -10,6 +10,8 @@ inputs:
 - {name: gcs_staging_location, type: String}
 - {name: whl_location, type: String, default: '', optional: true}
 - {name: requirements_file, type: String, default: requirements.txt, optional: true}
+outputs:
+- {name: stats_path, type: String}
 implementation:
   container:
     image: gcr.io/aju-vtests2/tfdv-tests:v9
@@ -23,7 +25,9 @@ implementation:
     - |
       def generate_tfdv_stats(input_data, output_path, job_name, use_dataflow,
                               project_id, region, gcs_temp_location, gcs_staging_location,
-                              whl_location = '', requirements_file = 'requirements.txt'):
+                              whl_location = '', requirements_file = 'requirements.txt'
+      ):
+
         import logging
         import time
 
@@ -64,6 +68,13 @@ implementation:
           data_location=input_data, output_path=output_path,
           pipeline_options=options)
 
+        return (output_path, )
+
+      def _serialize_str(str_value: str) -> str:
+          if not isinstance(str_value, str):
+              raise TypeError('Value "{}" has type "{}" instead of str.'.format(str(str_value), str(type(str_value))))
+          return str_value
+
       import argparse
       _parser = argparse.ArgumentParser(prog='Generate tfdv stats', description='')
       _parser.add_argument("--input-data", dest="input_data", type=str, required=True, default=argparse.SUPPRESS)
@@ -76,9 +87,25 @@ implementation:
       _parser.add_argument("--gcs-staging-location", dest="gcs_staging_location", type=str, required=True, default=argparse.SUPPRESS)
       _parser.add_argument("--whl-location", dest="whl_location", type=str, required=False, default=argparse.SUPPRESS)
       _parser.add_argument("--requirements-file", dest="requirements_file", type=str, required=False, default=argparse.SUPPRESS)
+      _parser.add_argument("----output-paths", dest="_output_paths", type=str, nargs=1)
       _parsed_args = vars(_parser.parse_args())
+      _output_files = _parsed_args.pop("_output_paths", [])
 
       _outputs = generate_tfdv_stats(**_parsed_args)
+
+      _output_serializers = [
+          _serialize_str,
+
+      ]
+
+      import os
+      for idx, output_file in enumerate(_output_files):
+          try:
+              os.makedirs(os.path.dirname(output_file))
+          except OSError:
+              pass
+          with open(output_file, 'w') as f:
+              f.write(_output_serializers[idx](_outputs[idx]))
     args:
     - --input-data
     - {inputValue: input_data}
@@ -106,3 +133,5 @@ implementation:
         then:
         - --requirements-file
         - {inputValue: requirements_file}
+    - '----output-paths'
+    - {outputPath: stats_path}

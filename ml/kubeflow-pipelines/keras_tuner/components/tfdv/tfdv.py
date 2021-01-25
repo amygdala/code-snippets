@@ -12,10 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from typing import NamedTuple
+
 
 def generate_tfdv_stats(input_data: str, output_path: str, job_name: str, use_dataflow: str,
                         project_id: str, region:str, gcs_temp_location: str, gcs_staging_location: str,
-                        whl_location: str = '', requirements_file: str = 'requirements.txt'):
+                        whl_location: str = '', requirements_file: str = 'requirements.txt'
+) -> NamedTuple('Outputs', [('stats_path', str)]):
+
   import logging
   import time
 
@@ -55,6 +59,8 @@ def generate_tfdv_stats(input_data: str, output_path: str, job_name: str, use_da
   tfdv.generate_statistics_from_csv(
     data_location=input_data, output_path=output_path,
     pipeline_options=options)
+
+  return (output_path, )
 
 
 if __name__ == '__main__':
