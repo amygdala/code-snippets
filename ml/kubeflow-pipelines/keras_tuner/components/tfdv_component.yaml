@@ -14,13 +14,13 @@ outputs:
 - {name: stats_path, type: String}
 implementation:
   container:
-    image: gcr.io/aju-vtests2/tfdv-tests:v9
+    image: gcr.io/google-samples/tfdv-tests:v1
     command:
     - sh
     - -ec
     - |
       program_path=$(mktemp)
-      echo -n "$0" > "$program_path"
+      printf "%s" "$0" > "$program_path"
       python3 -u "$program_path" "$@"
     - |
       def generate_tfdv_stats(input_data, output_path, job_name, use_dataflow,

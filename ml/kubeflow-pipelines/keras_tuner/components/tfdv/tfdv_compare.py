@@ -17,7 +17,7 @@ from typing import NamedTuple
 
 def tfdv_detect_drift(
     stats_older_path: str, stats_new_path: str
-) -> NamedTuple('Outputs', [('train', str)]):
+) -> NamedTuple('Outputs', [('drift', str)]):
 
   import logging
   import time
@@ -56,4 +56,5 @@ def tfdv_detect_drift(
 if __name__ == '__main__':
   import kfp
   kfp.components.func_to_container_op(tfdv_detect_drift,
-      output_component_file='../tfdv_drift_component.yaml', base_image='gcr.io/aju-vtests2/tfdv-tests:v9')
+      output_component_file='../tfdv_drift_component.yaml',
+      base_image='gcr.io/google-samples/tfdv-tests:v1')

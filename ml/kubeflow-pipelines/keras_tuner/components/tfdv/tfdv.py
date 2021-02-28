@@ -66,4 +66,5 @@ def generate_tfdv_stats(input_data: str, output_path: str, job_name: str, use_da
 if __name__ == '__main__':
   import kfp
   kfp.components.func_to_container_op(generate_tfdv_stats,
-      output_component_file='../tfdv_component.yaml', base_image='gcr.io/aju-vtests2/tfdv-tests:v9')
+      output_component_file='../tfdv_component.yaml',
+      base_image='gcr.io/google-samples/tfdv-tests:v1')

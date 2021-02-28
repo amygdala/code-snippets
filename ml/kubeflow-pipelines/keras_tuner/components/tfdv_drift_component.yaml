@@ -3,16 +3,16 @@ inputs:
 - {name: stats_older_path, type: String}
 - {name: stats_new_path, type: String}
 outputs:
-- {name: train, type: String}
+- {name: drift, type: String}
 implementation:
   container:
-    image: gcr.io/aju-vtests2/tfdv-tests:v9
+    image: gcr.io/google-samples/tfdv-tests:v1
     command:
     - sh
     - -ec
     - |
       program_path=$(mktemp)
-      echo -n "$0" > "$program_path"
+      printf "%s" "$0" > "$program_path"
       python3 -u "$program_path" "$@"
     - |
       def tfdv_detect_drift(
@@ -86,4 +86,4 @@ implementation:
     - --stats-new-path
     - {inputValue: stats_new_path}
     - '----output-paths'
-    - {outputPath: train}
+    - {outputPath: drift}
