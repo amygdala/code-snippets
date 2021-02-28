@@ -15,6 +15,7 @@
 FROM gcr.io/deeplearning-platform-release/tf2-cpu.2-3:latest
 
 ADD requirements.txt /
-ADD tfdv.py /
+# ADD tfdv.py /
+RUN pip install -U tensorflow-data-validation
 RUN pip download tensorflow_data_validation --no-deps --platform manylinux2010_x86_64 --only-binary=:all:
 RUN pip install -U "apache-beam[gcp]"

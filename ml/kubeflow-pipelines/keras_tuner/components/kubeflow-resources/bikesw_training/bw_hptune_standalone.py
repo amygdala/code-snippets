@@ -48,9 +48,9 @@ def create_model(hp):
       linear_feature_columns=sparse.values(),
       dnn_feature_columns=real.values(),
       num_hidden_layers=hp.Int('num_hidden_layers', 2, 5),
-      dnn_hidden_units1=hp.Int('hidden_size', 32, 256, step=32),
+      dnn_hidden_units1=hp.Int('hidden_size', 16, 256, step=32),
       learning_rate=hp.Choice('learning_rate',
-                    values=[1e-1, 1e-2, 1e-3, 1e-4])
+                    values=[5e-1, 1e-1, 1e-2, 1e-3, 1e-4])
     )
 
   model.summary()
