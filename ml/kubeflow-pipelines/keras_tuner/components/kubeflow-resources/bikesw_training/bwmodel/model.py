@@ -56,7 +56,8 @@ def get_layers():
       colname : tf.feature_column.numeric_column(colname)
             for colname in
   #            ('ts,start_latitude,start_longitude,end_latitude,end_longitude,euclidean,prcp,max,min,temp,dewp').split(',')
-              ('ts,euclidean,prcp,max,min,temp,dewp').split(',')
+              # ('ts,euclidean,prcp,max,min,temp,dewp').split(',')
+              ('euclidean,prcp,max,min,temp,dewp').split(',')
   }
   sparse = {
         'day_of_week': tf.feature_column.categorical_column_with_vocabulary_list('day_of_week',
@@ -73,6 +74,7 @@ def get_layers():
       colname : tf.keras.layers.Input(name=colname, shape=(), dtype='float32')
             for colname in real.keys()
   }
+  inputs.update({'ts': tf.keras.layers.Input(name='ts', shape=(), dtype='float64')})
   inputs.update({
       colname : tf.keras.layers.Input(name=colname, shape=(), dtype='string')
             for colname in sparse.keys()
