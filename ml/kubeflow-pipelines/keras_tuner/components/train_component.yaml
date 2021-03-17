@@ -45,7 +45,7 @@ outputs:
     type: UI metadata
 implementation:
   container:
-    image: gcr.io/google-samples/bw-pl-bikes-train:aad15ad
+    image: gcr.io/google-samples/bw-pl-bikes-train:v2
     args: [
       --data-dir, {inputValue: data_dir},
       --epochs, {inputValue: epochs},
