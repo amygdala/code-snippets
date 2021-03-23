@@ -56,8 +56,10 @@ def create_model(learning_rate, hidden_size, num_hidden_layers):
   return model
 
 def run_training(
-    epochs: int, data_dir: str,
-    steps_per_epoch: int, hptune_dict: str
+    # epochs: int,
+    data_dir: str,
+    # steps_per_epoch: int,
+    hptune_dict: str
     ):
 
   if 'AIP_MODEL_DIR' not in os.environ:
@@ -69,18 +71,18 @@ def run_training(
   logging.getLogger().setLevel(logging.INFO)
 
   # data_dir = 'gs://aju-dev-demos-codelabs/bikes_weather/'
-  # epochs = 4
-  # steps_per_epoch = -1
-  logging.info('epochs: %s', epochs)
-  logging.info('Tensorflow version %s', tf.__version__)
 
   hptune_info = json.loads(str(args.hptune_dict))
   logging.info('hptune_info: %s', hptune_info)
   learning_rate = hptune_info['learning_rate']
   hidden_size = hptune_info['hidden_size']
   num_hidden_layers = hptune_info['num_hidden_layers']
+  epochs = hptune_info['epochs']
+  steps_per_epoch = hptune_info['steps_per_epoch']
   logging.info('using: learning rate %s, hidden size %s, first hidden layer %s',
       learning_rate, hidden_size, num_hidden_layers)
+  logging.info('epochs: %s', epochs)
+  logging.info('Tensorflow version %s', tf.__version__)
 
   TRAIN_DATA_PATTERN = data_dir + "train*"
   EVAL_DATA_PATTERN = data_dir + "test*"
@@ -126,16 +128,20 @@ def run_training(
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
   # Input Arguments
-  parser.add_argument(
-      '--epochs', type=int, default=5)
+  # parser.add_argument(
+  #     '--epochs', type=int, default=5)
   parser.add_argument(
       # e.g. {"num_hidden_layers": 3, "hidden_size": 96, "learning_rate": 0.01}
       '--hptune-dict', required=True)
-  parser.add_argument(
-      '--steps-per-epoch', type=int,
-      default=-1)  # if set to -1, don't override the normal calcs for this
+  # parser.add_argument(
+  #     '--steps-per-epoch', type=int,
+  #     default=-1)  # if set to -1, don't override the normal calcs for this
   parser.add_argument(
       '--data-dir', default='gs://aju-dev-demos-codelabs/bikes_weather/')
   args = parser.parse_args()
 
-  run_training(args.epochs, args.data_dir, args.steps_per_epoch, args.hptune_dict)
+  run_training(
+      # args.epochs,
+      args.data_dir,
+      # args.steps_per_epoch,
+      args.hptune_dict)

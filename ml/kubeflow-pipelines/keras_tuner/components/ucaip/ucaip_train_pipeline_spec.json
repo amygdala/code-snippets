@@ -1,0 +1,321 @@
+{
+  "pipelineSpec": {
+    "runtimeParameters": {
+      "train_container_type": {
+        "defaultValue": {
+          "stringValue": "prebuilt"
+        },
+        "type": "STRING"
+      },
+      "hptune_dict": {
+        "type": "STRING",
+        "defaultValue": {
+          "stringValue": "{\"num_hidden_layers\": 3, \"hidden_size\": 32, \"learning_rate\": 0.01, \"epochs\": 3, \"steps_per_epoch\": -1}"
+        }
+      },
+      "timeout": {
+        "type": "INT",
+        "defaultValue": {
+          "intValue": "7200"
+        }
+      },
+      "project": {
+        "type": "STRING",
+        "defaultValue": {
+          "stringValue": "aju-vtests2"
+        }
+      },
+      "python_module": {
+        "type": "STRING",
+        "defaultValue": {
+          "stringValue": "trainer.task"
+        }
+      },
+      "package_uri": {
+        "defaultValue": {
+          "stringValue": "gs://aju-pipelines/ucaip/training1/bw-trainer-0.1.tar.gz"
+        },
+        "type": "STRING"
+      },
+      "container_image_uri": {
+        "type": "STRING"
+      },
+      "prediction_image_uri": {
+        "defaultValue": {
+          "stringValue": "us-docker.pkg.dev/cloud-aiplatform/prediction/tf2-cpu.2-3:latest"
+        },
+        "type": "STRING"
+      },
+      "executor_image_uri": {
+        "type": "STRING",
+        "defaultValue": {
+          "stringValue": "us-docker.pkg.dev/cloud-aiplatform/training/tf-gpu.2-3:latest"
+        }
+      },
+      "endpoint_disp_name": {
+        "defaultValue": {
+          "stringValue": "CHANGE THIS"
+        },
+        "type": "STRING"
+      },
+      "base_output_directory_prefix": {
+        "defaultValue": {
+          "stringValue": "gs://aju-pipelines/ucaip/training2/"
+        },
+        "type": "STRING"
+      },
+      "model_display_name": {
+        "type": "STRING",
+        "defaultValue": {
+          "stringValue": "CHANGE THIS"
+        }
+      },
+      "api_endpoint": {
+        "type": "STRING",
+        "defaultValue": {
+          "stringValue": "us-central1-aiplatform.googleapis.com"
+        }
+      },
+      "data_dir": {
+        "type": "STRING",
+        "defaultValue": {
+          "stringValue": "gs://aju-dev-demos-codelabs/bikes_weather/"
+        }
+      },
+      "location": {
+        "type": "STRING",
+        "defaultValue": {
+          "stringValue": "us-central1"
+        }
+      },
+      "training_display_name": {
+        "defaultValue": {
+          "stringValue": "CHANGE THIS"
+        },
+        "type": "STRING"
+      }
+    },
+    "sdkVersion": "kfp-1.4.0",
+    "schemaVersion": "v2alpha1",
+    "tasks": [
+      {
+        "outputs": {
+          "parameters": {
+            "model_id": {
+              "type": "STRING"
+            },
+            "model_dispname": {
+              "type": "STRING"
+            }
+          }
+        },
+        "taskInfo": {
+          "name": "Create training pipeline custom job"
+        },
+        "inputs": {
+          "parameters": {
+            "project": {
+              "runtimeValue": {
+                "runtimeParameter": "project"
+              }
+            },
+            "base_output_directory_prefix": {
+              "runtimeValue": {
+                "runtimeParameter": "base_output_directory_prefix"
+              }
+            },
+            "python_module": {
+              "runtimeValue": {
+                "runtimeParameter": "python_module"
+              }
+            },
+            "container_image_uri": {
+              "runtimeValue": {
+                "runtimeParameter": "container_image_uri"
+              }
+            },
+            "display_name": {
+              "runtimeValue": {
+                "runtimeParameter": "training_display_name"
+              }
+            },
+            "location": {
+              "runtimeValue": {
+                "runtimeParameter": "location"
+              }
+            },
+            "api_endpoint": {
+              "runtimeValue": {
+                "runtimeParameter": "api_endpoint"
+              }
+            },
+            "hptune_dict": {
+              "runtimeValue": {
+                "runtimeParameter": "hptune_dict"
+              }
+            },
+            "train_container_type": {
+              "runtimeValue": {
+                "runtimeParameter": "train_container_type"
+              }
+            },
+            "executor_image_uri": {
+              "runtimeValue": {
+                "runtimeParameter": "executor_image_uri"
+              }
+            },
+            "model_display_name": {
+              "runtimeValue": {
+                "runtimeParameter": "model_display_name"
+              }
+            },
+            "prediction_image_uri": {
+              "runtimeValue": {
+                "runtimeParameter": "prediction_image_uri"
+              }
+            },
+            "data_dir": {
+              "runtimeValue": {
+                "runtimeParameter": "data_dir"
+              }
+            },
+            "package_uri": {
+              "runtimeValue": {
+                "runtimeParameter": "package_uri"
+              }
+            }
+          }
+        },
+        "executorLabel": "Create training pipeline custom job"
+      },
+      {
+        "executorLabel": "Deploy model",
+        "inputs": {
+          "parameters": {
+            "endpoint_disp_name": {
+              "runtimeValue": {
+                "runtimeParameter": "endpoint_disp_name"
+              }
+            },
+            "deployed_model_display_name": {
+              "runtimeValue": {
+                "runtimeParameter": "model_display_name"
+              }
+            },
+            "timeout": {
+              "runtimeValue": {
+                "runtimeParameter": "timeout"
+              }
+            },
+            "api_endpoint": {
+              "runtimeValue": {
+                "runtimeParameter": "api_endpoint"
+              }
+            },
+            "project": {
+              "runtimeValue": {
+                "runtimeParameter": "project"
+              }
+            },
+            "location": {
+              "runtimeValue": {
+                "runtimeParameter": "location"
+              }
+            },
+            "model_name": {
+              "taskOutputParameter": {
+                "outputParameterKey": "model_id",
+                "producerTask": "Create training pipeline custom job"
+              }
+            }
+          }
+        },
+        "taskInfo": {
+          "name": "Deploy model"
+        }
+      }
+    ],
+    "deploymentConfig": {
+      "executors": {
+        "Create training pipeline custom job": {
+          "container": {
+            "command": [
+              "sh",
+              "-ec",
+              "program_path=$(mktemp)\nprintf \"%s\" \"$0\" > \"$program_path\"\npython3 -u \"$program_path\" \"$@\"\n",
+              "def create_training_pipeline_custom_job(\n    project,\n    display_name,\n    model_display_name,\n    train_container_type,\n    executor_image_uri,\n    package_uri,\n    python_module,\n    container_image_uri,\n    base_output_directory_prefix,\n    prediction_image_uri,  # 'us-docker.pkg.dev/cloud-aiplatform/prediction/tf2-cpu.2-3:latest'\n    location,  # \"us-central1\"\n    api_endpoint,  # \"us-central1-aiplatform.googleapis.com\",\n    data_dir,\n    hptune_dict,\n    # model_id: OutputPath('String'),\n    # model_dispname: OutputPath('String')\n):\n\n  import logging\n  import subprocess\n  import time\n\n  from google.cloud import aiplatform\n  from google.protobuf import json_format\n  from google.protobuf.struct_pb2 import Value\n  from google.cloud.aiplatform_v1beta1.types import pipeline_state\n\n  logging.getLogger().setLevel(logging.INFO)\n\n  # The AI Platform services require regional API endpoints.\n  client_options = {\"api_endpoint\": api_endpoint}\n  # Initialize client that will be used to create and send requests.\n  # This client only needs to be created once, and can be reused for multiple requests.\n  client = aiplatform.gapic.PipelineServiceClient(client_options=client_options)\n\n  if train_container_type == 'prebuilt':\n    python_package_spec = {\n        \"executor_image_uri\": executor_image_uri,\n        \"package_uris\": [package_uri],\n        \"python_module\": python_module,\n        \"args\": [f\"--data-dir={data_dir}\",\n                 f\"--hptune-dict={hptune_dict}\"]}\n    worker_pool_spec = {\n              \"machine_spec\": {\n                  \"machine_type\": \"n1-standard-16\",\n                  \"accelerator_type\": aiplatform.gapic.AcceleratorType.NVIDIA_TESLA_K80,\n                  \"accelerator_count\": 2,\n                  },\n              \"replica_count\": 1,\n              \"python_package_spec\": python_package_spec,\n          }\n  elif train_container_type == 'custom':\n    container_spec = {\n        # A working docker image can be found at gs://cloud-samples-data/ai-platform/mnist_tfrecord/custom_job\n        \"imageUri\": container_image_uri,\n        \"args\": [\n            # AIP_MODEL_DIR is set by the service according to baseOutputDirectory.\n            \"--model_dir=$(AIP_MODEL_DIR)\",\n        ]}\n    worker_pool_spec = {\n              \"machine_spec\": {\n                  \"machine_type\": \"n1-standard-16\",\n                  \"accelerator_type\": aiplatform.gapic.AcceleratorType.NVIDIA_TESLA_K80,\n                  \"accelerator_count\": 2,\n                  },\n              \"replica_count\": 1,\n              \"container_spec\": container_spec,\n          }\n\n  training_task_inputs_dict = {\n      \"workerPoolSpecs\": [\n        worker_pool_spec\n      ],\n      \"baseOutputDirectory\": {\n          # The GCS location for outputs must be accessible by the project's AI Platform service account.\n          \"output_uri_prefix\": base_output_directory_prefix\n      },\n  }\n  training_task_inputs = json_format.ParseDict(training_task_inputs_dict, Value())\n\n  training_task_definition = \"gs://google-cloud-aiplatform/schema/trainingjob/definition/custom_task_1.0.0.yaml\"\n  # image_uri = \"gcr.io/cloud-aiplatform/prediction/tf-cpu.1-15:latest\"\n  # image_uri = 'us-docker.pkg.dev/cloud-aiplatform/prediction/tf2-cpu.2-3:latest'\n\n  training_pipeline = {\n      \"display_name\": display_name,\n      \"training_task_definition\": training_task_definition,\n      \"training_task_inputs\": training_task_inputs,\n      \"model_to_upload\": {\n          \"display_name\": model_display_name,\n          \"container_spec\": {\"image_uri\": prediction_image_uri},\n      },\n  }\n  parent = f\"projects/{project}/locations/{location}\"\n  response = client.create_training_pipeline(\n      parent=parent, training_pipeline=training_pipeline\n  )\n  logging.info(\"training pipeline request response: %s\", response)\n\n  SLEEP_INTERVAL = 100\n\n  training_pipeline_name = response.name\n  logging.info(\"training pipeline name: %s\", training_pipeline_name)\n  # Poll periodically until training completes\n  while True:\n    mresponse = client.get_training_pipeline(name=training_pipeline_name)\n    logging.info('mresponse: %s', mresponse)\n    logging.info('job state: %s', mresponse.state)\n    if mresponse.state == pipeline_state.PipelineState.PIPELINE_STATE_FAILED:\n      logging.warning('training pipeline failed: %s', mresponse)\n      break\n    if mresponse.state == pipeline_state.PipelineState.PIPELINE_STATE_SUCCEEDED:\n      logging.info('training finished')\n      model_name = mresponse.model_to_upload.name\n      return (model_name, model_display_name)\n      # # write some outputs once finished\n      # model_name = mresponse.model_to_upload.name\n      # logging.info('got model name: %s', model_name)\n      # with open('temp.txt', \"w\") as outfile:\n      #   outfile.write(model_name)\n      # subprocess.run(['gsutil', 'cp', 'temp.txt', model_id])\n      # with open('temp2.txt', \"w\") as outfile:\n      #   outfile.write(model_display_name)\n      # subprocess.run(['gsutil', 'cp', 'temp2.txt', model_dispname])\n      # break\n    else:\n      time.sleep(SLEEP_INTERVAL)\n\ndef _serialize_str(str_value: str) -> str:\n    if not isinstance(str_value, str):\n        raise TypeError('Value \"{}\" has type \"{}\" instead of str.'.format(str(str_value), str(type(str_value))))\n    return str_value\n\nimport argparse\n_parser = argparse.ArgumentParser(prog='Create training pipeline custom job', description='')\n_parser.add_argument(\"--project\", dest=\"project\", type=str, required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"--display-name\", dest=\"display_name\", type=str, required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"--model-display-name\", dest=\"model_display_name\", type=str, required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"--train-container-type\", dest=\"train_container_type\", type=str, required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"--executor-image-uri\", dest=\"executor_image_uri\", type=str, required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"--package-uri\", dest=\"package_uri\", type=str, required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"--python-module\", dest=\"python_module\", type=str, required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"--container-image-uri\", dest=\"container_image_uri\", type=str, required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"--base-output-directory-prefix\", dest=\"base_output_directory_prefix\", type=str, required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"--prediction-image-uri\", dest=\"prediction_image_uri\", type=str, required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"--location\", dest=\"location\", type=str, required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"--api-endpoint\", dest=\"api_endpoint\", type=str, required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"--data-dir\", dest=\"data_dir\", type=str, required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"--hptune-dict\", dest=\"hptune_dict\", type=str, required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"----output-paths\", dest=\"_output_paths\", type=str, nargs=2)\n_parsed_args = vars(_parser.parse_args())\n_output_files = _parsed_args.pop(\"_output_paths\", [])\n\n_outputs = create_training_pipeline_custom_job(**_parsed_args)\n\n_output_serializers = [\n    _serialize_str,\n    _serialize_str,\n\n]\n\nimport os\nfor idx, output_file in enumerate(_output_files):\n    try:\n        os.makedirs(os.path.dirname(output_file))\n    except OSError:\n        pass\n    with open(output_file, 'w') as f:\n        f.write(_output_serializers[idx](_outputs[idx]))\n"
+            ],
+            "image": "gcr.io/aju-vtests2/bw-aiplatform:v1",
+            "args": [
+              "--project",
+              "{{$.inputs.parameters['project']}}",
+              "--display-name",
+              "{{$.inputs.parameters['display_name']}}",
+              "--model-display-name",
+              "{{$.inputs.parameters['model_display_name']}}",
+              "--train-container-type",
+              "{{$.inputs.parameters['train_container_type']}}",
+              "--executor-image-uri",
+              "{{$.inputs.parameters['executor_image_uri']}}",
+              "--package-uri",
+              "{{$.inputs.parameters['package_uri']}}",
+              "--python-module",
+              "{{$.inputs.parameters['python_module']}}",
+              "--container-image-uri",
+              "{{$.inputs.parameters['container_image_uri']}}",
+              "--base-output-directory-prefix",
+              "{{$.inputs.parameters['base_output_directory_prefix']}}",
+              "--prediction-image-uri",
+              "{{$.inputs.parameters['prediction_image_uri']}}",
+              "--location",
+              "{{$.inputs.parameters['location']}}",
+              "--api-endpoint",
+              "{{$.inputs.parameters['api_endpoint']}}",
+              "--data-dir",
+              "{{$.inputs.parameters['data_dir']}}",
+              "--hptune-dict",
+              "{{$.inputs.parameters['hptune_dict']}}",
+              "----output-paths",
+              "{{$.outputs.parameters['model_id'].output_file}}",
+              "{{$.outputs.parameters['model_dispname'].output_file}}"
+            ]
+          }
+        },
+        "Deploy model": {
+          "container": {
+            "args": [
+              "--project",
+              "{{$.inputs.parameters['project']}}",
+              "--endpoint-disp-name",
+              "{{$.inputs.parameters['endpoint_disp_name']}}",
+              "--model-name",
+              "{{$.inputs.parameters['model_name']}}",
+              "--deployed-model-display-name",
+              "{{$.inputs.parameters['deployed_model_display_name']}}",
+              "--location",
+              "{{$.inputs.parameters['location']}}",
+              "--api-endpoint",
+              "{{$.inputs.parameters['api_endpoint']}}",
+              "--timeout",
+              "{{$.inputs.parameters['timeout']}}"
+            ],
+            "command": [
+              "sh",
+              "-ec",
+              "program_path=$(mktemp)\nprintf \"%s\" \"$0\" > \"$program_path\"\npython3 -u \"$program_path\" \"$@\"\n",
+              "def deploy_model(\n    project,\n    endpoint_disp_name,\n    model_name,\n    deployed_model_display_name,\n    location = \"us-central1\",\n    api_endpoint = \"us-central1-aiplatform.googleapis.com\",\n    timeout = 7200,\n    ):\n\n  import logging\n  from google.cloud import aiplatform\n\n  logging.getLogger().setLevel(logging.INFO)\n\n  def create_endpoint(\n      project,\n      display_name,\n      client,\n      location = \"us-central1\",\n      api_endpoint = \"us-central1-aiplatform.googleapis.com\",\n      timeout = 300,\n      ):\n\n    endpoint = {\"display_name\": display_name}\n    parent = f\"projects/{project}/locations/{location}\"\n    response = client.create_endpoint(parent=parent, endpoint=endpoint)\n    print(\"Long running operation:\", response.operation.name)\n    create_endpoint_response = response.result(timeout=timeout)\n    print(\"create_endpoint_response:\", create_endpoint_response)\n    endpoint_name = create_endpoint_response.name\n    logging.info('endpoint name: %s', endpoint_name)\n    return endpoint_name\n\n  # The AI Platform services require regional API endpoints.\n  client_options = {\"api_endpoint\": api_endpoint}\n  # Initialize client that will be used to create and send requests.\n  # This client only needs to be created once, and can be reused for multiple requests.\n  client = aiplatform.gapic.EndpointServiceClient(client_options=client_options)\n\n  # create endpoint\n  logging.info('creating endpoint %s', endpoint_disp_name)\n  endpoint_path = create_endpoint(project, endpoint_disp_name, client)\n  logging.info(\"using endpoint path ID %s\", endpoint_path)\n\n  deployed_model = {\n      # format: 'projects/{project}/locations/{location}/models/{model}'\n      \"model\": model_name,\n      \"display_name\": deployed_model_display_name,\n      # `dedicated_resources` must be used for non-AutoML models\n      \"dedicated_resources\": {\n          \"min_replica_count\": 1,\n          \"machine_spec\": {\n              \"machine_type\": \"n1-standard-2\",\n              # Accelerators can be used only if the model specifies a GPU image.\n              # 'accelerator_type': aiplatform.gapic.AcceleratorType.NVIDIA_TESLA_K80,\n              # 'accelerator_count': 1,\n          },\n      },\n  }\n  # key '0' assigns traffic for the newly deployed model\n  # Traffic percentage values must add up to 100\n  # Leave dictionary empty if endpoint should not accept any traffic\n  traffic_split = {\"0\": 100}\n#   endpoint = client.endpoint_path(\n#       project=project, location=location, endpoint=endpoint_id\n#   )\n  response = client.deploy_model(\n    #   endpoint=endpoint, deployed_model=deployed_model, traffic_split=traffic_split\n      endpoint=endpoint_path, deployed_model=deployed_model, traffic_split=traffic_split\n  )\n  logging.info(\"Long running operation: %s\", response.operation.name)\n  deploy_model_response = response.result(timeout=timeout)\n  logging.info(\"deploy_model_response: %s\", deploy_model_response)\n\nimport argparse\n_parser = argparse.ArgumentParser(prog='Deploy model', description='')\n_parser.add_argument(\"--project\", dest=\"project\", type=str, required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"--endpoint-disp-name\", dest=\"endpoint_disp_name\", type=str, required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"--model-name\", dest=\"model_name\", type=str, required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"--deployed-model-display-name\", dest=\"deployed_model_display_name\", type=str, required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"--location\", dest=\"location\", type=str, required=False, default=argparse.SUPPRESS)\n_parser.add_argument(\"--api-endpoint\", dest=\"api_endpoint\", type=str, required=False, default=argparse.SUPPRESS)\n_parser.add_argument(\"--timeout\", dest=\"timeout\", type=int, required=False, default=argparse.SUPPRESS)\n_parsed_args = vars(_parser.parse_args())\n\n_outputs = deploy_model(**_parsed_args)\n"
+            ],
+            "image": "gcr.io/aju-vtests2/bw-aiplatform:v1"
+          }
+        }
+      },
+      "@type": "type.googleapis.com/ml_pipelines.PipelineDeploymentConfig"
+    },
+    "pipelineInfo": {
+      "name": "ucaip-model-train"
+    }
+  },
+  "runtimeConfig": {
+    "gcsOutputDirectory": "gs://aju-pipelines/pipeline_root/ucaiptests"
+  }
+}

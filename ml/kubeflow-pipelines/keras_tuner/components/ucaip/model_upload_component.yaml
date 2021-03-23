@@ -20,11 +20,6 @@ implementation:
       printf "%s" "$0" > "$program_path"
       python3 -u "$program_path" "$@"
     - |
-      def _make_parent_dirs_and_return_path(file_path: str):
-          import os
-          os.makedirs(os.path.dirname(file_path), exist_ok=True)
-          return file_path
-
       def upload_model(
           project,
           display_name,
@@ -33,8 +28,9 @@ implementation:
           location, # "us-central1",
           api_endpoint, #"us-central1-aiplatform.googleapis.com",
           timeout, # 1800,
-          model_id
+          # model_id: OutputPath('String')
           ):
+
         import logging
         import subprocess
         from google.cloud import aiplatform
@@ -71,10 +67,12 @@ implementation:
         upload_model_response = response.result(timeout=timeout)
         logging.info("upload_model_response: %s", upload_model_response)
         model_path = upload_model_response.model
-        logging.info('got model path: %s', model_path)
-        with open('temp.txt', "w") as outfile:
-          outfile.write(model_path)
-        subprocess.run(['gsutil', 'cp', 'temp.txt', model_id])
+        return (model_path, )
+
+      def _serialize_str(str_value: str) -> str:
+          if not isinstance(str_value, str):
+              raise TypeError('Value "{}" has type "{}" instead of str.'.format(str(str_value), str(type(str_value))))
+          return str_value
 
       import argparse
       _parser = argparse.ArgumentParser(prog='Upload model', description='')
@@ -85,10 +83,25 @@ implementation:
       _parser.add_argument("--location", dest="location", type=str, required=True, default=argparse.SUPPRESS)
       _parser.add_argument("--api-endpoint", dest="api_endpoint", type=str, required=True, default=argparse.SUPPRESS)
       _parser.add_argument("--timeout", dest="timeout", type=int, required=True, default=argparse.SUPPRESS)
-      _parser.add_argument("--model-id", dest="model_id", type=_make_parent_dirs_and_return_path, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("----output-paths", dest="_output_paths", type=str, nargs=1)
       _parsed_args = vars(_parser.parse_args())
+      _output_files = _parsed_args.pop("_output_paths", [])
 
       _outputs = upload_model(**_parsed_args)
+
+      _output_serializers = [
+          _serialize_str,
+
+      ]
+
+      import os
+      for idx, output_file in enumerate(_output_files):
+          try:
+              os.makedirs(os.path.dirname(output_file))
+          except OSError:
+              pass
+          with open(output_file, 'w') as f:
+              f.write(_output_serializers[idx](_outputs[idx]))
     args:
     - --project
     - {inputValue: project}
@@ -104,5 +117,5 @@ implementation:
     - {inputValue: api_endpoint}
     - --timeout
     - {inputValue: timeout}
-    - --model-id
+    - '----output-paths'
     - {outputPath: model_id}

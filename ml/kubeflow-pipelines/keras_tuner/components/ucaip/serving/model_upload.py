@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from kfp.components import OutputPath
+# from kfp.components import OutputPath
+from typing import NamedTuple
 
 
 def upload_model(
@@ -23,8 +24,9 @@ def upload_model(
     location: str, # "us-central1",
     api_endpoint: str, #"us-central1-aiplatform.googleapis.com",
     timeout: int, # 1800,
-    model_id: OutputPath('String')
-    ):
+    # model_id: OutputPath('String')
+    ) -> NamedTuple('Outputs', [('model_id', str)]):
+
   import logging
   import subprocess
   from google.cloud import aiplatform
@@ -61,10 +63,11 @@ def upload_model(
   upload_model_response = response.result(timeout=timeout)
   logging.info("upload_model_response: %s", upload_model_response)
   model_path = upload_model_response.model
-  logging.info('got model path: %s', model_path)
-  with open('temp.txt', "w") as outfile:
-    outfile.write(model_path)
-  subprocess.run(['gsutil', 'cp', 'temp.txt', model_id])
+  return (model_path, )
+  # logging.info('got model path: %s', model_path)
+  # with open('temp.txt', "w") as outfile:
+  #   outfile.write(model_path)
+  # subprocess.run(['gsutil', 'cp', 'temp.txt', model_id])
 
 
 

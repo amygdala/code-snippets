@@ -3,16 +3,16 @@ inputs:
 - {name: project, type: String}
 - {name: display_name, type: String}
 - {name: model_display_name, type: String}
+- {name: train_container_type, type: String}
 - {name: executor_image_uri, type: String}
 - {name: package_uri, type: String}
 - {name: python_module, type: String}
+- {name: container_image_uri, type: String}
 - {name: base_output_directory_prefix, type: String}
 - {name: prediction_image_uri, type: String}
 - {name: location, type: String}
 - {name: api_endpoint, type: String}
-- {name: epochs, type: Integer}
 - {name: data_dir, type: String}
-- {name: steps_per_epoch, type: Integer}
 - {name: hptune_dict, type: String}
 outputs:
 - {name: model_id, type: String}
@@ -28,28 +28,23 @@ implementation:
       printf "%s" "$0" > "$program_path"
       python3 -u "$program_path" "$@"
     - |
-      def _make_parent_dirs_and_return_path(file_path: str):
-          import os
-          os.makedirs(os.path.dirname(file_path), exist_ok=True)
-          return file_path
-
       def create_training_pipeline_custom_job(
           project,
           display_name,
           model_display_name,
+          train_container_type,
           executor_image_uri,
           package_uri,
           python_module,
+          container_image_uri,
           base_output_directory_prefix,
           prediction_image_uri,  # 'us-docker.pkg.dev/cloud-aiplatform/prediction/tf2-cpu.2-3:latest'
           location,  # "us-central1"
           api_endpoint,  # "us-central1-aiplatform.googleapis.com",
-          epochs,
           data_dir,
-          steps_per_epoch,
           hptune_dict,
-          model_id,
-          model_dispname
+          # model_id: OutputPath('String'),
+          # model_dispname: OutputPath('String')
       ):
 
         import logging
@@ -69,36 +64,43 @@ implementation:
         # This client only needs to be created once, and can be reused for multiple requests.
         client = aiplatform.gapic.PipelineServiceClient(client_options=client_options)
 
-        training_task_inputs_dict = {
-            "workerPoolSpecs": [
-              {
-                    # "machine_spec": {"machineType": "n1-standard-16"},
+        if train_container_type == 'prebuilt':
+          python_package_spec = {
+              "executor_image_uri": executor_image_uri,
+              "package_uris": [package_uri],
+              "python_module": python_module,
+              "args": [f"--data-dir={data_dir}",
+                       f"--hptune-dict={hptune_dict}"]}
+          worker_pool_spec = {
                     "machine_spec": {
                         "machine_type": "n1-standard-16",
                         "accelerator_type": aiplatform.gapic.AcceleratorType.NVIDIA_TESLA_K80,
                         "accelerator_count": 2,
                         },
                     "replica_count": 1,
-                    "python_package_spec": {
-                        "executor_image_uri": executor_image_uri,
-                        "package_uris": [package_uri],
-                        "python_module": python_module,
-                        "args": [f"--epochs={epochs}", f"--data-dir={data_dir}",
-                                 f"--steps-per-epoch={steps_per_epoch}", f"--hptune-dict={hptune_dict}"],
-                    },
+                    "python_package_spec": python_package_spec,
                 }
-                # {
-                #     "replicaCount": 1,
-                #     "machineSpec": {"machineType": "n1-standard-4"},
-                #     "containerSpec": {
-                #         # A working docker image can be found at gs://cloud-samples-data/ai-platform/mnist_tfrecord/custom_job
-                #         "imageUri": container_image_uri,
-                #         "args": [
-                #             # AIP_MODEL_DIR is set by the service according to baseOutputDirectory.
-                #             "--model_dir=$(AIP_MODEL_DIR)",
-                #         ],
-                #     },
-                # }
+        elif train_container_type == 'custom':
+          container_spec = {
+              # A working docker image can be found at gs://cloud-samples-data/ai-platform/mnist_tfrecord/custom_job
+              "imageUri": container_image_uri,
+              "args": [
+                  # AIP_MODEL_DIR is set by the service according to baseOutputDirectory.
+                  "--model_dir=$(AIP_MODEL_DIR)",
+              ]}
+          worker_pool_spec = {
+                    "machine_spec": {
+                        "machine_type": "n1-standard-16",
+                        "accelerator_type": aiplatform.gapic.AcceleratorType.NVIDIA_TESLA_K80,
+                        "accelerator_count": 2,
+                        },
+                    "replica_count": 1,
+                    "container_spec": container_spec,
+                }
+
+        training_task_inputs_dict = {
+            "workerPoolSpecs": [
+              worker_pool_spec
             ],
             "baseOutputDirectory": {
                 # The GCS location for outputs must be accessible by the project's AI Platform service account.
@@ -135,42 +137,67 @@ implementation:
           mresponse = client.get_training_pipeline(name=training_pipeline_name)
           logging.info('mresponse: %s', mresponse)
           logging.info('job state: %s', mresponse.state)
+          if mresponse.state == pipeline_state.PipelineState.PIPELINE_STATE_FAILED:
+            logging.warning('training pipeline failed: %s', mresponse)
+            break
           if mresponse.state == pipeline_state.PipelineState.PIPELINE_STATE_SUCCEEDED:
             logging.info('training finished')
-            # write some outputs once finished
             model_name = mresponse.model_to_upload.name
-            logging.info('got model name: %s', model_name)
-            with open('temp.txt', "w") as outfile:
-              outfile.write(model_name)
-            subprocess.run(['gsutil', 'cp', 'temp.txt', model_id])
-            with open('temp2.txt', "w") as outfile:
-              outfile.write(model_display_name)
-            subprocess.run(['gsutil', 'cp', 'temp2.txt', model_dispname])
-            break
+            return (model_name, model_display_name)
+            # # write some outputs once finished
+            # model_name = mresponse.model_to_upload.name
+            # logging.info('got model name: %s', model_name)
+            # with open('temp.txt', "w") as outfile:
+            #   outfile.write(model_name)
+            # subprocess.run(['gsutil', 'cp', 'temp.txt', model_id])
+            # with open('temp2.txt', "w") as outfile:
+            #   outfile.write(model_display_name)
+            # subprocess.run(['gsutil', 'cp', 'temp2.txt', model_dispname])
+            # break
           else:
             time.sleep(SLEEP_INTERVAL)
+
+      def _serialize_str(str_value: str) -> str:
+          if not isinstance(str_value, str):
+              raise TypeError('Value "{}" has type "{}" instead of str.'.format(str(str_value), str(type(str_value))))
+          return str_value
 
       import argparse
       _parser = argparse.ArgumentParser(prog='Create training pipeline custom job', description='')
       _parser.add_argument("--project", dest="project", type=str, required=True, default=argparse.SUPPRESS)
       _parser.add_argument("--display-name", dest="display_name", type=str, required=True, default=argparse.SUPPRESS)
       _parser.add_argument("--model-display-name", dest="model_display_name", type=str, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("--train-container-type", dest="train_container_type", type=str, required=True, default=argparse.SUPPRESS)
       _parser.add_argument("--executor-image-uri", dest="executor_image_uri", type=str, required=True, default=argparse.SUPPRESS)
       _parser.add_argument("--package-uri", dest="package_uri", type=str, required=True, default=argparse.SUPPRESS)
       _parser.add_argument("--python-module", dest="python_module", type=str, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("--container-image-uri", dest="container_image_uri", type=str, required=True, default=argparse.SUPPRESS)
       _parser.add_argument("--base-output-directory-prefix", dest="base_output_directory_prefix", type=str, required=True, default=argparse.SUPPRESS)
       _parser.add_argument("--prediction-image-uri", dest="prediction_image_uri", type=str, required=True, default=argparse.SUPPRESS)
       _parser.add_argument("--location", dest="location", type=str, required=True, default=argparse.SUPPRESS)
       _parser.add_argument("--api-endpoint", dest="api_endpoint", type=str, required=True, default=argparse.SUPPRESS)
-      _parser.add_argument("--epochs", dest="epochs", type=int, required=True, default=argparse.SUPPRESS)
       _parser.add_argument("--data-dir", dest="data_dir", type=str, required=True, default=argparse.SUPPRESS)
-      _parser.add_argument("--steps-per-epoch", dest="steps_per_epoch", type=int, required=True, default=argparse.SUPPRESS)
       _parser.add_argument("--hptune-dict", dest="hptune_dict", type=str, required=True, default=argparse.SUPPRESS)
-      _parser.add_argument("--model-id", dest="model_id", type=_make_parent_dirs_and_return_path, required=True, default=argparse.SUPPRESS)
-      _parser.add_argument("--model-dispname", dest="model_dispname", type=_make_parent_dirs_and_return_path, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("----output-paths", dest="_output_paths", type=str, nargs=2)
       _parsed_args = vars(_parser.parse_args())
+      _output_files = _parsed_args.pop("_output_paths", [])
 
       _outputs = create_training_pipeline_custom_job(**_parsed_args)
+
+      _output_serializers = [
+          _serialize_str,
+          _serialize_str,
+
+      ]
+
+      import os
+      for idx, output_file in enumerate(_output_files):
+          try:
+              os.makedirs(os.path.dirname(output_file))
+          except OSError:
+              pass
+          with open(output_file, 'w') as f:
+              f.write(_output_serializers[idx](_outputs[idx]))
     args:
     - --project
     - {inputValue: project}
@@ -178,12 +205,16 @@ implementation:
     - {inputValue: display_name}
     - --model-display-name
     - {inputValue: model_display_name}
+    - --train-container-type
+    - {inputValue: train_container_type}
     - --executor-image-uri
     - {inputValue: executor_image_uri}
     - --package-uri
     - {inputValue: package_uri}
     - --python-module
     - {inputValue: python_module}
+    - --container-image-uri
+    - {inputValue: container_image_uri}
     - --base-output-directory-prefix
     - {inputValue: base_output_directory_prefix}
     - --prediction-image-uri
@@ -192,15 +223,10 @@ implementation:
     - {inputValue: location}
     - --api-endpoint
     - {inputValue: api_endpoint}
-    - --epochs
-    - {inputValue: epochs}
     - --data-dir
     - {inputValue: data_dir}
-    - --steps-per-epoch
-    - {inputValue: steps_per_epoch}
     - --hptune-dict
     - {inputValue: hptune_dict}
-    - --model-id
+    - '----output-paths'
     - {outputPath: model_id}
-    - --model-dispname
     - {outputPath: model_dispname}

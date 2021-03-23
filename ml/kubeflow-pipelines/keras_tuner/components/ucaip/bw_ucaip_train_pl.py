@@ -32,31 +32,33 @@ model_deploy_op = components.load_component_from_file(
 )
 def model_train_pipeline(
     prediction_image_uri: str = 'us-docker.pkg.dev/cloud-aiplatform/prediction/tf2-cpu.2-3:latest',
-    # artifact_uri: str = 'gs://aju-pipelines/v64/077ae97e-9c6d-4c1c-b5a1-fc2e95fb7dbb/0/bwmodel/trained_model/export/bikesw/1615937808',
     location: str = "us-central1",
     api_endpoint: str = "us-central1-aiplatform.googleapis.com",
     project: str = 'aju-vtests2',
     training_display_name: str = 'CHANGE THIS',
     model_display_name: str = 'CHANGE THIS',
     endpoint_disp_name: str = 'CHANGE THIS',
+    train_container_type: str = 'prebuilt',
     executor_image_uri: str = 'us-docker.pkg.dev/cloud-aiplatform/training/tf-gpu.2-3:latest',
     package_uri: str = 'gs://aju-pipelines/ucaip/training1/bw-trainer-0.1.tar.gz',
     python_module: str = 'trainer.task',
+    container_image_uri: str = '',
     base_output_directory_prefix: str = 'gs://aju-pipelines/ucaip/training2/',
     timeout: int = 7200,
-    epochs: int = 5,
-    steps_per_epoch: int = -1,
-    hptune_dict: str = '{"num_hidden_layers": 3, "hidden_size": 32, "learning_rate": 0.01}',
+    hptune_dict: str = '{"num_hidden_layers": 3, "hidden_size": 32, "learning_rate": 0.01, "epochs": 3, "steps_per_epoch": -1}',
     data_dir: str = 'gs://aju-dev-demos-codelabs/bikes_weather/'
     ):
 
   model_train = model_train_op(
     project, training_display_name, model_display_name,
+    train_container_type,
     executor_image_uri, package_uri, python_module,
+    container_image_uri,
     base_output_directory_prefix,
     prediction_image_uri,
-    location, api_endpoint, epochs,
-    data_dir, steps_per_epoch, hptune_dict
+    location, api_endpoint,
+    data_dir,
+    hptune_dict
   )
 
   model_deploy = model_deploy_op(

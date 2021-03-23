@@ -13,26 +13,28 @@
 # limitations under the License.
 
 
-from kfp.components import OutputPath
+# from kfp.components import OutputPath
+from typing import NamedTuple
+
 
 def create_training_pipeline_custom_job(
     project: str,
     display_name: str,
     model_display_name: str,
+    train_container_type: str,
     executor_image_uri: str,
     package_uri: str,
     python_module: str,
+    container_image_uri: str,
     base_output_directory_prefix: str,
     prediction_image_uri: str,  # 'us-docker.pkg.dev/cloud-aiplatform/prediction/tf2-cpu.2-3:latest'
     location: str,  # "us-central1"
     api_endpoint: str,  # "us-central1-aiplatform.googleapis.com",
-    epochs: int,
     data_dir: str,
-    steps_per_epoch: int,
     hptune_dict: str,
-    model_id: OutputPath('String'),
-    model_dispname: OutputPath('String')
-):
+    # model_id: OutputPath('String'),
+    # model_dispname: OutputPath('String')
+) -> NamedTuple('Outputs', [('model_id', str), ('model_dispname', str)]):
 
   import logging
   import subprocess
@@ -51,36 +53,46 @@ def create_training_pipeline_custom_job(
   # This client only needs to be created once, and can be reused for multiple requests.
   client = aiplatform.gapic.PipelineServiceClient(client_options=client_options)
 
-  training_task_inputs_dict = {
-      "workerPoolSpecs": [
-        {
-              # "machine_spec": {"machineType": "n1-standard-16"},
+  if train_container_type == 'prebuilt':
+    python_package_spec = {
+        "executor_image_uri": executor_image_uri,
+        "package_uris": [package_uri],
+        "python_module": python_module,
+        "args": [f"--data-dir={data_dir}",
+                 f"--hptune-dict={hptune_dict}"]}
+    worker_pool_spec = {
               "machine_spec": {
                   "machine_type": "n1-standard-16",
                   "accelerator_type": aiplatform.gapic.AcceleratorType.NVIDIA_TESLA_K80,
                   "accelerator_count": 2,
                   },
               "replica_count": 1,
-              "python_package_spec": {
-                  "executor_image_uri": executor_image_uri,
-                  "package_uris": [package_uri],
-                  "python_module": python_module,
-                  "args": [f"--epochs={epochs}", f"--data-dir={data_dir}",
-                           f"--steps-per-epoch={steps_per_epoch}", f"--hptune-dict={hptune_dict}"],
-              },
+              "python_package_spec": python_package_spec,
           }
-          # {
-          #     "replicaCount": 1,
-          #     "machineSpec": {"machineType": "n1-standard-4"},
-          #     "containerSpec": {
-          #         # A working docker image can be found at gs://cloud-samples-data/ai-platform/mnist_tfrecord/custom_job
-          #         "imageUri": container_image_uri,
-          #         "args": [
-          #             # AIP_MODEL_DIR is set by the service according to baseOutputDirectory.
-          #             "--model_dir=$(AIP_MODEL_DIR)",
-          #         ],
-          #     },
-          # }
+  elif train_container_type == 'custom':
+    container_spec = {
+        # A working docker image can be found at gs://cloud-samples-data/ai-platform/mnist_tfrecord/custom_job
+        "imageUri": container_image_uri,
+        "args": [
+            # AIP_MODEL_DIR is set by the service according to baseOutputDirectory.
+            "--model_dir=$(AIP_MODEL_DIR)",
+        ]}
+    worker_pool_spec = {
+              "machine_spec": {
+                  "machine_type": "n1-standard-16",
+                  "accelerator_type": aiplatform.gapic.AcceleratorType.NVIDIA_TESLA_K80,
+                  "accelerator_count": 2,
+                  },
+              "replica_count": 1,
+              "container_spec": container_spec,
+          }
+  else:
+    logging.warning('unknown train_container_type; exiting')
+    exit(1)
+
+  training_task_inputs_dict = {
+      "workerPoolSpecs": [
+        worker_pool_spec
       ],
       "baseOutputDirectory": {
           # The GCS location for outputs must be accessible by the project's AI Platform service account.
@@ -117,18 +129,23 @@ def create_training_pipeline_custom_job(
     mresponse = client.get_training_pipeline(name=training_pipeline_name)
     logging.info('mresponse: %s', mresponse)
     logging.info('job state: %s', mresponse.state)
+    if mresponse.state == pipeline_state.PipelineState.PIPELINE_STATE_FAILED:
+      logging.warning('training pipeline failed: %s', mresponse)
+      exit(1)
     if mresponse.state == pipeline_state.PipelineState.PIPELINE_STATE_SUCCEEDED:
       logging.info('training finished')
-      # write some outputs once finished
       model_name = mresponse.model_to_upload.name
-      logging.info('got model name: %s', model_name)
-      with open('temp.txt', "w") as outfile:
-        outfile.write(model_name)
-      subprocess.run(['gsutil', 'cp', 'temp.txt', model_id])
-      with open('temp2.txt', "w") as outfile:
-        outfile.write(model_display_name)
-      subprocess.run(['gsutil', 'cp', 'temp2.txt', model_dispname])
-      break
+      return (model_name, model_display_name)
+      # # write some outputs once finished
+      # model_name = mresponse.model_to_upload.name
+      # logging.info('got model name: %s', model_name)
+      # with open('temp.txt', "w") as outfile:
+      #   outfile.write(model_name)
+      # subprocess.run(['gsutil', 'cp', 'temp.txt', model_id])
+      # with open('temp2.txt', "w") as outfile:
+      #   outfile.write(model_display_name)
+      # subprocess.run(['gsutil', 'cp', 'temp2.txt', model_dispname])
+      # break
     else:
       time.sleep(SLEEP_INTERVAL)
 
