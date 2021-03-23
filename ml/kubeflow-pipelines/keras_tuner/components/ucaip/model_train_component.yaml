@@ -1,0 +1,206 @@
+name: Create training pipeline custom job
+inputs:
+- {name: project, type: String}
+- {name: display_name, type: String}
+- {name: model_display_name, type: String}
+- {name: executor_image_uri, type: String}
+- {name: package_uri, type: String}
+- {name: python_module, type: String}
+- {name: base_output_directory_prefix, type: String}
+- {name: prediction_image_uri, type: String}
+- {name: location, type: String}
+- {name: api_endpoint, type: String}
+- {name: epochs, type: Integer}
+- {name: data_dir, type: String}
+- {name: steps_per_epoch, type: Integer}
+- {name: hptune_dict, type: String}
+outputs:
+- {name: model_id, type: String}
+- {name: model_dispname, type: String}
+implementation:
+  container:
+    image: gcr.io/aju-vtests2/bw-aiplatform:v1
+    command:
+    - sh
+    - -ec
+    - |
+      program_path=$(mktemp)
+      printf "%s" "$0" > "$program_path"
+      python3 -u "$program_path" "$@"
+    - |
+      def _make_parent_dirs_and_return_path(file_path: str):
+          import os
+          os.makedirs(os.path.dirname(file_path), exist_ok=True)
+          return file_path
+
+      def create_training_pipeline_custom_job(
+          project,
+          display_name,
+          model_display_name,
+          executor_image_uri,
+          package_uri,
+          python_module,
+          base_output_directory_prefix,
+          prediction_image_uri,  # 'us-docker.pkg.dev/cloud-aiplatform/prediction/tf2-cpu.2-3:latest'
+          location,  # "us-central1"
+          api_endpoint,  # "us-central1-aiplatform.googleapis.com",
+          epochs,
+          data_dir,
+          steps_per_epoch,
+          hptune_dict,
+          model_id,
+          model_dispname
+      ):
+
+        import logging
+        import subprocess
+        import time
+
+        from google.cloud import aiplatform
+        from google.protobuf import json_format
+        from google.protobuf.struct_pb2 import Value
+        from google.cloud.aiplatform_v1beta1.types import pipeline_state
+
+        logging.getLogger().setLevel(logging.INFO)
+
+        # The AI Platform services require regional API endpoints.
+        client_options = {"api_endpoint": api_endpoint}
+        # Initialize client that will be used to create and send requests.
+        # This client only needs to be created once, and can be reused for multiple requests.
+        client = aiplatform.gapic.PipelineServiceClient(client_options=client_options)
+
+        training_task_inputs_dict = {
+            "workerPoolSpecs": [
+              {
+                    # "machine_spec": {"machineType": "n1-standard-16"},
+                    "machine_spec": {
+                        "machine_type": "n1-standard-16",
+                        "accelerator_type": aiplatform.gapic.AcceleratorType.NVIDIA_TESLA_K80,
+                        "accelerator_count": 2,
+                        },
+                    "replica_count": 1,
+                    "python_package_spec": {
+                        "executor_image_uri": executor_image_uri,
+                        "package_uris": [package_uri],
+                        "python_module": python_module,
+                        "args": [f"--epochs={epochs}", f"--data-dir={data_dir}",
+                                 f"--steps-per-epoch={steps_per_epoch}", f"--hptune-dict={hptune_dict}"],
+                    },
+                }
+                # {
+                #     "replicaCount": 1,
+                #     "machineSpec": {"machineType": "n1-standard-4"},
+                #     "containerSpec": {
+                #         # A working docker image can be found at gs://cloud-samples-data/ai-platform/mnist_tfrecord/custom_job
+                #         "imageUri": container_image_uri,
+                #         "args": [
+                #             # AIP_MODEL_DIR is set by the service according to baseOutputDirectory.
+                #             "--model_dir=$(AIP_MODEL_DIR)",
+                #         ],
+                #     },
+                # }
+            ],
+            "baseOutputDirectory": {
+                # The GCS location for outputs must be accessible by the project's AI Platform service account.
+                "output_uri_prefix": base_output_directory_prefix
+            },
+        }
+        training_task_inputs = json_format.ParseDict(training_task_inputs_dict, Value())
+
+        training_task_definition = "gs://google-cloud-aiplatform/schema/trainingjob/definition/custom_task_1.0.0.yaml"
+        # image_uri = "gcr.io/cloud-aiplatform/prediction/tf-cpu.1-15:latest"
+        # image_uri = 'us-docker.pkg.dev/cloud-aiplatform/prediction/tf2-cpu.2-3:latest'
+
+        training_pipeline = {
+            "display_name": display_name,
+            "training_task_definition": training_task_definition,
+            "training_task_inputs": training_task_inputs,
+            "model_to_upload": {
+                "display_name": model_display_name,
+                "container_spec": {"image_uri": prediction_image_uri},
+            },
+        }
+        parent = f"projects/{project}/locations/{location}"
+        response = client.create_training_pipeline(
+            parent=parent, training_pipeline=training_pipeline
+        )
+        logging.info("training pipeline request response: %s", response)
+
+        SLEEP_INTERVAL = 100
+
+        training_pipeline_name = response.name
+        logging.info("training pipeline name: %s", training_pipeline_name)
+        # Poll periodically until training completes
+        while True:
+          mresponse = client.get_training_pipeline(name=training_pipeline_name)
+          logging.info('mresponse: %s', mresponse)
+          logging.info('job state: %s', mresponse.state)
+          if mresponse.state == pipeline_state.PipelineState.PIPELINE_STATE_SUCCEEDED:
+            logging.info('training finished')
+            # write some outputs once finished
+            model_name = mresponse.model_to_upload.name
+            logging.info('got model name: %s', model_name)
+            with open('temp.txt', "w") as outfile:
+              outfile.write(model_name)
+            subprocess.run(['gsutil', 'cp', 'temp.txt', model_id])
+            with open('temp2.txt', "w") as outfile:
+              outfile.write(model_display_name)
+            subprocess.run(['gsutil', 'cp', 'temp2.txt', model_dispname])
+            break
+          else:
+            time.sleep(SLEEP_INTERVAL)
+
+      import argparse
+      _parser = argparse.ArgumentParser(prog='Create training pipeline custom job', description='')
+      _parser.add_argument("--project", dest="project", type=str, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("--display-name", dest="display_name", type=str, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("--model-display-name", dest="model_display_name", type=str, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("--executor-image-uri", dest="executor_image_uri", type=str, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("--package-uri", dest="package_uri", type=str, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("--python-module", dest="python_module", type=str, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("--base-output-directory-prefix", dest="base_output_directory_prefix", type=str, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("--prediction-image-uri", dest="prediction_image_uri", type=str, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("--location", dest="location", type=str, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("--api-endpoint", dest="api_endpoint", type=str, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("--epochs", dest="epochs", type=int, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("--data-dir", dest="data_dir", type=str, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("--steps-per-epoch", dest="steps_per_epoch", type=int, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("--hptune-dict", dest="hptune_dict", type=str, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("--model-id", dest="model_id", type=_make_parent_dirs_and_return_path, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("--model-dispname", dest="model_dispname", type=_make_parent_dirs_and_return_path, required=True, default=argparse.SUPPRESS)
+      _parsed_args = vars(_parser.parse_args())
+
+      _outputs = create_training_pipeline_custom_job(**_parsed_args)
+    args:
+    - --project
+    - {inputValue: project}
+    - --display-name
+    - {inputValue: display_name}
+    - --model-display-name
+    - {inputValue: model_display_name}
+    - --executor-image-uri
+    - {inputValue: executor_image_uri}
+    - --package-uri
+    - {inputValue: package_uri}
+    - --python-module
+    - {inputValue: python_module}
+    - --base-output-directory-prefix
+    - {inputValue: base_output_directory_prefix}
+    - --prediction-image-uri
+    - {inputValue: prediction_image_uri}
+    - --location
+    - {inputValue: location}
+    - --api-endpoint
+    - {inputValue: api_endpoint}
+    - --epochs
+    - {inputValue: epochs}
+    - --data-dir
+    - {inputValue: data_dir}
+    - --steps-per-epoch
+    - {inputValue: steps_per_epoch}
+    - --hptune-dict
+    - {inputValue: hptune_dict}
+    - --model-id
+    - {outputPath: model_id}
+    - --model-dispname
+    - {outputPath: model_dispname}

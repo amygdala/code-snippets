@@ -1,0 +1,108 @@
+name: Upload model
+inputs:
+- {name: project, type: String}
+- {name: display_name, type: String}
+- {name: image_uri, type: String}
+- {name: artifact_uri, type: String}
+- {name: location, type: String}
+- {name: api_endpoint, type: String}
+- {name: timeout, type: Integer}
+outputs:
+- {name: model_id, type: String}
+implementation:
+  container:
+    image: gcr.io/aju-vtests2/bw-aiplatform:v1
+    command:
+    - sh
+    - -ec
+    - |
+      program_path=$(mktemp)
+      printf "%s" "$0" > "$program_path"
+      python3 -u "$program_path" "$@"
+    - |
+      def _make_parent_dirs_and_return_path(file_path: str):
+          import os
+          os.makedirs(os.path.dirname(file_path), exist_ok=True)
+          return file_path
+
+      def upload_model(
+          project,
+          display_name,
+          image_uri,
+          artifact_uri,
+          location, # "us-central1",
+          api_endpoint, #"us-central1-aiplatform.googleapis.com",
+          timeout, # 1800,
+          model_id
+          ):
+        import logging
+        import subprocess
+        from google.cloud import aiplatform
+
+        logging.getLogger().setLevel(logging.INFO)
+        metadata_schema_uri = ""
+
+        # The AI Platform services require regional API endpoints.
+        client_options = {"api_endpoint": api_endpoint}
+        # Initialize client that will be used to create and send requests.
+        # This client only needs to be created once, and can be reused for multiple requests.
+        client = aiplatform.gapic.ModelServiceClient(client_options=client_options)
+        model = {
+            "display_name": display_name,
+            "metadata_schema_uri": metadata_schema_uri,
+            # The artifact_uri should be the path to a GCS directory containing
+            # saved model artifacts.  The bucket must be accessible for the
+            # project's AI Platform service account and in the same region as
+            # the api endpoint.
+            "artifact_uri": artifact_uri,
+            "container_spec": {
+                "image_uri": image_uri,
+                "command": [],
+                "args": [],
+                "env": [],
+                "ports": [],
+                "predict_route": "",
+                "health_route": "",
+            },
+        }
+        parent = f"projects/{project}/locations/{location}"
+        response = client.upload_model(parent=parent, model=model)
+        logging.info("Long running operation: %s", response.operation.name)
+        upload_model_response = response.result(timeout=timeout)
+        logging.info("upload_model_response: %s", upload_model_response)
+        model_path = upload_model_response.model
+        logging.info('got model path: %s', model_path)
+        with open('temp.txt', "w") as outfile:
+          outfile.write(model_path)
+        subprocess.run(['gsutil', 'cp', 'temp.txt', model_id])
+
+      import argparse
+      _parser = argparse.ArgumentParser(prog='Upload model', description='')
+      _parser.add_argument("--project", dest="project", type=str, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("--display-name", dest="display_name", type=str, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("--image-uri", dest="image_uri", type=str, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("--artifact-uri", dest="artifact_uri", type=str, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("--location", dest="location", type=str, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("--api-endpoint", dest="api_endpoint", type=str, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("--timeout", dest="timeout", type=int, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("--model-id", dest="model_id", type=_make_parent_dirs_and_return_path, required=True, default=argparse.SUPPRESS)
+      _parsed_args = vars(_parser.parse_args())
+
+      _outputs = upload_model(**_parsed_args)
+    args:
+    - --project
+    - {inputValue: project}
+    - --display-name
+    - {inputValue: display_name}
+    - --image-uri
+    - {inputValue: image_uri}
+    - --artifact-uri
+    - {inputValue: artifact_uri}
+    - --location
+    - {inputValue: location}
+    - --api-endpoint
+    - {inputValue: api_endpoint}
+    - --timeout
+    - {inputValue: timeout}
+    - --model-id
+    - {outputPath: model_id}

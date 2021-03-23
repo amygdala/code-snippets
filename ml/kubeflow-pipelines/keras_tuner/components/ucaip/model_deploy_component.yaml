@@ -1,0 +1,132 @@
+name: Deploy model
+inputs:
+- {name: project, type: String}
+- {name: endpoint_disp_name, type: String}
+- {name: model_name, type: String}
+- {name: deployed_model_display_name, type: String}
+- {name: location, type: String, default: us-central1, optional: true}
+- {name: api_endpoint, type: String, default: us-central1-aiplatform.googleapis.com,
+  optional: true}
+- {name: timeout, type: Integer, default: '7200', optional: true}
+implementation:
+  container:
+    image: gcr.io/aju-vtests2/bw-aiplatform:v1
+    command:
+    - sh
+    - -ec
+    - |
+      program_path=$(mktemp)
+      printf "%s" "$0" > "$program_path"
+      python3 -u "$program_path" "$@"
+    - |
+      def deploy_model(
+          project,
+          endpoint_disp_name,
+          model_name,
+          deployed_model_display_name,
+          location = "us-central1",
+          api_endpoint = "us-central1-aiplatform.googleapis.com",
+          timeout = 7200,
+          ):
+
+        import logging
+        from google.cloud import aiplatform
+
+        logging.getLogger().setLevel(logging.INFO)
+
+        def create_endpoint(
+            project,
+            display_name,
+            client,
+            location = "us-central1",
+            api_endpoint = "us-central1-aiplatform.googleapis.com",
+            timeout = 300,
+            ):
+
+          endpoint = {"display_name": display_name}
+          parent = f"projects/{project}/locations/{location}"
+          response = client.create_endpoint(parent=parent, endpoint=endpoint)
+          print("Long running operation:", response.operation.name)
+          create_endpoint_response = response.result(timeout=timeout)
+          print("create_endpoint_response:", create_endpoint_response)
+          endpoint_name = create_endpoint_response.name
+          logging.info('endpoint name: %s', endpoint_name)
+          return endpoint_name
+
+        # The AI Platform services require regional API endpoints.
+        client_options = {"api_endpoint": api_endpoint}
+        # Initialize client that will be used to create and send requests.
+        # This client only needs to be created once, and can be reused for multiple requests.
+        client = aiplatform.gapic.EndpointServiceClient(client_options=client_options)
+
+        # create endpoint
+        logging.info('creating endpoint %s', endpoint_disp_name)
+        endpoint_path = create_endpoint(project, endpoint_disp_name, client)
+        logging.info("using endpoint path ID %s", endpoint_path)
+
+        deployed_model = {
+            # format: 'projects/{project}/locations/{location}/models/{model}'
+            "model": model_name,
+            "display_name": deployed_model_display_name,
+            # `dedicated_resources` must be used for non-AutoML models
+            "dedicated_resources": {
+                "min_replica_count": 1,
+                "machine_spec": {
+                    "machine_type": "n1-standard-2",
+                    # Accelerators can be used only if the model specifies a GPU image.
+                    # 'accelerator_type': aiplatform.gapic.AcceleratorType.NVIDIA_TESLA_K80,
+                    # 'accelerator_count': 1,
+                },
+            },
+        }
+        # key '0' assigns traffic for the newly deployed model
+        # Traffic percentage values must add up to 100
+        # Leave dictionary empty if endpoint should not accept any traffic
+        traffic_split = {"0": 100}
+      #   endpoint = client.endpoint_path(
+      #       project=project, location=location, endpoint=endpoint_id
+      #   )
+        response = client.deploy_model(
+          #   endpoint=endpoint, deployed_model=deployed_model, traffic_split=traffic_split
+            endpoint=endpoint_path, deployed_model=deployed_model, traffic_split=traffic_split
+        )
+        logging.info("Long running operation: %s", response.operation.name)
+        deploy_model_response = response.result(timeout=timeout)
+        logging.info("deploy_model_response: %s", deploy_model_response)
+
+      import argparse
+      _parser = argparse.ArgumentParser(prog='Deploy model', description='')
+      _parser.add_argument("--project", dest="project", type=str, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("--endpoint-disp-name", dest="endpoint_disp_name", type=str, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("--model-name", dest="model_name", type=str, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("--deployed-model-display-name", dest="deployed_model_display_name", type=str, required=True, default=argparse.SUPPRESS)
+      _parser.add_argument("--location", dest="location", type=str, required=False, default=argparse.SUPPRESS)
+      _parser.add_argument("--api-endpoint", dest="api_endpoint", type=str, required=False, default=argparse.SUPPRESS)
+      _parser.add_argument("--timeout", dest="timeout", type=int, required=False, default=argparse.SUPPRESS)
+      _parsed_args = vars(_parser.parse_args())
+
+      _outputs = deploy_model(**_parsed_args)
+    args:
+    - --project
+    - {inputValue: project}
+    - --endpoint-disp-name
+    - {inputValue: endpoint_disp_name}
+    - --model-name
+    - {inputValue: model_name}
+    - --deployed-model-display-name
+    - {inputValue: deployed_model_display_name}
+    - if:
+        cond: {isPresent: location}
+        then:
+        - --location
+        - {inputValue: location}
+    - if:
+        cond: {isPresent: api_endpoint}
+        then:
+        - --api-endpoint
+        - {inputValue: api_endpoint}
+    - if:
+        cond: {isPresent: timeout}
+        then:
+        - --timeout
+        - {inputValue: timeout}
