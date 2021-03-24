@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-# from kfp.components import OutputPath
 from typing import NamedTuple
 
 
@@ -51,7 +49,11 @@ def create_training_pipeline_custom_job(
   # This client only needs to be created once, and can be reused for multiple requests.
   client = aiplatform.gapic.PipelineServiceClient(client_options=client_options)
 
+  # TODO: more error checking before kicking off the job
   if train_container_type == 'prebuilt':
+    if package_uri == 'none' or executor_image_uri == 'none':
+      logging.warning('unspecified URI; exiting')
+      exit(1)
     python_package_spec = {
         "executor_image_uri": executor_image_uri,
         "package_uris": [package_uri],
@@ -68,6 +70,9 @@ def create_training_pipeline_custom_job(
               "python_package_spec": python_package_spec,
           }
   elif train_container_type == 'custom':
+    if container_image_uri == 'none':
+      logging.warning('unspecified container_image_uri; exiting')
+      exit(1)
     container_spec = {
         # A working docker image can be found at gs://cloud-samples-data/ai-platform/mnist_tfrecord/custom_job
         "imageUri": container_image_uri,
