@@ -32,8 +32,6 @@ def create_training_pipeline_custom_job(
     api_endpoint: str,  # "us-central1-aiplatform.googleapis.com",
     data_dir: str,
     hptune_dict: str,
-    # model_id: OutputPath('String'),
-    # model_dispname: OutputPath('String')
 ) -> NamedTuple('Outputs', [('model_id', str), ('model_dispname', str)]):
 
   import logging
@@ -102,8 +100,6 @@ def create_training_pipeline_custom_job(
   training_task_inputs = json_format.ParseDict(training_task_inputs_dict, Value())
 
   training_task_definition = "gs://google-cloud-aiplatform/schema/trainingjob/definition/custom_task_1.0.0.yaml"
-  # image_uri = "gcr.io/cloud-aiplatform/prediction/tf-cpu.1-15:latest"
-  # image_uri = 'us-docker.pkg.dev/cloud-aiplatform/prediction/tf2-cpu.2-3:latest'
 
   training_pipeline = {
       "display_name": display_name,
@@ -136,31 +132,11 @@ def create_training_pipeline_custom_job(
       logging.info('training finished')
       model_name = mresponse.model_to_upload.name
       return (model_name, model_display_name)
-      # # write some outputs once finished
-      # model_name = mresponse.model_to_upload.name
-      # logging.info('got model name: %s', model_name)
-      # with open('temp.txt', "w") as outfile:
-      #   outfile.write(model_name)
-      # subprocess.run(['gsutil', 'cp', 'temp.txt', model_id])
-      # with open('temp2.txt', "w") as outfile:
-      #   outfile.write(model_display_name)
-      # subprocess.run(['gsutil', 'cp', 'temp2.txt', model_dispname])
-      # break
     else:
       time.sleep(SLEEP_INTERVAL)
 
 if __name__ == '__main__':
-  # create_training_pipeline_custom_job(
-  #   'aju-vtests2', 'bw_sdktest2',
-  #   'bw_sdktest2',
-  #   'us-docker.pkg.dev/cloud-aiplatform/training/tf-gpu.2-3:latest',
-  #   'gs://aju-pipelines/ucaip/training1/bw-trainer-0.1.tar.gz',
-  #   'trainer.task',
-  #   'gs://aju-pipelines/ucaip/test1803_sdk1',
-  #   "us-central1",
-  #   "us-central1-aiplatform.googleapis.com",
-  # )
   import kfp
   kfp.components.func_to_container_op(create_training_pipeline_custom_job,
       output_component_file='../model_train_component.yaml',
-      base_image='gcr.io/aju-vtests2/bw-aiplatform:v1')
+      base_image='gcr.io/google-samples/bw-aiplatform:v1')

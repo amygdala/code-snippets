@@ -24,7 +24,6 @@ def upload_model(
     location: str, # "us-central1",
     api_endpoint: str, #"us-central1-aiplatform.googleapis.com",
     timeout: int, # 1800,
-    # model_id: OutputPath('String')
     ) -> NamedTuple('Outputs', [('model_id', str)]):
 
   import logging
@@ -64,21 +63,14 @@ def upload_model(
   logging.info("upload_model_response: %s", upload_model_response)
   model_path = upload_model_response.model
   return (model_path, )
-  # logging.info('got model path: %s', model_path)
-  # with open('temp.txt', "w") as outfile:
-  #   outfile.write(model_path)
-  # subprocess.run(['gsutil', 'cp', 'temp.txt', model_id])
 
 
 
 if __name__ == '__main__':
-  # upload_model('aju-vtests2', display_name='sdk_test1', metadata_schema_uri="",
-  #     image_uri='us-docker.pkg.dev/cloud-aiplatform/prediction/tf2-cpu.2-3:latest',
-  #     artifact_uri='gs://aju-pipelines/v64/077ae97e-9c6d-4c1c-b5a1-fc2e95fb7dbb/0/bwmodel/trained_model/export/bikesw/1615937808')
   import kfp
   kfp.components.func_to_container_op(upload_model,
       output_component_file='../model_upload_component.yaml',
-      base_image='gcr.io/aju-vtests2/bw-aiplatform:v1')
+      base_image='gcr.io/google-samples/bw-aiplatform:v1')
 
 
 # gcloud beta ai models upload --region=us-central1 --display-name=bw2 --container-image-uri=us-docker.pkg.dev/cloud-aiplatform/prediction/tf2-cpu.2-3:latest --artifact-uri=gs://aju-pipelines/ktune13/f8515c75-32b7-47a4-af70-5ff24362eccc/0/bwmodel/trained_model/export/bikesw/1603733739

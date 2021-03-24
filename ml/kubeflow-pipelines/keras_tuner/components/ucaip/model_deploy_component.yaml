@@ -10,7 +10,7 @@ inputs:
 - {name: timeout, type: Integer, default: '7200', optional: true}
 implementation:
   container:
-    image: gcr.io/aju-vtests2/bw-aiplatform:v1
+    image: gcr.io/google-samples/bw-aiplatform:v1
     command:
     - sh
     - -ec
@@ -87,7 +87,6 @@ implementation:
       #       project=project, location=location, endpoint=endpoint_id
       #   )
         response = client.deploy_model(
-          #   endpoint=endpoint, deployed_model=deployed_model, traffic_split=traffic_split
             endpoint=endpoint_path, deployed_model=deployed_model, traffic_split=traffic_split
         )
         logging.info("Long running operation: %s", response.operation.name)

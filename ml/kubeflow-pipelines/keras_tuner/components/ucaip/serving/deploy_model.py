@@ -80,18 +80,16 @@ def deploy_model(
 #       project=project, location=location, endpoint=endpoint_id
 #   )
   response = client.deploy_model(
-    #   endpoint=endpoint, deployed_model=deployed_model, traffic_split=traffic_split
       endpoint=endpoint_path, deployed_model=deployed_model, traffic_split=traffic_split
   )
   logging.info("Long running operation: %s", response.operation.name)
   deploy_model_response = response.result(timeout=timeout)
   logging.info("deploy_model_response: %s", deploy_model_response)
+  # TODO: output status info in some form
 
 
 if __name__ == '__main__':
-#   deploy_model('aju-vtests2', 'endpoint_test2',
-#       'projects/467744782358/locations/us-central1/models/6181278449496227840', 'sdk_test1')
   import kfp
   kfp.components.func_to_container_op(deploy_model,
       output_component_file='../model_deploy_component.yaml',
-      base_image='gcr.io/aju-vtests2/bw-aiplatform:v1')
+      base_image='gcr.io/google-samples/bw-aiplatform:v1')

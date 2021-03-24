@@ -11,7 +11,7 @@ outputs:
 - {name: model_id, type: String}
 implementation:
   container:
-    image: gcr.io/aju-vtests2/bw-aiplatform:v1
+    image: gcr.io/google-samples/bw-aiplatform:v1
     command:
     - sh
     - -ec
@@ -28,7 +28,6 @@ implementation:
           location, # "us-central1",
           api_endpoint, #"us-central1-aiplatform.googleapis.com",
           timeout, # 1800,
-          # model_id: OutputPath('String')
           ):
 
         import logging
