@@ -1,0 +1,17 @@
+boto3
+pytorch_lightning
+image
+matplotlib
+torch
+pyarrow
+sklearn
+transformers
+torchtext
+webdataset
+torchvision
+pandas
+numpy
+s3fs
+wget
+torch-model-archiver
+
