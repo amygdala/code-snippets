@@ -42,5 +42,6 @@ class Executor(GenericExecutor):
                 model_name = "model_state_dict.pth"
 
             model_save_path = os.path.join(model_save_path, model_name)
-            print("Saving model to {}".format(model_save_path))
-            torch.save(model.state_dict(), model_save_path)
+            if trainer.global_rank == 0:
+                print("Saving model to {}".format(model_save_path))
+                torch.save(model.state_dict(), model_save_path)

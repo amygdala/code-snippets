@@ -2,7 +2,9 @@ FROM pytorch/pytorch:1.8.0-cuda11.1-cudnn8-runtime
 
 COPY requirements.txt requirements.txt
 
+RUN pip3 install -U pip
 RUN pip3 install -r requirements.txt
+RUN pip3 install -U google-cloud-aiplatform[tensorboard]
 
 ADD pytorch-pipeline /workspace/pytorch-pipeline
 
