@@ -45,7 +45,12 @@ if __name__ == "__main__":
     parser.add_argument(
         "--gcs_tensorboard_root",
         type=str,
-        help="",
+    )
+
+    parser.add_argument(
+        "--gcs_tensorboard_instance",
+        type=str,
+        default="",
     )
 
     parser.add_argument(
@@ -159,6 +164,7 @@ if __name__ == "__main__":
     # Set the trainer-specific arguments
     trainer_args = {
         "logger": tboard,
+        "profiler": "pytorch",
         "checkpoint_callback": True,
         "max_epochs": max_epochs,
         "callbacks": [lr_logger, early_stopping, checkpoint_callback],
@@ -205,3 +211,26 @@ if __name__ == "__main__":
         capture_output=True,
     )
     print(copyres2)
+
+    if args["gcs_tensorboard_instance"]:
+        try:
+            from datetime import datetime
+
+            ts = datetime.now().strftime("%Y%m%d%H%M%S")
+            exp_name = f"{args['model_name']}{ts}"
+            logging.warning("setting up Vertex tensorboard experiment")
+            tb_args = [
+                "/opt/conda/bin/tb-gcp-uploader",
+                "--tensorboard_resource_name",
+                args["gcs_tensorboard_instance"],
+                "--logdir",
+                args["gcs_tensorboard_root"],
+                "--experiment_name",
+                exp_name,
+                "--one_shot=True",
+            ]
+            logging.warning("tb args: %s", tb_args)
+            tb_res = subprocess.run(tb_args, capture_output=True)
+            print(tb_res)
+        except Exception as e:
+            logging.warning(e)
