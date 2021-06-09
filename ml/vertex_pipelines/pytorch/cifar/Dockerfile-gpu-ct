@@ -15,9 +15,12 @@
 FROM pytorch/pytorch:1.8.1-cuda10.2-cudnn7-runtime
 
 COPY requirements.txt requirements.txt
+RUN pip3 install -U pip
 RUN pip3 install -r requirements.txt
 RUN pip3 install gcsfs
 RUN pip3 install google-cloud-storage
+RUN pip3 install -U google-cloud-aiplatform[tensorboard]
+
 
 RUN apt-get update -y
 RUN apt-get install --no-install-recommends -y -q ca-certificates wget unzip
